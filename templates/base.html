@@ -1,0 +1,185 @@
+<!doctype html>
+<!--
+  Esqueleto comum a todas as telas do dashboard.
+
+  Concentra o "shell" da aplicação — topbar, sidebar, scrim do menu em overlay e
+  a ordem de carregamento do CSS. Cada tela herda daqui e preenche apenas os
+  blocos `content`, `page_styles` e `page_scripts`; repetir o shell arquivo a
+  arquivo faria a topbar divergir de uma tela para outra em poucas semanas.
+
+  Contrato com o JS (js/pages/shell.js), por atributos data-*:
+    [data-app]              raiz que recebe os estados .is-collapsed / .is-sidebar-open
+    [data-sidebar]          a barra lateral
+    [data-sidebar-scrim]    fundo escuro do menu em overlay (mobile)
+    [data-sidebar-toggle]   botão de abrir/recolher, na topbar
+    [data-dropdown]         menu da conta (gatilho + painel)
+    [data-user-*]           identidade do usuário autenticado
+-->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>{% block title %}Acompanhamento ESG{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+    <!-- A ordem abaixo é a cascata do projeto e não muda: tokens definem os
+         valores, base reseta e cria os utilitários, components traz os blocos
+         reutilizáveis e o CSS da página só arranja esses blocos na tela. -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <!-- Slot próprio para o skin do toast: ele entra depois de components.css e
+         antes do CSS da página, e só nas telas que realmente emitem toast. -->
+    {% block toast_styles %}{% endblock %}
+    {% block page_styles %}{% endblock %}
+</head>
+
+<body>
+<!-- Primeiro tabstop de toda página do app. -->
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+<div class="app" data-app>
+
+    <!-- ======================================================================
+         TOPBAR
+         ====================================================================== -->
+    <header class="topbar">
+        <div class="topbar__lead">
+            <button type="button"
+                    class="btn-icon"
+                    data-sidebar-toggle
+                    aria-controls="sidebar"
+                    aria-expanded="false">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.75"
+                          stroke-linecap="round"/>
+                </svg>
+                <span class="visually-hidden">Abrir ou fechar o menu de navegação</span>
+            </button>
+
+            <!-- TODO: trocar pela marca definitiva da aplicação quando existir. -->
+            <a class="brand" href="{{ url_for('bp_render_home.render_home') }}">
+                <span class="brand__mark" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                        <rect width="28" height="28" rx="8" fill="currentColor"/>
+                        <rect x="6" y="6" width="6" height="6" rx="1.5" fill="var(--color-accent)"/>
+                        <rect x="16" y="6" width="6" height="6" rx="1.5" fill="var(--color-primary)"/>
+                        <rect x="6" y="16" width="6" height="6" rx="1.5" fill="var(--color-primary)"/>
+                        <rect x="16" y="16" width="6" height="6" rx="1.5" fill="var(--color-primary-subtle)"/>
+                    </svg>
+                </span>
+                <span class="brand__name">Acompanhamento ESG</span>
+            </a>
+        </div>
+
+        <div class="topbar__actions">
+            <div class="dropdown" data-dropdown>
+                <button type="button" class="user-trigger" data-dropdown-trigger
+                        aria-expanded="false" aria-haspopup="true" aria-controls="menu-usuario">
+                    <!-- Autenticação ainda não existe: os campos ficam em
+                         "Carregando..." até o shell ter de onde buscar o usuário
+                         (ver AUTH_ENABLED em js/pages/shell.js). -->
+                    <span class="avatar" aria-hidden="true" data-user-initials></span>
+                    <span class="user-trigger__identity">
+                        <span class="user-trigger__name" data-user-name>Carregando...</span>
+                        <span class="user-trigger__role" data-user-role>Carregando...</span>
+                    </span>
+                    <svg class="user-trigger__caret" width="16" height="16" viewBox="0 0 16 16" fill="none"
+                         aria-hidden="true">
+                        <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                              stroke-linejoin="round"/>
+                    </svg>
+                    <span class="visually-hidden">Abrir menu da conta</span>
+                </button>
+
+                <div class="dropdown__menu" id="menu-usuario" data-dropdown-menu hidden>
+                    <div class="dropdown__header">
+                        <div class="dropdown__name" data-user-name>Carregando...</div>
+                        <div class="dropdown__meta" data-user-email>Carregando...</div>
+                    </div>
+                    <hr class="dropdown__separator">
+                    <!-- Nasce habilitado no HTML e é desabilitado pelo shell
+                         enquanto não houver rota de logout: botão que não faz
+                         nada ao ser clicado é pior que botão visivelmente
+                         indisponível.
+                         TODO: criar js/auth/logout.js (POST /auth/logout) e
+                         ligar em shell.js quando a sessão existir. -->
+                    <button type="button" class="dropdown__item dropdown__item--danger" data-logout>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M6.5 2.5H3.5A1 1 0 0 0 2.5 3.5v9a1 1 0 0 0 1 1h3" stroke="currentColor"
+                                  stroke-width="1.4" stroke-linecap="round"/>
+                            <path d="M10 5.5 12.5 8 10 10.5M12.5 8H6" stroke="currentColor" stroke-width="1.4"
+                                  stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Sair
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="app__body">
+
+        <!-- ==================================================================
+             SIDEBAR
+             ================================================================== -->
+        <aside class="sidebar on-inverse" id="sidebar" data-sidebar>
+            <nav class="sidebar__nav" aria-label="Navegação principal">
+                <p class="sidebar__section">Operação</p>
+                <ul class="nav">
+                    <li>
+                        <a class="nav__link {% block nav_home_state %}{% endblock %}"
+                           href="{{ url_for('bp_render_home.render_home') }}"
+                           {% block nav_home_current %}{% endblock %}>
+                            <svg class="nav__icon" width="20" height="20" viewBox="0 0 20 20" fill="none"
+                                 aria-hidden="true">
+                                <path d="m3 8.5 7-5.5 7 5.5V16a1 1 0 0 1-1 1h-3.5v-5h-5v5H4a1 1 0 0 1-1-1V8.5Z"
+                                      stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                            </svg>
+                            <span class="nav__label">Início</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- TODO: os demais itens entram aqui conforme as telas forem
+                     criadas. Item da tela atual leva `is-active` e
+                     aria-current="page" — os dois, não só um. -->
+            </nav>
+
+            <div class="sidebar__footer">
+                <div class="sidebar__seal seal" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span>
+                </div>
+                <p class="sidebar__footer-text">
+                    Acompanhamento dos indicadores ambientais, sociais e de governança.
+                </p>
+            </div>
+        </aside>
+
+        <!-- Fundo escuro do menu em overlay (mobile) -->
+        <div class="sidebar-scrim" data-sidebar-scrim hidden></div>
+
+        <!-- ==================================================================
+             CONTEÚDO
+             ================================================================== -->
+        <main class="app__main" id="conteudo">
+            <div class="container stack-32">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Shell (sidebar, menu da conta e usuário logado), comum a todas as telas. -->
+<script type="module" src="{{ url_for('static', filename='js/pages/shell.js') }}"></script>
+{% block page_scripts %}{% endblock %}
+</body>
+</html>
