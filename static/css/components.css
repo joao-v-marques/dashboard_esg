@@ -1,0 +1,1966 @@
+/* ==========================================================================
+   components.css — botões, campos, cards, tabela, badges, avatar, dropdown,
+   alertas, modal, paginação, estados de vazio/carregamento.
+   Reutilizável por todas as telas. Nenhum hexadecimal: só tokens.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   BOTÕES
+   -------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  height: var(--control-height);
+  padding-inline: var(--space-16);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  background-color: var(--color-surface-sunken);
+  border-color: var(--color-border);
+  color: var(--color-text-disabled);
+  box-shadow: none;
+}
+
+.btn--lg {
+  height: var(--control-height-lg);
+  padding-inline: var(--space-24);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+/* Primário --------------------------------------------------------------- */
+.btn--primary {
+  background-color: var(--color-primary-surface);
+  color: var(--color-text-on-brand);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  color: var(--color-text-on-brand);
+}
+
+.btn--primary:active:not(:disabled) {
+  background-color: var(--color-primary-active);
+  box-shadow: none;
+}
+
+/* Secundário (contorno) --------------------------------------------------- */
+.btn--secondary {
+  background-color: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-strong);
+}
+
+.btn--secondary:hover:not(:disabled) {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text-strong);
+}
+
+.btn--secondary:active:not(:disabled) {
+  background-color: var(--color-surface-secondary);
+}
+
+/* Discreto ---------------------------------------------------------------- */
+.btn--ghost {
+  background-color: transparent;
+  color: var(--color-text-strong);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background-color: var(--color-hover-layer);
+  color: var(--color-text-strong);
+}
+
+.btn--ghost:active:not(:disabled) {
+  background-color: var(--color-active-layer);
+}
+
+/* Destaque secundário — laranja institucional, uso parcimonioso ----------- */
+.btn--attention {
+  background-color: var(--color-surface);
+  border-color: var(--color-warning);
+  color: var(--color-warning-strong);
+}
+
+.btn--attention:hover:not(:disabled) {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.btn--attention:active:not(:disabled) {
+  border-color: var(--color-warning-strong);
+}
+
+/* Destrutivo — vermelho convencional, fora da paleta por legibilidade ----- */
+.btn--danger {
+  background-color: var(--color-danger);
+  color: var(--color-text-on-brand);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background-color: var(--color-danger-hover);
+  color: var(--color-text-on-brand);
+}
+
+/* Botão só de ícone ------------------------------------------------------- */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--color-text-muted);
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.btn-icon:hover:not(:disabled) {
+  background-color: var(--color-hover-layer);
+  color: var(--color-text-strong);
+}
+
+.btn-icon:active:not(:disabled) {
+  background-color: var(--color-active-layer);
+}
+
+.btn-icon:disabled {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.btn-icon--bordered {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+}
+
+/* Botão de ação em linha de tabela ---------------------------------------- */
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-primary-text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-radius: var(--radius-control);
+}
+
+.btn-link:hover { color: var(--color-primary-hover); }
+.btn-link:active { color: var(--color-primary-active); }
+
+.btn-link--danger { color: var(--color-danger); }
+.btn-link--danger:hover { color: var(--color-danger-hover); }
+
+/* Ação de linha em andamento — o download desabilita o próprio botão enquanto
+   o arquivo não chega, para o duplo clique não pedir duas vezes. */
+.btn-link:disabled {
+  color: var(--color-text-disabled);
+  text-decoration: none;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   CABEÇALHO DE PÁGINA
+   Título, texto de apoio e ações primárias. Usado por todas as telas.
+   -------------------------------------------------------------------------- */
+
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-24);
+  flex-wrap: wrap;
+}
+
+.page-head__title {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
+  margin-bottom: var(--space-8);
+}
+
+.page-head__subtitle {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+  max-width: 560px;
+}
+
+.page-head__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+/* Seletor de ano-base ------------------------------------------------------
+   Os cursos são contabilizados por ano, então o ano escolhido aqui define o
+   recorte de tudo que a tela mostra — indicadores, totais e listagem. Por
+   isso fica no cabeçalho da página, e não na barra de filtros da tabela:
+   o escopo é da tela inteira.
+
+   Rótulo inline, para o bloco ficar com a mesma altura do botão ao lado. */
+
+.year-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.year-filter__label {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.year-filter__select {
+  width: auto;
+  min-width: 112px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Em telas estreitas o cabeçalho empilha; o seletor ocupa a linha inteira
+   para o alvo de toque não ficar espremido ao lado do botão. */
+@media (max-width: 599px) {
+  .page-head__actions {
+    width: 100%;
+  }
+
+  .year-filter {
+    flex: 1 1 100%;
+  }
+
+  .year-filter__select {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+/* Trilha de navegação — só em telas que ficam abaixo de uma listagem. */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-8);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-muted);
+}
+
+.breadcrumb a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-radius: var(--radius-control);
+}
+
+.breadcrumb a:hover {
+  color: var(--color-primary-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.breadcrumb__sep {
+  color: var(--color-border-strong);
+}
+
+/* --------------------------------------------------------------------------
+   CAMPOS DE FORMULÁRIO
+   -------------------------------------------------------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.field__label {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-strong);
+}
+
+.field__label .field__optional {
+  font-weight: var(--weight-regular);
+  color: var(--color-text-muted);
+}
+
+.field__hint {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-muted);
+}
+
+/* Agrupamento de campos relacionados sob uma única legenda.
+   O conteúdo vive em .fieldset__body, e não no próprio fieldset: <legend> tem
+   renderização especial e não se comporta como item de flex de forma
+   confiável entre navegadores. Assim a legenda é um bloco comum e o corpo é
+   uma coluna flex — o mesmo ritmo de um .field simples (rótulo, 8px, campo),
+   o que mantém o fieldset alinhado com os campos vizinhos na mesma linha. */
+.fieldset {
+  /* fieldset nasce com min-width: min-content e estoura grid e flex. */
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.fieldset__legend {
+  padding: 0;
+  margin-bottom: var(--space-8);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-strong);
+}
+
+.fieldset__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* Campos lado a lado que dividem a largura igualmente. */
+.field-row {
+  display: flex;
+  gap: var(--space-16);
+}
+
+.field-row > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Campo numérico com unidade fixa à direita ("8 h", "30 min").
+   A unidade substitui um rótulo acima do campo, que acrescentaria uma linha
+   e desalinharia o grupo em relação aos campos ao lado. */
+.input-unit {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Folga para a maior unidade em uso ("min") não encostar no número. */
+.input-unit .input {
+  padding-right: var(--space-48);
+}
+
+.input-unit__suffix {
+  position: absolute;
+  right: var(--space-16);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+/* As setinhas de incremento ocupariam o lugar da unidade. */
+.input-unit .input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.input-unit .input[type="number"]::-webkit-outer-spin-button,
+.input-unit .input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-danger-text);
+  font-weight: var(--weight-medium);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  height: var(--control-height);
+  padding-inline: var(--space-16);
+  background-color: var(--color-field-bg);
+  border: 1px solid var(--color-field-border);
+  border-radius: var(--radius-control);
+  color: var(--color-text-strong);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+
+.textarea {
+  height: auto;
+  min-height: 96px;
+  padding-block: var(--space-8);
+  resize: vertical;
+}
+
+.input--lg,
+.select--lg {
+  height: var(--control-height-lg);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+}
+
+.input:hover:not(:disabled),
+.select:hover:not(:disabled),
+.textarea:hover:not(:disabled) {
+  border-color: var(--color-text-muted);
+}
+
+.input:focus-visible,
+.select:focus-visible,
+.textarea:focus-visible {
+  border-color: var(--color-primary);
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 1px;
+}
+
+.input:disabled,
+.select:disabled,
+.textarea:disabled {
+  background-color: var(--color-field-bg-disabled);
+  border-color: var(--color-border);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Estado de erro — a borda muda e o campo é anunciado via aria-invalid. */
+.input[aria-invalid="true"],
+.select[aria-invalid="true"],
+.textarea[aria-invalid="true"] {
+  border-color: var(--color-danger);
+  background-color: var(--color-surface);
+}
+
+.input[aria-invalid="true"]:focus-visible,
+.select[aria-invalid="true"]:focus-visible {
+  outline-color: var(--color-danger);
+}
+
+/* Seta do select desenhada com gradientes — sem imagem externa. */
+.select {
+  appearance: none;
+  padding-right: var(--space-40);
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) calc(50% + 2px),
+    calc(100% - 16px) calc(50% + 2px);
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+/* Campo com ícone/afixo à direita (senha, busca) --------------------------- */
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrap .input {
+  padding-right: var(--space-48);
+}
+
+.input-wrap--leading .input {
+  padding-left: var(--space-40);
+  padding-right: var(--space-16);
+}
+
+.input-wrap__affix {
+  position: absolute;
+  right: var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-control);
+  color: var(--color-text-muted);
+  transition: color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+
+button.input-wrap__affix:hover {
+  background-color: var(--color-hover-layer);
+  color: var(--color-text-strong);
+}
+
+button.input-wrap__affix[aria-pressed="true"] {
+  color: var(--color-primary-text);
+}
+
+.input-wrap__icon {
+  position: absolute;
+  left: var(--space-16);
+  display: inline-flex;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.input-wrap--leading .input-wrap__icon {
+  left: var(--space-16);
+}
+
+/* Campo de arquivo -------------------------------------------------------- */
+
+/* A borda tracejada distingue "anexar arquivo" de um campo de texto comum.
+   O nome do arquivo escolhido é exibido pelo próprio navegador, então isto
+   funciona sem nenhum JavaScript. */
+.file-input {
+  width: 100%;
+  min-height: var(--control-height-lg);
+  padding: var(--space-8);
+  background-color: var(--color-field-bg);
+  border: 1px dashed var(--color-field-border);
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+
+.file-input:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-sunken);
+}
+
+.file-input:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 1px;
+  border-color: var(--color-primary);
+}
+
+.file-input:disabled {
+  background-color: var(--color-field-bg-disabled);
+  border-color: var(--color-border);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.file-input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.file-input::file-selector-button {
+  height: 32px;
+  margin-right: var(--space-16);
+  padding-inline: var(--space-16);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text-strong);
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+.file-input:hover::file-selector-button {
+  background-color: var(--color-surface-secondary);
+}
+
+.file-input:disabled::file-selector-button {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Checkbox e rádio -------------------------------------------------------- */
+
+.check {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text);
+}
+
+.check input[type="checkbox"],
+.check input[type="radio"] {
+  appearance: none;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  border: 1px solid var(--color-field-border);
+  border-radius: 4px;
+  background-color: var(--color-field-bg);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease);
+}
+
+.check input[type="radio"] {
+  border-radius: var(--radius-pill);
+}
+
+.check input[type="checkbox"]:hover,
+.check input[type="radio"]:hover {
+  border-color: var(--color-text-muted);
+}
+
+.check input[type="checkbox"]:checked,
+.check input[type="radio"]:checked {
+  background-color: var(--color-primary-surface);
+  border-color: var(--color-primary-surface);
+}
+
+/* A marca de seleção é desenhada com bordas — nítida em qualquer densidade. */
+.check input[type="checkbox"],
+.check input[type="radio"] {
+  position: relative;
+}
+
+.check input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--color-text-on-brand);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.check input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-text-on-brand);
+}
+
+.check input:disabled {
+  background-color: var(--color-field-bg-disabled);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+
+.check:has(input:disabled) {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   CARDS
+   -------------------------------------------------------------------------- */
+
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-xs);
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+  padding: var(--space-24);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card__title {
+  font-size: var(--text-md);
+  line-height: var(--leading-md);
+  margin: 0;
+}
+
+.card__body {
+  padding: var(--space-24);
+}
+
+.card__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+  padding: var(--space-16) var(--space-24);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface-sunken);
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+}
+
+/* Card de indicador ------------------------------------------------------- */
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-24);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-xs);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Faixa de 4px que codifica o assunto do indicador. */
+.stat::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background-color: var(--color-primary);
+}
+
+.stat--warning::before  { background-color: var(--color-warning); }
+.stat--negative::before { background-color: var(--color-negative); }
+.stat--info::before     { background-color: var(--color-info); }
+.stat--accent::before   { background-color: var(--color-accent); }
+
+.stat__label {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+}
+
+.stat__value {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  line-height: var(--leading-3xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__unit {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  color: var(--color-text-muted);
+  margin-left: var(--space-4);
+}
+
+.stat__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__delta strong {
+  font-weight: var(--weight-semibold);
+}
+
+/* A cor da variação expressa a AVALIAÇÃO, não a direção: menos cursos sem
+   certificado é uma boa notícia e recebe --good, mesmo caindo. */
+.stat__delta--good strong { color: var(--color-success-text); }
+.stat__delta--bad strong  { color: var(--color-negative-text); }
+
+.stat__delta svg { flex: none; }
+.stat__delta--down svg { transform: rotate(180deg); }
+
+/* Nem todo indicador traz nota. Sem esta regra o parágrafo vazio ainda ocuparia
+   uma linha de 16px e desalinharia a base dos cards vizinhos que a têm. */
+.stat__delta:empty { display: none; }
+
+/* --------------------------------------------------------------------------
+   BADGES DE STATUS
+   Todos com fundo pastel e texto escuro — contraste verificado ≥ 5.9:1.
+   Nenhuma tela usa hoje; ficam prontos para as próximas.
+   -------------------------------------------------------------------------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: 24px;
+  padding-inline: var(--space-8);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text-strong);
+}
+
+.badge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background-color: currentColor;
+  flex: none;
+}
+
+.badge--success {           /* concluído, aprovado, ativo */
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.badge--warning {           /* requer atenção */
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.badge--negative {          /* recusado, inativo */
+  background-color: var(--color-negative-bg);
+  color: var(--color-negative-text);
+}
+
+.badge--info {              /* em análise */
+  background-color: var(--color-info-bg);
+  color: var(--color-info-text);
+}
+
+.badge--neutral {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+}
+
+/* Contagem discreta ao lado de um título. */
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding-inline: var(--space-8);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface-secondary);
+  color: var(--color-text-strong);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   AVATAR
+   -------------------------------------------------------------------------- */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary-subtle);
+  color: var(--color-success-text);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.avatar--lg {
+  width: 40px;
+  height: 40px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
+/* --------------------------------------------------------------------------
+   DROPDOWN / MENU
+   -------------------------------------------------------------------------- */
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown__menu {
+  position: absolute;
+  top: calc(100% + var(--space-8));
+  right: 0;
+  z-index: var(--z-dropdown);
+  min-width: 224px;
+  padding: var(--space-8);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-md);
+}
+
+.dropdown__menu[hidden] {
+  display: none;
+}
+
+.dropdown__header {
+  padding: var(--space-8);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-8);
+}
+
+.dropdown__name {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-strong);
+}
+
+.dropdown__meta {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+.dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+  height: var(--control-height);
+  padding-inline: var(--space-8);
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  text-align: left;
+  text-decoration: none;
+  transition: background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+/* :not(:disabled) nos dois estados porque :hover e :active continuam valendo
+   para botão desabilitado — sem a guarda, o item indisponível acenderia ao
+   passar o mouse e prometeria uma ação que não acontece. */
+.dropdown__item:hover:not(:disabled) {
+  background-color: var(--color-hover-layer);
+  color: var(--color-text-strong);
+}
+
+.dropdown__item:active:not(:disabled) {
+  background-color: var(--color-active-layer);
+}
+
+/* Item indisponível: cor de texto desabilitado e cursor bloqueado. O item
+   continua no menu de propósito — sumir e reaparecer faria o menu mudar de
+   tamanho conforme o estado da sessão. */
+.dropdown__item:disabled {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.dropdown__item svg {
+  color: var(--color-text-muted);
+}
+
+.dropdown__item:disabled svg {
+  color: var(--color-text-disabled);
+}
+
+.dropdown__item--danger {
+  color: var(--color-danger);
+}
+
+.dropdown__item--danger svg { color: currentColor; }
+
+.dropdown__separator {
+  height: 1px;
+  margin: var(--space-8) 0;
+  background-color: var(--color-border);
+  border: 0;
+}
+
+/* --------------------------------------------------------------------------
+   ALERTAS
+   -------------------------------------------------------------------------- */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-16);
+  padding: var(--space-16);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-strong);
+  background-color: var(--color-surface-sunken);
+}
+
+.alert[hidden] {
+  display: none;
+}
+
+.alert__icon { flex: none; margin-top: 2px; }
+
+.alert__content { flex: 1 1 auto; }
+
+.alert__title {
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-4);
+}
+
+.alert--success  { background-color: var(--color-success-bg);  color: var(--color-success-text); }
+.alert--warning  { background-color: var(--color-warning-bg);  color: var(--color-warning-text); }
+.alert--info     { background-color: var(--color-info-bg);     color: var(--color-info-text); }
+.alert--danger   { background-color: var(--color-danger-bg);   color: var(--color-danger-text); }
+
+.alert__dismiss {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-control);
+  color: currentColor;
+  opacity: 0.7;
+}
+
+.alert__dismiss:hover { opacity: 1; }
+
+/* --------------------------------------------------------------------------
+   TABELA
+   -------------------------------------------------------------------------- */
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.table {
+  width: 100%;
+  min-width: 960px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
+.table caption {
+  text-align: left;
+  padding: 0 0 var(--space-16);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+}
+
+/* O cabeçalho gruda logo abaixo da topbar durante o scroll da página.
+   Só funciona quando .table-wrap não é um container de scroll — ver a regra
+   de largura mínima em home.css. */
+.table thead th {
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: var(--z-sticky);
+  height: var(--control-height);
+  padding: 0 var(--space-16);
+  background-color: var(--color-surface-sunken);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table tbody td {
+  height: var(--table-row-height);
+  padding: var(--space-8) var(--space-16);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+  color: var(--color-text);
+}
+
+.table tbody tr:hover td {
+  background-color: var(--color-hover-layer);
+}
+
+.table tbody tr[hidden] {
+  display: none;
+}
+
+.table__primary {
+  color: var(--color-text-strong);
+  font-weight: var(--weight-semibold);
+}
+
+.table__secondary {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+}
+
+/* Coluna numérica: valor e cabeçalho encostados na direita, com tabular-nums.
+   Alinhar à direita é o que deixa a casa das unidades embaixo da casa das
+   unidades — é assim que se compara 3 com 12 de relance. */
+.table__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* O <th> precisa da sua própria regra: `.table thead th` acima é mais
+   específico que `.table__num` e vencia o alinhamento, deixando o cabeçalho à
+   esquerda enquanto o número da coluna ia para a direita. */
+.table thead th.table__num {
+  text-align: right;
+}
+
+/* Ações encostadas na direita da linha.
+   Sem `display: flex` de propósito: um <td> que vira flex container deixa de ser
+   célula de tabela, o navegador embrulha o conteúdo numa célula anônima e a
+   coluna para de negociar largura com o <th> do cabeçalho — que é justamente o
+   que desalinha as duas. O text-align faz o mesmo trabalho e a célula continua
+   célula; o meio vertical já vem do `vertical-align: middle` de .table tbody td. */
+.table__actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table__actions > * + * {
+  margin-left: var(--space-16);
+}
+
+/* Barra de ferramentas da tabela ------------------------------------------ */
+
+.toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+  padding: var(--space-24);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.toolbar__search {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.toolbar__filter {
+  flex: 0 1 200px;
+  min-width: 160px;
+}
+
+/* Rótulo acima do controle, em qualquer barra de filtros. */
+.toolbar__search,
+.toolbar__filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* Rodapé da tabela: contagem à esquerda, paginação à direita. */
+.table-foot {
+  justify-content: space-between;
+}
+
+/* A partir de 1240px a tabela cabe inteira: dispensamos o scroll horizontal,
+   e é isso que devolve ao <thead> a capacidade de grudar na topbar. Abaixo
+   disso o wrapper vira container de scroll e o cabeçalho rola com a tabela —
+   a faixa em que o usuário está arrastando na horizontal de qualquer forma. */
+@media (min-width: 1240px) {
+  .table-wrap { overflow-x: visible; }
+}
+
+/* Tabela em telas pequenas ------------------------------------------------ *
+ * Decisão: abaixo de 768px a tabela vira lista de cards, e não scroll
+ * horizontal com coluna fixa. São 6 colunas e dois campos longos (curso e
+ * instituição); em 360px o scroll obrigaria a arrastar quase toda a linha
+ * para ler um único registro. Como card, cada lançamento é lido de uma vez.
+ *
+ * Exige data-label em cada <td>: é dele que sai o rótulo da célula.
+ * ------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  .toolbar {
+    padding: var(--space-16);
+  }
+
+  .toolbar__search,
+  .toolbar__filter {
+    flex: 1 1 100%;
+  }
+
+  .table-wrap {
+    padding: var(--space-16);
+    overflow-x: visible;
+  }
+
+  .table--cards {
+    min-width: 0;
+    display: block;
+  }
+
+  .table--cards caption { padding-bottom: var(--space-8); }
+
+  /* O cabeçalho continua no DOM para os leitores de tela. */
+  .table--cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .table--cards tbody { display: block; }
+
+  .table--cards tbody tr {
+    display: block;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .table--cards tbody tr + tr {
+    margin-top: var(--space-16);
+  }
+
+  .table--cards tbody tr:hover td {
+    background-color: transparent;
+  }
+
+  .table--cards tbody td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-16);
+    height: auto;
+    min-height: var(--control-height);
+    padding: var(--space-8) var(--space-16);
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+  }
+
+  .table--cards tbody td::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: var(--text-xs);
+    line-height: var(--leading-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* O nome do cooperado abre o card, em destaque e sem rótulo. */
+  .table--cards tbody td:first-child {
+    display: block;
+    padding-block: var(--space-16);
+    background-color: var(--color-surface-sunken);
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+  }
+
+  .table--cards tbody td:first-child::before { content: none; }
+
+  .table--cards tbody td:first-child .table__primary {
+    font-size: var(--text-base);
+    line-height: var(--leading-base);
+  }
+
+  /* A instituição desce para a própria linha dentro da célula do curso. */
+  .table--cards tbody td .table__secondary {
+    flex-basis: 100%;
+    text-align: right;
+  }
+
+  .table--cards tbody td:last-child {
+    justify-content: flex-end;
+    border-bottom: 0;
+    padding-block: var(--space-16);
+  }
+
+  .table--cards tbody td:last-child::before { content: none; }
+
+  .table-foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-16);
+  }
+
+  .table-foot .spacer { display: none; }
+
+  .pagination { justify-content: center; }
+}
+
+/* --------------------------------------------------------------------------
+   PAGINAÇÃO
+   -------------------------------------------------------------------------- */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.pagination__page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--control-height);
+  height: var(--control-height);
+  padding-inline: var(--space-8);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+.pagination__page:hover {
+  background-color: var(--color-hover-layer);
+  color: var(--color-text-strong);
+}
+
+.pagination__page[aria-current="page"] {
+  background-color: var(--color-brand-deep);
+  border-color: var(--color-brand-deep);
+  color: var(--color-text-on-brand);
+}
+
+.pagination__ellipsis {
+  padding-inline: var(--space-4);
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   ESTADO VAZIO
+   O selo modular reaparece aqui, esmaecido — assinatura da interface.
+   -------------------------------------------------------------------------- */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-16);
+  padding: var(--space-64) var(--space-24);
+}
+
+.empty[hidden] { display: none; }
+
+.empty__seal {
+  opacity: 0.32;
+  margin-bottom: var(--space-8);
+}
+
+.empty__title {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: var(--leading-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-heading);
+}
+
+.empty__text {
+  max-width: 400px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   CARREGAMENTO (skeleton)
+   Previsto no CSS; ainda não acionado por nenhuma tela.
+   -------------------------------------------------------------------------- */
+
+.skeleton {
+  display: block;
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface-sunken);
+  background-image: linear-gradient(
+    90deg,
+    var(--color-surface-sunken) 0%,
+    var(--color-surface-secondary) 50%,
+    var(--color-surface-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.4s var(--ease) infinite;
+}
+
+.skeleton--text  { height: 16px; }
+.skeleton--title { height: 24px; width: 40%; }
+.skeleton--row   { height: var(--table-row-height); border-radius: var(--radius-control); }
+.skeleton--stat  { height: 128px; border-radius: var(--radius-card); }
+
+@keyframes skeleton-sweep {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background-image: none;
+  }
+}
+
+/* Botão em carregamento --------------------------------------------------- */
+
+.btn.is-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn.is-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-radius: var(--radius-pill);
+  border-top-color: transparent;
+  color: var(--color-text-on-brand);
+  animation: spin 700ms linear infinite;
+}
+
+.btn--secondary.is-loading::after,
+.btn--ghost.is-loading::after {
+  color: var(--color-text-strong);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn.is-loading::after {
+    animation-duration: 1.6s;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   MODAL
+
+   <dialog> nativo: Esc, foco preso dentro e fundo inerte são do elemento, e
+   não de JS nosso. O único cuidado é o `display`: o navegador esconde o
+   diálogo fechado com `display: none`, então o flex precisa entrar em
+   `.modal[open]` — em `.modal` ele venceria a regra do agente e o modal
+   apareceria aberto o tempo todo.
+   -------------------------------------------------------------------------- */
+
+.modal {
+  width: min(880px, calc(100vw - var(--space-32)));
+  max-height: calc(100vh - var(--space-64));
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text);
+}
+
+.modal[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal::backdrop {
+  background-color: var(--color-overlay);
+}
+
+.modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex: none;
+  padding: var(--space-24);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal__title {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  color: var(--color-text-heading);
+}
+
+.modal__subtitle {
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+}
+
+/* O botão de fechar recua para a margem do cabeçalho: a área de clique
+   continua inteira, mas o ícone alinha com o título em vez de flutuar. */
+.modal__close {
+  flex: none;
+  margin: calc(var(--space-8) * -1) calc(var(--space-8) * -1) 0 0;
+}
+
+/* Só o corpo rola; cabeçalho fixo mantém à vista de quem é o detalhe aberto. */
+.modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
+  padding: var(--space-24);
+  overflow-y: auto;
+}
+
+.modal__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-16);
+}
+
+.modal__section-title {
+  font-size: var(--text-md);
+  line-height: var(--leading-md);
+  color: var(--color-text-heading);
+}
+
+/* A tabela de dentro do modal é estreita: a largura mínima de .table foi
+   pensada para a página inteira e aqui só produziria rolagem lateral. */
+.modal__table {
+  min-width: 560px;
+}
+
+/* E o cabeçalho dela não gruda: o sticky de .table se ancora na topbar da
+   página, que não é o container de rolagem aqui dentro. */
+.modal__table thead th {
+  position: static;
+}
+
+.modal__empty {
+  padding: var(--space-24) 0 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+}
+
+.modal__empty[hidden] { display: none; }
+
+/* Ficha de dados: rótulo pequeno em cima, valor em destaque embaixo.
+   A grade se acomoda sozinha ao número de itens e à largura disponível. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-16);
+}
+
+.facts__label {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.facts__value {
+  margin-top: var(--space-4);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-strong);
+}
+
+/* No celular o modal ocupa a tela inteira: painel flutuante com margem
+   sobrando de cada lado só encolhe a tabela que já é o conteúdo principal. */
+@media (max-width: 767px) {
+  .modal {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 100dvh;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .modal__section-head .btn { width: 100%; }
+}
+
+/* ==========================================================================
+   SHELL DA APLICAÇÃO — topbar, sidebar e área de conteúdo.
+   Consumido por base.html; toda página que estende o layout herda.
+   ========================================================================== */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   Topbar
+   -------------------------------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-topbar);
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  height: var(--topbar-height);
+  padding-inline: var(--space-16);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.topbar__lead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex: none;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-control);
+  color: var(--color-brand-deep);
+  text-decoration: none;
+}
+
+.brand:hover { color: var(--color-brand-deep-hover); }
+
+.brand__mark { display: inline-flex; }
+
+.brand__name {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: var(--leading-md);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-heading);
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex: none;
+  margin-left: auto;
+}
+
+.user-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: var(--control-height);
+  padding: 0 var(--space-8);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+.user-trigger:hover { background-color: var(--color-hover-layer); }
+.user-trigger:active { background-color: var(--color-active-layer); }
+
+/* Nome e perfil empilhados. O texto alinha à esquerda mesmo com o gatilho
+   centralizando os filhos, para as duas linhas nascerem da mesma margem. */
+.user-trigger__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.user-trigger__name {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-strong);
+  white-space: nowrap;
+}
+
+.user-trigger__role {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-regular);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.user-trigger__caret {
+  color: var(--color-text-muted);
+  transition: transform var(--duration-fast) var(--ease);
+}
+
+.user-trigger[aria-expanded="true"] .user-trigger__caret {
+  transform: rotate(180deg);
+}
+
+/* --------------------------------------------------------------------------
+   Corpo: sidebar + conteúdo
+   -------------------------------------------------------------------------- */
+
+.app__body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sidebar {
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: var(--z-sidebar);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-24);
+  flex: none;
+  width: var(--sidebar-width);
+  height: calc(100vh - var(--topbar-height));
+  padding: var(--space-24) var(--space-16);
+  overflow-y: auto;
+  background-color: var(--color-brand-deep);
+  color: var(--color-text-on-inverse);
+  transition: width var(--duration-base) var(--ease),
+    transform var(--duration-base) var(--ease);
+}
+
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.sidebar__section {
+  margin: var(--space-16) 0 var(--space-4);
+  padding-inline: var(--space-8);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--palette-teal-200);
+}
+
+.sidebar__nav > .sidebar__section:first-child { margin-top: 0; }
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.nav__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: var(--control-height);
+  padding-inline: var(--space-8);
+  border-radius: var(--radius-control);
+  color: var(--color-text-on-inverse);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.nav__link:hover {
+  background-color: var(--color-brand-deep-hover);
+  color: var(--palette-white);
+  text-decoration: none;
+}
+
+.nav__link:active {
+  background-color: var(--color-brand-deep-active);
+}
+
+.nav__link.is-active {
+  background-color: var(--color-brand-deep-active);
+  color: var(--palette-white);
+  font-weight: var(--weight-semibold);
+}
+
+/* Marcador do item ativo: barra de 4px em verde limão. */
+.nav__link.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--space-8);
+  bottom: var(--space-8);
+  width: 4px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent);
+}
+
+.nav__icon { flex: none; }
+
+.sidebar__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-16) var(--space-8) 0;
+  border-top: 1px solid var(--color-border-inverse);
+}
+
+.sidebar__seal { --seal-cell: 8px; }
+
+.sidebar__footer-text {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--palette-teal-200);
+}
+
+/* Sidebar recolhida (desktop) --------------------------------------------- */
+
+.app.is-collapsed .sidebar { width: var(--sidebar-width-min); }
+
+.app.is-collapsed .nav__link { justify-content: center; padding-inline: 0; }
+
+/* O rótulo some visualmente mas continua legível por leitor de tela. */
+.app.is-collapsed .nav__label,
+.app.is-collapsed .sidebar__section,
+.app.is-collapsed .sidebar__footer-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.app.is-collapsed .sidebar__seal { display: none; }
+
+.app.is-collapsed .nav__link.is-active::before { display: none; }
+
+.app.is-collapsed .nav__link.is-active {
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+/* Área de conteúdo -------------------------------------------------------- */
+
+.app__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-block: var(--space-32) var(--space-64);
+}
+
+.sidebar-scrim { display: none; }
+
+/* --------------------------------------------------------------------------
+   Responsivo do shell
+   -------------------------------------------------------------------------- */
+
+@media (min-width: 1024px) {
+  .topbar { padding-inline: var(--space-24); }
+}
+
+/* Abaixo de 1200px o nome e o perfil saem; o avatar segue identificando. */
+@media (max-width: 1199px) {
+  .user-trigger__identity { display: none; }
+}
+
+/* Abaixo de 1024px a sidebar vira overlay. */
+@media (max-width: 1023px) {
+  .sidebar {
+    position: fixed;
+    top: var(--topbar-height);
+    left: 0;
+    bottom: 0;
+    z-index: calc(var(--z-overlay) + 1);
+    height: auto;
+    width: min(280px, 84vw);
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .app.is-sidebar-open .sidebar { transform: translateX(0); }
+
+  .sidebar-scrim {
+    display: block;
+    position: fixed;
+    inset: var(--topbar-height) 0 0 0;
+    z-index: var(--z-overlay);
+    background-color: var(--color-overlay);
+  }
+
+  .sidebar-scrim[hidden] { display: none; }
+
+  /* Recolher é irrelevante quando o menu já é overlay. */
+  .app.is-collapsed .sidebar { width: min(280px, 84vw); }
+
+  .app.is-collapsed .nav__label,
+  .app.is-collapsed .sidebar__section,
+  .app.is-collapsed .sidebar__footer-text {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: revert;
+    overflow: visible;
+    clip-path: none;
+  }
+
+  .app.is-collapsed .nav__link { justify-content: flex-start; padding-inline: var(--space-8); }
+  .app.is-collapsed .sidebar__seal { display: grid; }
+  .app.is-collapsed .nav__link.is-active::before { display: block; }
+  .app.is-collapsed .nav__link.is-active { box-shadow: none; }
+}
+
+@media (max-width: 899px) {
+  .app__main { padding-block: var(--space-24) var(--space-48); }
+}
+
+@media (max-width: 479px) {
+  .brand__name { display: none; }
+}
