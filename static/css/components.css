@@ -407,6 +407,13 @@
   font-weight: var(--weight-medium);
 }
 
+/* A mensagem nasce com `hidden` e é revelada pelo JS. Como a regra acima dá
+   display ao bloco, o `[hidden]` do navegador perde na cascata — o mesmo
+   motivo do `.alert[hidden]` e do `.empty[hidden]` mais abaixo. */
+.field__error[hidden] {
+  display: none;
+}
+
 .input,
 .select,
 .textarea {

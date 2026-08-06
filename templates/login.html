@@ -1,0 +1,189 @@
+<!doctype html>
+<!--
+  Login.
+
+  Única tela do sistema sem o shell: sem topbar e sem sidebar, porque não há
+  para onde navegar antes de entrar. Por isso ela não traz [data-topbar] nem
+  [data-sidebar] — js/pages/shell.js não escreve nada quando os contêineres não
+  existem, então nem é carregado aqui.
+
+  Também não tem .skip-link: ele existe para pular a navegação repetida, e o
+  painel da marca ao lado é decorativo, sem nada focável para pular. O primeiro
+  tabstop já é o campo de usuário.
+
+  O envio ao servidor ainda não existe (ver LOGIN_ENABLED em js/pages/login.js).
+  A validação dos campos, o aviso vindo da URL e o botão de mostrar a senha são
+  de tela e já funcionam.
+-->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Entrar · Acompanhamento ESG</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+    <!-- A ordem abaixo é a cascata do projeto e não muda: tokens definem os
+         valores, base reseta e cria os utilitários, components traz os blocos
+         reutilizáveis e o CSS da página só arranja esses blocos na tela. -->
+    <link rel="stylesheet" href="/static/css/tokens.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
+
+<body>
+<div class="login">
+
+    <!-- ======================================================================
+         Painel da marca
+
+         Só identidade: nada aqui é focável nem clicável. Abaixo de 900px ele
+         encolhe para uma faixa com o selo e o nome — sumir por completo deixaria
+         a tela sem dizer de qual sistema ela é.
+         ====================================================================== -->
+    <aside class="login__brand on-inverse">
+        <div class="login__brand-mark seal" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+        </div>
+
+        <div class="login__brand-text">
+            <p class="login__brand-name">Acompanhamento ESG</p>
+            <p class="login__brand-description">
+                Os indicadores ambientais, sociais e de governança da cooperativa,
+                reunidos em um só painel.
+            </p>
+        </div>
+    </aside>
+
+    <!-- ======================================================================
+         Formulário
+         ====================================================================== -->
+    <main class="login__panel" id="conteudo">
+        <div class="login__content">
+
+            <section class="card" aria-labelledby="titulo-login">
+                <div class="card__body stack-24">
+
+                    <header class="login__head">
+                        <h1 class="login__title" id="titulo-login">Entrar</h1>
+                        <p class="login__subtitle">
+                            Use o mesmo usuário e senha do sistema interno da cooperativa.
+                        </p>
+                    </header>
+
+                    <!-- Aviso fixo do cartão, e não toast: além do retorno do envio,
+                         esta tela precisa mostrar o motivo que vem na própria URL
+                         (sessão expirada, entrada necessária). Nasce oculto e é
+                         revelado por js/pages/login.js. Os dois ícones ficam no
+                         HTML e alternam por `hidden`, um por variante. -->
+                    <div class="alert" data-login-notice role="status" hidden>
+                        <span class="alert__icon" data-notice-icon="info">
+                            <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M8 7.5v3.75" stroke="currentColor" stroke-width="1.5"
+                                      stroke-linecap="round"/>
+                                <circle cx="8" cy="5" r="0.85" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        <span class="alert__icon" data-notice-icon="warning" hidden>
+                            <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <path d="M8 2.4 14.2 13H1.8L8 2.4Z" stroke="currentColor" stroke-width="1.5"
+                                      stroke-linejoin="round"/>
+                                <path d="M8 6.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                <circle cx="8" cy="11.4" r="0.85" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        <p class="alert__content" data-login-notice-text></p>
+                    </div>
+
+                    <!-- novalidate: a recusa do navegador aparece num balão que some
+                         sozinho e não é lida como parte do campo. A validação é feita
+                         em login.js, que escreve em .field__error e marca
+                         aria-invalid — o mesmo desenho do erro que vier do servidor. -->
+                    <form class="stack-24" data-login-form novalidate>
+
+                        <div class="field">
+                            <label class="field__label" for="username">Usuário</label>
+                            <input class="input input--lg"
+                                   type="text"
+                                   id="username"
+                                   name="username"
+                                   autocomplete="username"
+                                   autocapitalize="none"
+                                   spellcheck="false"
+                                   required
+                                   aria-describedby="erro-username"
+                                   autofocus>
+                            <p class="field__error" id="erro-username" data-error-for="username" hidden></p>
+                        </div>
+
+                        <div class="field">
+                            <label class="field__label" for="password">Senha</label>
+                            <!-- .input-wrap abre espaço à direita do campo para o botão
+                                 de mostrar a senha não cobrir o que foi digitado. -->
+                            <div class="input-wrap">
+                                <input class="input input--lg"
+                                       type="password"
+                                       id="password"
+                                       name="password"
+                                       autocomplete="current-password"
+                                       required
+                                       aria-describedby="erro-password">
+                                <button type="button"
+                                        class="input-wrap__affix"
+                                        data-password-toggle
+                                        aria-controls="password"
+                                        aria-pressed="false">
+                                    <svg data-icon="show" width="20" height="20" viewBox="0 0 20 20" fill="none"
+                                         aria-hidden="true">
+                                        <path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z" stroke="currentColor"
+                                              stroke-width="1.5" stroke-linejoin="round"/>
+                                        <circle cx="10" cy="10" r="2.25" stroke="currentColor" stroke-width="1.5"/>
+                                    </svg>
+                                    <svg data-icon="hide" width="20" height="20" viewBox="0 0 20 20" fill="none"
+                                         aria-hidden="true" hidden>
+                                        <path d="M4.5 6.2C2.9 7.6 2 10 2 10s3 5 8 5c1.5 0 2.8-.45 3.9-1.1"
+                                              stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                              stroke-linejoin="round"/>
+                                        <path d="M16.4 12.6C17.5 11.4 18 10 18 10s-3-5-8-5c-.6 0-1.2.07-1.7.2"
+                                              stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                              stroke-linejoin="round"/>
+                                        <path d="m8.4 8.4a2.25 2.25 0 0 0 3.2 3.2" stroke="currentColor"
+                                              stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="m3.5 3.5 13 13" stroke="currentColor" stroke-width="1.5"
+                                              stroke-linecap="round"/>
+                                    </svg>
+                                    <span class="visually-hidden" data-password-toggle-label>Mostrar senha</span>
+                                </button>
+                            </div>
+                            <p class="field__error" id="erro-password" data-error-for="password" hidden></p>
+                        </div>
+
+                        <button type="submit" class="btn btn--primary btn--lg btn--block" data-login-submit>
+                            Entrar
+                        </button>
+                    </form>
+
+                </div>
+            </section>
+
+            <p class="login__foot text-xs text-muted">
+                Acesso restrito aos usuários cadastrados. Se não conseguir entrar,
+                procure a equipe responsável pelo sistema.
+            </p>
+
+        </div>
+    </main>
+</div>
+
+<script type="module" src="/static/js/pages/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+/* ==========================================================================
+   login.css — estilos exclusivos da tela de entrada.
+
+   Cartão, campos, botão, aviso (.alert) e o selo modular vêm de
+   components.css e base.css. Aqui só entra o arranjo dos dois blocos da tela:
+   o painel escuro da marca e a coluna do formulário.
+
+   A tela não usa .container: ela não é uma página de conteúdo dentro do shell,
+   e sim uma folha inteira dividida em dois. O limite de leitura é a largura do
+   cartão, não a do container.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Divisão da tela
+
+   Duas colunas de mesma largura. minmax(0, 1fr) e não 1fr: sem isso, uma
+   palavra longa no painel da marca empurraria a coluna do formulário.
+   -------------------------------------------------------------------------- */
+
+.login {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   Painel da marca
+
+   O degradê desce do tom mais escuro para o institucional — os mesmos dois
+   tons que a sidebar usa, para as duas superfícies escuras do sistema serem
+   reconhecidas como a mesma.
+   -------------------------------------------------------------------------- */
+
+.login__brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-48);
+  padding: var(--space-64) var(--space-48);
+  background-image: linear-gradient(160deg, var(--color-brand-deep-dark), var(--color-brand-deep));
+  color: var(--color-text-on-inverse);
+}
+
+/* O selo é redimensionado pela custom property que ele mesmo expõe — é a
+   única forma prevista de mudar sua escala, e não custa arquivo nenhum. */
+.login__brand-mark {
+  --seal-cell: 40px;
+}
+
+.login__brand-name {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-on-brand);
+}
+
+.login__brand-description {
+  margin-top: var(--space-8);
+  /* Linha de leitura curta: o painel é largo, e texto correndo de ponta a
+     ponta em 700px de coluna é cansativo mesmo com três linhas. */
+  max-width: 40ch;
+}
+
+/* --------------------------------------------------------------------------
+   Coluna do formulário
+   -------------------------------------------------------------------------- */
+
+.login__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-48) var(--space-32);
+}
+
+/* 448px é a largura em que os campos de 48px de altura ficam confortáveis sem
+   que a linha do rótulo fique solta no meio do cartão. */
+.login__content {
+  width: 100%;
+  max-width: 448px;
+}
+
+.login__title {
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+}
+
+.login__subtitle {
+  margin-top: var(--space-8);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+}
+
+.login__foot {
+  margin-top: var(--space-24);
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Responsivo
+
+   Abaixo de 900px o painel da marca vira uma faixa no topo: some a descrição,
+   ficam o selo pequeno e o nome. Esconder o painel inteiro deixaria a tela sem
+   dizer de qual sistema ela é — e é justamente na entrada que isso importa.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 899px) {
+  .login {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .login__brand {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-16);
+    padding: var(--space-24) var(--space-32);
+  }
+
+  .login__brand-mark {
+    --seal-cell: 12px;
+  }
+
+  .login__brand-description {
+    display: none;
+  }
+
+  .login__brand-name {
+    font-size: var(--text-md);
+    line-height: var(--leading-md);
+  }
+
+  .login__panel {
+    padding: var(--space-32) var(--space-24);
+    /* Alinhado ao topo: centralizar deixaria o cartão saltando de posição
+       conforme o teclado do celular abre e fecha. */
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 599px) {
+  .login__brand {
+    padding: var(--space-16) var(--space-24);
+  }
+
+  .login__panel {
+    padding: var(--space-24) var(--space-16);
+  }
+}

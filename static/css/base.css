@@ -48,6 +48,14 @@ svg {
   flex: none;
 }
 
+/* O projeto mostra e esconde pelo atributo `hidden`, que é o que o leitor de
+   tela respeita. Só que a regra acima dá `display: block` ao svg, e um seletor
+   de elemento vence o `[hidden]` da folha do navegador: sem esta linha, um
+   `<svg hidden>` continuaria visível. Quem cria a colisão desfaz. */
+svg[hidden] {
+  display: none;
+}
+
 button,
 input,
 select,
