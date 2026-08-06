@@ -1,7 +1,7 @@
 from database.connect_db import get_db_connection
 
 class User:
-    def __init__(self, username, name, password_hash, email, role_id, sector_id, role_name=None, sector_name=None, id=None, created_at=None, is_active=None):
+    def __init__(self, username, name, email, role_id, sector_id, role_name=None, sector_name=None, id=None, created_at=None, is_active=None, password_hash=None):
         self.username = username
         self.name = name
         self.password_hash = password_hash
@@ -38,11 +38,43 @@ class UserModel:
             conn, cursor = get_db_connection()
 
             sql_query = """
-                SELECT u.id, u.username, u.name
+                SELECT u.id, u.username, u.name, u.email, u.role_id, r.description, u.sector_id, s.description, u.created_at, u.is_active 
                 FROM users u
                 WHERE u.username = %s
+                INNER JOIN roles r ON r.id = u.role_id
+                INNER JOIN sectors s ON s.id = u.sector_id
             """
             values = (username,)
+
+            cursor.execute(sql_query, values)
+            userData = cursor.fetchone()
+
+            user = User(**userData)
+
+            return user
+        except Exception as e:
+            raise Exception(str(e))
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    @staticmethod
+    def get_by_id(user_id):
+        conn = None
+        cursor = None
+        try:
+            conn, cursor = get_db_connection()
+
+            sql_query = """
+                SELECT u.id, u.username, u.name, u.email, u.role_id, r.description, u.sector_id, s.description, u.created_at, u.is_active 
+                FROM users u
+                WHERE u.id = %s
+                INNER JOIN roles r ON r.id = u.role_id
+                INNER JOIN sectors s ON s.id = u.sector_id
+            """
+            values = (user_id,)
 
             cursor.execute(sql_query, values)
             userData = cursor.fetchone()
