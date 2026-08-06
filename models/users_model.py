@@ -19,7 +19,6 @@ class User:
             "id": self.id,
             "username": self.username,
             "name": self.name,
-            "password_hash": self.password_hash,
             "email": self.email,
             "role_id": self.role_id,
             "sector_id": self.sector_id,
@@ -38,22 +37,25 @@ class UserModel:
             conn, cursor = get_db_connection()
 
             sql_query = """
-                SELECT u.id, u.username, u.name, u.email, u.role_id, r.description, u.sector_id, s.description, u.created_at, u.is_active 
+                SELECT u.id, u.username, u.name, u.email, u.password_hash, u.role_id, r.name AS role_name, u.sector_id, s.name AS sector_name, u.created_at, u.is_active 
                 FROM users u
-                WHERE u.username = %s
                 INNER JOIN roles r ON r.id = u.role_id
                 INNER JOIN sectors s ON s.id = u.sector_id
+                WHERE u.username = %s
             """
             values = (username,)
 
             cursor.execute(sql_query, values)
             userData = cursor.fetchone()
 
+            # Sem resultado é usuário inexistente, não erro: quem chamou decide
+            # o que fazer. Antes, User(**None) estourava e virava 500.
+            if not userData:
+                return None
+
             user = User(**userData)
 
             return user
-        except Exception as e:
-            raise Exception(str(e))
         finally:
             if cursor:
                 cursor.close()
@@ -68,22 +70,23 @@ class UserModel:
             conn, cursor = get_db_connection()
 
             sql_query = """
-                SELECT u.id, u.username, u.name, u.email, u.role_id, r.description, u.sector_id, s.description, u.created_at, u.is_active 
+                SELECT u.id, u.username, u.name, u.email, u.role_id, r.name AS role_name, u.sector_id, s.name AS sector_name, u.created_at, u.is_active 
                 FROM users u
-                WHERE u.id = %s
                 INNER JOIN roles r ON r.id = u.role_id
                 INNER JOIN sectors s ON s.id = u.sector_id
+                WHERE u.id = %s
             """
             values = (user_id,)
 
             cursor.execute(sql_query, values)
             userData = cursor.fetchone()
 
+            if not userData:
+                return None
+
             user = User(**userData)
 
             return user
-        except Exception as e:
-            raise Exception(str(e))
         finally:
             if cursor:
                 cursor.close()
