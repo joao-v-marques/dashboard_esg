@@ -1,5 +1,6 @@
 from routes.render_pages.render_home import bp_render_home
 from routes.render_pages.render_login import bp_render_login
+from routes.render_pages.render_dashboard import bp_render_dashboard
 
 from routes.auth_controller import bp_auth
 
@@ -11,4 +12,5 @@ def config_all(app):
 def config_bps(app):
     app.register_blueprint(bp_render_home, url_prefix=PREFIX)
     app.register_blueprint(bp_render_login, url_prefix=PREFIX)
+    app.register_blueprint(bp_render_dashboard, url_prefix=PREFIX)
     app.register_blueprint(bp_auth, url_prefix=PREFIX)

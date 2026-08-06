@@ -61,6 +61,16 @@ const NAV_ITEMS = [
                       stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
             </svg>`,
     },
+    {
+        href: PAGES.dashboard,
+        label: "Dashboard",
+        icon: `
+            <svg class="nav__icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3 17h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M6 17v-5M10 17V6M14 17v-8" stroke="currentColor" stroke-width="1.5"
+                      stroke-linecap="round"/>
+            </svg>`,
+    },
     // TODO: os demais itens entram aqui conforme as telas forem criadas.
 ];
 

@@ -1,0 +1,116 @@
+<!doctype html>
+<!--
+  Dashboard.
+
+  Tela de acompanhamento dos indicadores. Convive com a Início: lá ficam a
+  saudação e a apresentação do que a aplicação faz; aqui fica a análise.
+
+  A estrutura está de pé e o conteúdo ainda não. A área principal traz um
+  estado vazio que diz isso com todas as letras, em vez de indicadores
+  desenhados com número inventado: um painel que parece pronto e mostra dado
+  falso é pior que um painel que assume estar em construção.
+
+  Como nas demais telas, o HTML é puro — o Flask só entrega com
+  render_template. Topbar e sidebar não são repetidas aqui; [data-topbar] e
+  [data-sidebar] nascem vazios e são preenchidos por js/pages/shell.js, que é o
+  único lugar onde o shell existe.
+-->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Dashboard · Acompanhamento ESG</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+    <!-- A ordem abaixo é a cascata do projeto e não muda: tokens definem os
+         valores, base reseta e cria os utilitários, components traz os blocos
+         reutilizáveis e o CSS da página só arranja esses blocos na tela. -->
+    <link rel="stylesheet" href="/static/css/tokens.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+
+<body>
+<!-- Primeiro tabstop de toda página do app. Fica no HTML, e não no shell em JS,
+     justamente para ser o primeiro tabstop desde o primeiro instante. -->
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+<div class="app" data-app>
+
+    <!-- PREENCHIDO VIA JS (js/pages/shell.js) -->
+    <header class="topbar" data-topbar></header>
+
+    <div class="app__body">
+
+        <!-- PREENCHIDO VIA JS (js/pages/shell.js) -->
+        <aside class="sidebar on-inverse" id="sidebar" data-sidebar></aside>
+
+        <!-- Fundo escuro do menu em overlay (mobile) -->
+        <div class="sidebar-scrim" data-sidebar-scrim hidden></div>
+
+        <main class="app__main" id="conteudo">
+            <div class="container stack-32">
+
+                <!-- =====================================================
+                     1. Cabeçalho da página
+                     ===================================================== -->
+                <header class="page-head">
+                    <div class="page-head__text">
+                        <h1 class="page-head__title">Dashboard</h1>
+                        <p class="page-head__subtitle">
+                            Acompanhamento dos indicadores ambientais, sociais e de
+                            governança da cooperativa.
+                        </p>
+                    </div>
+                </header>
+
+                <!-- =====================================================
+                     2. Conteúdo
+
+                     Área reservada para os indicadores. Enquanto eles não
+                     existirem, o estado vazio ocupa o lugar — é a superfície
+                     de recado centralizado que o projeto já usa, e o texto não
+                     promete dado que não há.
+
+                     Quando o conteúdo entrar, é este bloco que sai. O heading
+                     da seção fica: toda seção tem um, visível ou não.
+                     ===================================================== -->
+                <section aria-labelledby="titulo-indicadores">
+                    <h2 class="visually-hidden" id="titulo-indicadores">Indicadores</h2>
+
+                    <div class="card">
+                        <div class="empty">
+                            <div class="empty__seal seal" aria-hidden="true">
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                            </div>
+                            <p class="empty__title">Painel em construção</p>
+                            <p class="empty__text">
+                                Os indicadores desta tela ainda estão sendo preparados.
+                                Enquanto isso, o panorama por pilar continua disponível
+                                na tela de início.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Shell (topbar, sidebar, menu da conta e usuário logado), comum a todas as
+     telas. Esta página ainda não tem comportamento próprio, então não há um
+     js/pages/dashboard.js: um módulo vazio só para existir é ruído. Ele entra
+     junto com o primeiro conteúdo que precisar de JS. -->
+<script type="module" src="/static/js/pages/shell.js"></script>
+</body>
+</html>

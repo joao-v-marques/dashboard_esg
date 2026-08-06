@@ -15,6 +15,7 @@ export const BASE_PATH = "/dashboard-esg";
 /** Telas renderizadas pelo Flask (render_template). */
 export const PAGES = {
     home: `${BASE_PATH}/home`,
+    dashboard: `${BASE_PATH}/dashboard`,
     login: `${BASE_PATH}/login`,
 };
 

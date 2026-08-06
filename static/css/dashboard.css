@@ -1,0 +1,13 @@
+/* ==========================================================================
+   dashboard.css — estilos exclusivos da tela de dashboard.
+
+   Está propositalmente vazio de regras. Tudo o que a tela usa hoje —
+   cabeçalho de página, card e estado vazio — vem de components.css, e o
+   empilhamento sai dos utilitários de base.css (.container, .stack-32).
+   Repetir aqui o que o componente já resolve é o começo das cinco variações
+   do mesmo bloco.
+
+   O arquivo existe porque a cascata do projeto prevê um CSS por página e o
+   template o carrega. É aqui que entra o arranjo específico quando os
+   indicadores chegarem — a grade deles, e só ela.
+   ========================================================================== */
