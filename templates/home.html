@@ -1,180 +1,223 @@
-{% extends "base.html" %}
-
-{#
+<!doctype html>
+<!--
   Início.
 
   Duas partes: o panorama dos três pilares — ambiental, social e governança — e
   uma apresentação do que a aplicação faz.
 
+  A página é HTML puro: o Flask só a entrega com render_template, sem nenhuma
+  expressão de template dentro. O que é comum a todas as telas — topbar e
+  sidebar — não é repetido aqui; os contêineres [data-topbar] e [data-sidebar]
+  nascem vazios e são preenchidos por js/pages/shell.js, que é o único lugar
+  onde o shell existe. Eles já têm altura e largura pelo CSS, então o
+  preenchimento não desloca o conteúdo.
+
   Sem dados mockados. Os indicadores nascem em estado de carregamento e só são
   revelados quando a API responder; enquanto o endpoint não existir, o bloco
   permanece no esqueleto, que é a leitura honesta de "ainda não chegou".
   Ver js/pages/home.js.
-#}
+-->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Início · Acompanhamento ESG</title>
 
-{% block title %}Início · Acompanhamento ESG{% endblock %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 
-{# Item da sidebar correspondente a esta tela: classe e aria-current, os dois. #}
-{% block nav_home_state %}is-active{% endblock %}
-{% block nav_home_current %}aria-current="page"{% endblock %}
+    <!-- A ordem abaixo é a cascata do projeto e não muda: tokens definem os
+         valores, base reseta e cria os utilitários, components traz os blocos
+         reutilizáveis e o CSS da página só arranja esses blocos na tela. -->
+    <link rel="stylesheet" href="/static/css/tokens.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/home.css">
+</head>
 
-{% block page_styles %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
-{% endblock %}
+<body>
+<!-- Primeiro tabstop de toda página do app. Fica no HTML, e não no shell em JS,
+     justamente para ser o primeiro tabstop desde o primeiro instante. -->
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
-{% block content %}
+<div class="app" data-app>
 
-    {# =====================================================================
-       1. Cabeçalho da página
-       ===================================================================== #}
-    <header class="page-head">
-        <div class="page-head__text">
-            {# O nome é preenchido pelo shell, como na topbar. #}
-            <h1 class="page-head__title">Olá, <span data-user-name>Carregando...</span></h1>
-            <p class="page-head__subtitle">
-                Acompanhe aqui os indicadores ambientais, sociais e de governança
-                da cooperativa.
-            </p>
-        </div>
-    </header>
+    <!-- PREENCHIDO VIA JS (js/pages/shell.js) -->
+    <header class="topbar" data-topbar></header>
 
-    {# =====================================================================
-       2. Panorama dos pilares
+    <div class="app__body">
 
-       Três estados, mutuamente exclusivos e controlados pelo atributo hidden
-       em js/pages/home.js: carregando, com dado e falha. O bloco com dado
-       nasce oculto — nascer visível e sumir depois do fetch faz a tela piscar
-       com número que ainda não é verdade.
-       ===================================================================== #}
-    <section aria-labelledby="titulo-panorama">
-        <h2 class="visually-hidden" id="titulo-panorama">Panorama dos pilares</h2>
+        <!-- PREENCHIDO VIA JS (js/pages/shell.js) -->
+        <aside class="sidebar on-inverse" id="sidebar" data-sidebar></aside>
 
-        {# Carregando — é o estado inicial, o único visível no HTML. #}
-        <div class="stat-grid" data-overview-loading>
-            <span class="skeleton skeleton--stat"></span>
-            <span class="skeleton skeleton--stat"></span>
-            <span class="skeleton skeleton--stat"></span>
-        </div>
+        <!-- Fundo escuro do menu em overlay (mobile) -->
+        <div class="sidebar-scrim" data-sidebar-scrim hidden></div>
 
-        {# Com dado — os valores são escritos pelo JS via textContent. #}
-        <div class="stat-grid" data-overview hidden>
-            <article class="stat">
-                <p class="stat__label">Ambiental</p>
-                <p class="stat__value tabular" data-overview-environmental>-</p>
-                <p class="stat__delta" data-overview-environmental-note></p>
-            </article>
+        <main class="app__main" id="conteudo">
+            <div class="container stack-32">
 
-            <article class="stat stat--info">
-                <p class="stat__label">Social</p>
-                <p class="stat__value tabular" data-overview-social>-</p>
-                <p class="stat__delta" data-overview-social-note></p>
-            </article>
+                <!-- =====================================================
+                     1. Cabeçalho da página
+                     ===================================================== -->
+                <header class="page-head">
+                    <div class="page-head__text">
+                        <!-- O nome é preenchido pelo shell, como na topbar. -->
+                        <h1 class="page-head__title">Olá, <span data-user-name>Carregando...</span></h1>
+                        <p class="page-head__subtitle">
+                            Acompanhe aqui os indicadores ambientais, sociais e de governança
+                            da cooperativa.
+                        </p>
+                    </div>
+                </header>
 
-            <article class="stat stat--accent">
-                <p class="stat__label">Governança</p>
-                <p class="stat__value tabular" data-overview-governance>-</p>
-                <p class="stat__delta" data-overview-governance-note></p>
-            </article>
-        </div>
+                <!-- =====================================================
+                     2. Panorama dos pilares
 
-        {# Falha. Reaproveita o desenho do estado vazio de propósito — é a mesma
-           superfície de recado centralizado —, mas com texto que não mente
-           sobre o dado: falha de rede não é "nenhum indicador". #}
-        <div class="card" data-overview-error hidden>
-            <div class="empty">
-                <div class="empty__seal seal" aria-hidden="true">
-                    <span></span><span></span><span></span><span></span>
-                    <span></span><span></span><span></span><span></span>
-                    <span></span><span></span><span></span><span></span>
-                    <span></span><span></span><span></span><span></span>
-                </div>
-                <p class="empty__title">Não foi possível carregar o panorama</p>
-                <p class="empty__text">
-                    Verifique a conexão e atualize a página. Se continuar, avise a
-                    equipe responsável pelo sistema.
-                </p>
+                     Três estados, mutuamente exclusivos e controlados pelo
+                     atributo hidden em js/pages/home.js: carregando, com dado
+                     e falha. O bloco com dado nasce oculto — nascer visível e
+                     sumir depois do fetch faz a tela piscar com número que
+                     ainda não é verdade.
+                     ===================================================== -->
+                <section aria-labelledby="titulo-panorama">
+                    <h2 class="visually-hidden" id="titulo-panorama">Panorama dos pilares</h2>
+
+                    <!-- Carregando — é o estado inicial, o único visível no HTML. -->
+                    <div class="stat-grid" data-overview-loading>
+                        <span class="skeleton skeleton--stat"></span>
+                        <span class="skeleton skeleton--stat"></span>
+                        <span class="skeleton skeleton--stat"></span>
+                    </div>
+
+                    <!-- Com dado — os valores são escritos pelo JS via textContent. -->
+                    <div class="stat-grid" data-overview hidden>
+                        <article class="stat">
+                            <p class="stat__label">Ambiental</p>
+                            <p class="stat__value tabular" data-overview-environmental>-</p>
+                            <p class="stat__delta" data-overview-environmental-note></p>
+                        </article>
+
+                        <article class="stat stat--info">
+                            <p class="stat__label">Social</p>
+                            <p class="stat__value tabular" data-overview-social>-</p>
+                            <p class="stat__delta" data-overview-social-note></p>
+                        </article>
+
+                        <article class="stat stat--accent">
+                            <p class="stat__label">Governança</p>
+                            <p class="stat__value tabular" data-overview-governance>-</p>
+                            <p class="stat__delta" data-overview-governance-note></p>
+                        </article>
+                    </div>
+
+                    <!-- Falha. Reaproveita o desenho do estado vazio de propósito — é a
+                         mesma superfície de recado centralizado —, mas com texto que não
+                         mente sobre o dado: falha de rede não é "nenhum indicador". -->
+                    <div class="card" data-overview-error hidden>
+                        <div class="empty">
+                            <div class="empty__seal seal" aria-hidden="true">
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                            </div>
+                            <p class="empty__title">Não foi possível carregar o panorama</p>
+                            <p class="empty__text">
+                                Verifique a conexão e atualize a página. Se continuar, avise a
+                                equipe responsável pelo sistema.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =====================================================
+                     3. Apresentação da aplicação
+                     ===================================================== -->
+                <section class="card" aria-labelledby="titulo-como-funciona">
+                    <div class="card__header">
+                        <h2 class="card__title" id="titulo-como-funciona">Como funciona</h2>
+                    </div>
+
+                    <div class="card__body intro">
+                        <p class="intro__lead">
+                            Esta aplicação reúne, em um só lugar, os indicadores que a
+                            cooperativa acompanha nas três frentes do ESG. Cada frente tem
+                            seus próprios indicadores, e o painel mostra como cada um deles
+                            evolui ao longo do tempo.
+                        </p>
+
+                        <ol class="pillars">
+                            <li class="pillar">
+                                <span class="pillar__icon" aria-hidden="true">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <path d="M10 17c0-5 2.5-8.5 6.5-9.5C16.5 13 14 17 10 17Z" stroke="currentColor"
+                                              stroke-width="1.5" stroke-linejoin="round"/>
+                                        <path d="M10 17c0-4-2-6.5-6.5-7C3.5 14.5 6 17 10 17Z" stroke="currentColor"
+                                              stroke-width="1.5" stroke-linejoin="round"/>
+                                        <path d="M10 17v-4" stroke="currentColor" stroke-width="1.5"
+                                              stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                                <div class="pillar__text">
+                                    <p class="pillar__title">Ambiental</p>
+                                    <p class="pillar__description">
+                                        O efeito da operação sobre o meio ambiente: consumo de
+                                        recursos, resíduos e emissões.
+                                    </p>
+                                </div>
+                            </li>
+
+                            <li class="pillar">
+                                <span class="pillar__icon" aria-hidden="true">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <circle cx="8" cy="7" r="2.75" stroke="currentColor" stroke-width="1.5"/>
+                                        <path d="M2.5 16a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.5"
+                                              stroke-linecap="round"/>
+                                        <path d="M13.5 5.5a2.5 2.5 0 0 1 0 5M15 16a5 5 0 0 0-1.5-3.6"
+                                              stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                                <div class="pillar__text">
+                                    <p class="pillar__title">Social</p>
+                                    <p class="pillar__description">
+                                        A relação com pessoas: cooperados, colaboradores e as
+                                        comunidades onde a cooperativa atua.
+                                    </p>
+                                </div>
+                            </li>
+
+                            <li class="pillar">
+                                <span class="pillar__icon" aria-hidden="true">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <path d="M3.5 16.5h13M4.5 16.5V8M15.5 16.5V8M8 16.5V8M12 16.5V8"
+                                              stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="m10 3 6.5 4h-13L10 3Z" stroke="currentColor" stroke-width="1.5"
+                                              stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                                <div class="pillar__text">
+                                    <p class="pillar__title">Governança</p>
+                                    <p class="pillar__description">
+                                        Como a cooperativa se organiza e decide: transparência,
+                                        controles internos e prestação de contas.
+                                    </p>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
+                </section>
+
             </div>
-        </div>
-    </section>
+        </main>
+    </div>
+</div>
 
-    {# =====================================================================
-       3. Apresentação da aplicação
-       ===================================================================== #}
-    <section class="card" aria-labelledby="titulo-como-funciona">
-        <div class="card__header">
-            <h2 class="card__title" id="titulo-como-funciona">Como funciona</h2>
-        </div>
-
-        <div class="card__body intro">
-            <p class="intro__lead">
-                Esta aplicação reúne, em um só lugar, os indicadores que a
-                cooperativa acompanha nas três frentes do ESG. Cada frente tem
-                seus próprios indicadores, e o painel mostra como cada um deles
-                evolui ao longo do tempo.
-            </p>
-
-            <ol class="pillars">
-                <li class="pillar">
-                    <span class="pillar__icon" aria-hidden="true">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M10 17c0-5 2.5-8.5 6.5-9.5C16.5 13 14 17 10 17Z" stroke="currentColor"
-                                  stroke-width="1.5" stroke-linejoin="round"/>
-                            <path d="M10 17c0-4-2-6.5-6.5-7C3.5 14.5 6 17 10 17Z" stroke="currentColor"
-                                  stroke-width="1.5" stroke-linejoin="round"/>
-                            <path d="M10 17v-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                        </svg>
-                    </span>
-                    <div class="pillar__text">
-                        <p class="pillar__title">Ambiental</p>
-                        <p class="pillar__description">
-                            O efeito da operação sobre o meio ambiente: consumo de
-                            recursos, resíduos e emissões.
-                        </p>
-                    </div>
-                </li>
-
-                <li class="pillar">
-                    <span class="pillar__icon" aria-hidden="true">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <circle cx="8" cy="7" r="2.75" stroke="currentColor" stroke-width="1.5"/>
-                            <path d="M2.5 16a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.5"
-                                  stroke-linecap="round"/>
-                            <path d="M13.5 5.5a2.5 2.5 0 0 1 0 5M15 16a5 5 0 0 0-1.5-3.6" stroke="currentColor"
-                                  stroke-width="1.5" stroke-linecap="round"/>
-                        </svg>
-                    </span>
-                    <div class="pillar__text">
-                        <p class="pillar__title">Social</p>
-                        <p class="pillar__description">
-                            A relação com pessoas: cooperados, colaboradores e as
-                            comunidades onde a cooperativa atua.
-                        </p>
-                    </div>
-                </li>
-
-                <li class="pillar">
-                    <span class="pillar__icon" aria-hidden="true">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M3.5 16.5h13M4.5 16.5V8M15.5 16.5V8M8 16.5V8M12 16.5V8" stroke="currentColor"
-                                  stroke-width="1.5" stroke-linecap="round"/>
-                            <path d="m10 3 6.5 4h-13L10 3Z" stroke="currentColor" stroke-width="1.5"
-                                  stroke-linejoin="round"/>
-                        </svg>
-                    </span>
-                    <div class="pillar__text">
-                        <p class="pillar__title">Governança</p>
-                        <p class="pillar__description">
-                            Como a cooperativa se organiza e decide: transparência,
-                            controles internos e prestação de contas.
-                        </p>
-                    </div>
-                </li>
-            </ol>
-        </div>
-    </section>
-
-{% endblock %}
-
-{% block page_scripts %}
-    <script type="module" src="{{ url_for('static', filename='js/pages/home.js') }}"></script>
-{% endblock %}
+<!-- Shell (topbar, sidebar, menu da conta e usuário logado), comum a todas as
+     telas. Vem antes do script da página, sempre. -->
+<script type="module" src="/static/js/pages/shell.js"></script>
+<script type="module" src="/static/js/pages/home.js"></script>
+</body>
+</html>

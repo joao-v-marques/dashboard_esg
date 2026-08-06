@@ -1629,7 +1629,10 @@ button.input-wrap__affix[aria-pressed="true"] {
 
 /* ==========================================================================
    SHELL DA APLICAÇÃO — topbar, sidebar e área de conteúdo.
-   Consumido por base.html; toda página que estende o layout herda.
+   O esqueleto (.app, .topbar, .app__body, .sidebar, .app__main) vem no HTML de
+   cada página; o conteúdo da topbar e da sidebar é escrito por
+   js/pages/shell.js. Nenhuma medida daqui depende disso: a topbar tem altura e
+   a sidebar tem largura mesmo vazias, para o preenchimento não deslocar a tela.
    ========================================================================== */
 
 .app {

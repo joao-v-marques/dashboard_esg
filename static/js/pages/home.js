@@ -8,19 +8,16 @@
  *   [data-overview-environmental] / -social / -governance        valor do card
  *   [data-overview-environmental-note] / -social- / -governance- nota do card
  *
- * A API ainda não existe. Enquanto OVERVIEW_URL não estiver de pé, a seção
+ * A API ainda não existe. Enquanto API.overview não estiver de pé, a seção
  * permanece no esqueleto: é a leitura honesta de "o dado não chegou". Mostrar
  * zero seria afirmar que os indicadores estão zerados, e mostrar o estado de
  * falha seria culpar a rede por algo que ainda não foi construído.
  */
 
-/** Vire para true quando OVERVIEW_URL existir no backend. */
+import { API, PAGES } from "../utils/routes.js";
+
+/** Vire para true quando API.overview existir no backend. */
 const OVERVIEW_ENABLED = false;
-
-const OVERVIEW_URL = "/dashboard-esg/api/v1/overview";
-
-/** Redirecionamento de sessão expirada; espelha a rota do login quando existir. */
-const LOGIN_PAGE = "/dashboard-esg/login";
 
 /* =========================================================================
    Estados da seção
@@ -95,11 +92,11 @@ async function loadOverview() {
     if (!OVERVIEW_ENABLED) return;
 
     try {
-        const response = await fetch(OVERVIEW_URL, { credentials: "same-origin" });
+        const response = await fetch(API.overview, { credentials: "same-origin" });
 
         // Sessão vencida não é falha de carregamento: é hora de logar de novo.
         if (response.status === 401) {
-            window.location.replace(LOGIN_PAGE);
+            window.location.replace(PAGES.login);
             return;
         }
 
