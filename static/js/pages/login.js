@@ -13,16 +13,19 @@
  * Por id: username, password — são os nomes que vão no corpo da requisição,
  * e batem com as colunas de `users` no banco.
  *
- * O envio ao servidor ainda não existe. Enquanto LOGIN_ENABLED for false, o
- * formulário valida o que dá para validar aqui e para no aviso do cartão: um
- * botão que parece enviar e não envia é pior que um recado dizendo que a
- * entrada ainda não está de pé.
+ * O envio vai em POST para API.login e a sessão volta em cookie HttpOnly — o
+ * JS não lê nem guarda o token, só navega para PAGES.home depois da resposta.
  */
 
 import { initPasswordToggles } from "../utils/password_toggle.js";
+import { API, PAGES } from "../utils/routes.js";
 
-/** Vire para true quando a rota de autenticação existir no backend. */
-const LOGIN_ENABLED = false;
+/**
+ * Interruptor da tela. Fica como desligamento de emergência: com false, o
+ * formulário valida o que dá sem servidor e para no aviso do cartão, em vez de
+ * um botão que parece enviar e não envia.
+ */
+const LOGIN_ENABLED = true;
 
 /* =========================================================================
    Aviso do cartão
@@ -59,10 +62,35 @@ const NOTICES = {
     },
 };
 
-/** Enquanto não há para onde enviar. Sai junto com o `if (!LOGIN_ENABLED)`. */
+/** Só aparece com LOGIN_ENABLED em false. Sai junto com o interruptor. */
 const NOTICE_PENDING = {
     variant: "info",
     text: "A entrada ainda não está disponível: a autenticação do sistema está em construção.",
+};
+
+/**
+ * Retornos do envio.
+ *
+ * O 401 tem texto próprio aqui, e não o do servidor, para não haver dois
+ * lugares decidindo o quanto se conta a quem erra a senha — o recado é um só e
+ * não distingue usuário de senha.
+ *
+ * Falha de servidor também não ecoa a resposta: 5xx é onde detalhe interno
+ * costuma escapar, e a tela não ganha nada em mostrá-lo.
+ */
+const NOTICE_INVALID = {
+    variant: "danger",
+    text: "Usuário ou senha incorretos.",
+};
+
+const NOTICE_ERROR = {
+    variant: "danger",
+    text: "Não foi possível entrar agora. Tente de novo em instantes.",
+};
+
+const NOTICE_OFFLINE = {
+    variant: "danger",
+    text: "Não foi possível falar com o servidor. Verifique sua conexão e tente de novo.",
 };
 
 const NOTICE_VARIANTS = ["info", "warning", "success", "danger"];
@@ -158,11 +186,48 @@ function validate() {
    Envio
    ========================================================================= */
 
+/** Botão ocupado: trava o duplo envio e mostra que algo está acontecendo. */
+function setLoading(button, loading) {
+    if (!button) return;
+
+    button.disabled = loading;
+    button.classList.toggle("is-loading", loading);
+}
+
+/** Corpo de erro do servidor, ou null se a resposta não for JSON. */
+async function readJson(response) {
+    try {
+        return await response.json();
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Traduz uma resposta 400 em erro de campo quando o servidor diz qual campo
+ * falhou; sem essa informação, o recado vai para o aviso do cartão.
+ */
+function showValidationError(data) {
+    const fields = data?.fields;
+
+    if (fields && typeof fields === "object") {
+        const invalid = FIELDS.filter(({ id }) => fields[id]);
+
+        if (invalid.length) {
+            invalid.forEach(({ id }) => setFieldError(id, String(fields[id])));
+            document.getElementById(invalid[0].id)?.focus();
+            return;
+        }
+    }
+
+    showNotice({ variant: "danger", text: data?.message ?? NOTICE_ERROR.text });
+}
+
 function initForm() {
     const form = document.querySelector("[data-login-form]");
     if (!form) return;
 
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         // Limpar o retorno anterior antes de tudo: erro da tentativa passada
@@ -184,20 +249,65 @@ function initForm() {
             return;
         }
 
-        // TODO: envio. O handler passa a ser async e segue a sequência do
-        // projeto:
-        //   1. guardar o botão ([data-login-submit]) numa variável ANTES do
-        //      primeiro await — depois dele event.currentTarget já é null;
-        //   2. desabilitar o botão e marcar .is-loading (evita duplo envio);
-        //   3. fetch POST com credentials: "same-origin" e o corpo
-        //      { username, password };
-        //   4. 401 → showNotice com o recado de usuário ou senha incorretos,
-        //      sem dizer qual dos dois está errado;
-        //   5. demais respostas não-ok → traduzir { message, fields } em
-        //      showNotice + setFieldError, e focar o primeiro campo inválido;
-        //   6. sucesso → window.location.assign(PAGES.home), importando PAGES
-        //      de ../utils/routes.js;
-        //   7. finally → reabilitar o botão.
+        // Guardado antes do primeiro await: depois dele event.currentTarget já
+        // é null, e o finally não teria o que reabilitar.
+        const submit = form.querySelector("[data-login-submit]");
+
+        // Só a saída bem-sucedida deixa o botão travado: a navegação leva um
+        // instante, e reabilitar nesse intervalo permitiria um segundo envio.
+        let navigating = false;
+
+        setLoading(submit, true);
+
+        try {
+            const response = await fetch(API.login, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                // O cookie de sessão volta nesta resposta; sem credentials o
+                // navegador o descartaria e o login não teria efeito nenhum.
+                credentials: "same-origin",
+                body: JSON.stringify({
+                    // O usuário vai sem espaços nas pontas, como o backend
+                    // compara. A senha vai como digitada: espaço pode ser parte
+                    // dela, e aparar aqui recusaria uma senha correta.
+                    username: document.getElementById("username").value.trim(),
+                    password: document.getElementById("password").value,
+                }),
+            });
+
+            if (response.ok) {
+                navigating = true;
+
+                // assign, e não replace: quem chegou aqui por sessão expirada
+                // ainda consegue voltar na história do navegador.
+                window.location.assign(PAGES.home);
+                return;
+            }
+
+            const data = await readJson(response);
+
+            if (response.status === 401) {
+                showNotice(NOTICE_INVALID);
+                document.getElementById("password")?.focus();
+                return;
+            }
+
+            if (response.status === 400) {
+                showValidationError(data);
+                return;
+            }
+
+            showNotice(NOTICE_ERROR);
+            console.error(`A API respondeu ${response.status}`);
+        } catch (error) {
+            // Aqui só cai o que impediu a resposta de chegar — rede fora, DNS,
+            // servidor no chão. Status de erro não passa por aqui: fetch só
+            // rejeita quando não houve resposta.
+            showNotice(NOTICE_OFFLINE);
+            console.error(error);
+        } finally {
+            if (!navigating) setLoading(submit, false);
+        }
     });
 }
 

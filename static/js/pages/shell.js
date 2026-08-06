@@ -353,17 +353,15 @@ function initDropdowns() {
 /* =========================================================================
    Usuário autenticado
 
-   Autenticação e autorização ainda não existem no backend. Enquanto isso, os
-   campos da topbar ficam em "Carregando..." — que é o que a marcação já traz —
-   e nenhuma chamada é feita: bater num endpoint inexistente só produziria um
-   404 no console e um rótulo de erro na tela de todo mundo.
+   GET API.currentUser devolve { id, username, name, initials, email, role,
+   sector }. O cookie de sessão é HttpOnly: o JS não o lê nem o guarda, só o
+   manda junto com credentials: "same-origin".
 
-   Quando a sessão existir, basta ligar AUTH_ENABLED; a leitura da resposta já
-   está escrita abaixo e o contrato de data-* não muda.
+   AUTH_ENABLED continua como desligamento de emergência — com false, os campos
+   ficam em "Carregando..." e nenhuma chamada é feita.
    ========================================================================= */
 
-/** Vire para true quando GET API.currentUser existir. */
-const AUTH_ENABLED = false;
+const AUTH_ENABLED = true;
 
 async function initCurrentUser() {
     const nameTargets = document.querySelectorAll("[data-user-name]");
@@ -378,6 +376,14 @@ async function initCurrentUser() {
 
     try {
         const response = await fetch(API.currentUser, { credentials: "same-origin" });
+
+        // A página é protegida no servidor, então chegar aqui sem sessão só
+        // acontece se ela vencer entre o carregamento e esta chamada. Cair no
+        // rótulo neutro deixaria a pessoa numa tela que não responde mais.
+        if (response.status === 401) {
+            window.location.replace(`${PAGES.login}?reason=session-expired`);
+            return;
+        }
 
         if (!response.ok) throw new Error(`A API respondeu ${response.status}`);
 
@@ -410,20 +416,50 @@ async function initCurrentUser() {
 }
 
 /**
- * Encerrar a sessão depende de uma rota que ainda não existe. Até lá o botão
- * fica desabilitado: um "Sair" que não faz nada ao ser clicado é pior que um
- * "Sair" visivelmente indisponível — o usuário acharia que saiu.
+ * Encerrar a sessão.
  *
- * TODO: criar js/auth/logout.js (POST /auth/logout, redireciona para
- * PAGES.login só depois da resposta) e chamar aqui quando AUTH_ENABLED for
- * true.
+ * Mora aqui, e não em js/auth/logout.js como dizia o TODO antigo: o botão é da
+ * topbar, que este módulo desenha, e a leitura do usuário logado já está ao
+ * lado.
+ *
+ * Com AUTH_ENABLED em false o botão fica desabilitado — um "Sair" que não faz
+ * nada ao ser clicado é pior que um "Sair" visivelmente indisponível, porque o
+ * usuário acharia que saiu.
  */
 function initLogout() {
-    if (AUTH_ENABLED) return;
+    const buttons = document.querySelectorAll("[data-logout]");
 
-    document.querySelectorAll("[data-logout]").forEach((button) => {
-        button.disabled = true;
-        button.title = "Disponível quando o login estiver ativo.";
+    if (!AUTH_ENABLED) {
+        buttons.forEach((button) => {
+            button.disabled = true;
+            button.title = "Disponível quando o login estiver ativo.";
+        });
+        return;
+    }
+
+    buttons.forEach((button) => {
+        button.addEventListener("click", async () => {
+            button.disabled = true;
+
+            try {
+                // Só sair da tela depois da resposta: navegar antes deixaria o
+                // cookie de pé se a chamada falhasse, e a pessoa voltaria ao
+                // painel achando que tinha saído.
+                const response = await fetch(API.logout, {
+                    method: "POST",
+                    credentials: "same-origin",
+                });
+
+                if (!response.ok) throw new Error(`A API respondeu ${response.status}`);
+
+                // replace, e não assign: o painel sai da história do navegador,
+                // e o "voltar" depois de sair não devolve a tela de dentro.
+                window.location.replace(`${PAGES.login}?reason=signed-out`);
+            } catch (error) {
+                button.disabled = false;
+                console.error(error);
+            }
+        });
     });
 }
 

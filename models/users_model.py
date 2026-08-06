@@ -14,18 +14,39 @@ class User:
         self.created_at = created_at
         self.is_active = is_active
 
+    @property
+    def initials(self):
+        """
+        Duas letras para o avatar: primeiro e último nome. Nome de uma palavra
+        só usa as duas primeiras letras dela, e cadastro sem nome cai no
+        username — o avatar não fica vazio havendo como identificar.
+        """
+        parts = (self.name or self.username or "").split()
+
+        if not parts:
+            return ""
+
+        if len(parts) == 1:
+            return parts[0][:2].upper()
+
+        return (parts[0][0] + parts[-1][0]).upper()
+
     def to_dict(self):
+        """
+        Forma que sai na API.
+
+        role e sector trazem o nome do perfil e do setor, não o id: é o nome
+        que a tela traduz (static/js/utils/roles.js). Os ids ficam de fora
+        porque são chave de tabela, e o que a tela não usa não trafega.
+        """
         return {
             "id": self.id,
             "username": self.username,
             "name": self.name,
+            "initials": self.initials,
             "email": self.email,
-            "role_id": self.role_id,
-            "sector_id": self.sector_id,
-            "role_name": self.role_name,
-            "sector_name": self.sector_name,
-            "created_at": self.created_at,
-            "is_active": self.is_active
+            "role": self.role_name,
+            "sector": self.sector_name
         }
 
 class UserModel:
