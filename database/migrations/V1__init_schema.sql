@@ -2,12 +2,12 @@ CREATE DATABASE dashboard_esg;
 
 CREATE TABLE roles (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name NOT NULL UNIQUE
+    name VARCHAR(100) NOT NULL UNIQUE
 );
 
 CREATE TABLE sectors (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name NOT NULL UNIQUE
+    name VARCHAR(100) NOT NULL UNIQUE
 );
 
 CREATE TABLE users (
@@ -23,4 +23,20 @@ CREATE TABLE users (
 
     CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES roles(id),
     CONSTRAINT fk_user_sector FOREIGN KEY (sector_id) REFERENCES sectors(id)
+);
+
+INSERT INTO sectors (name)
+VALUES ('TIC'), ('Compras');
+
+INSERT INTO roles (name)
+VALUES ('administrator'), ('employee');
+
+INSERT INTO users (username, name, password_hash, email, role_id, sector_id)
+VALUES (
+    "admin",
+    "Administrador do Sistema",
+    "",
+    "joaovictor@unimedssp.coop.br",
+    1, -- Role de administrator
+    1 -- Relacionado ao setor do TIC
 );
