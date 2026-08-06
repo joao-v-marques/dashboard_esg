@@ -21,13 +21,18 @@ export const PAGES = {
 /**
  * Endpoints da API.
  *
- * TODO: nenhum deles existe ainda no backend. Quem os criar deve virar a
- * respectiva flag (AUTH_ENABLED em pages/shell.js, OVERVIEW_ENABLED em
- * pages/home.js) no mesmo commit.
+ * Padrão do backend: `${BASE_PATH}/api/<endpoint>` — as páginas ficam na raiz
+ * do prefixo, a API sob /api. Endpoint novo entra aqui seguindo essa forma.
+ *
+ * Os de autenticação já existem (routes/auth_controller.py). O de overview
+ * ainda não: quem o criar deve virar OVERVIEW_ENABLED em pages/home.js no
+ * mesmo commit.
  */
 export const API = {
-    currentUser: `${BASE_PATH}/api/v1/users/me`,
-    overview: `${BASE_PATH}/api/v1/overview`,
+    login: `${BASE_PATH}/api/login`,
+    logout: `${BASE_PATH}/api/logout`,
+    currentUser: `${BASE_PATH}/api/me`,
+    overview: `${BASE_PATH}/api/overview`,
 };
 
 /**
