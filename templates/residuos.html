@@ -1,0 +1,284 @@
+<!doctype html>
+<!--
+  Lançamento de Resíduos.
+
+  Cadastro diário/semanal do peso coletado, por unidade, tipo de resíduo e
+  destino. É o dado bruto que alimenta os indicadores de resíduos do
+  dashboard (kg gerado, kg reciclado, % reciclado) — esta tela não calcula
+  nada, só registra o que foi pesado.
+
+  Como nas demais telas, o HTML é puro e o shell (topbar, sidebar) nasce vazio
+  em [data-topbar]/[data-sidebar], preenchido por js/pages/shell.js.
+
+  A tabela carrega uma vez e os filtros escondem linha por linha no cliente
+  (ver o atributo `hidden` em .table tbody tr no components.css) — não há
+  paginação ainda, e o volume de lançamentos não pede uma por enquanto.
+
+  O botão "Editar" de cada linha existe, mas nasce desabilitado: a lógica de
+  edição (PUT) ainda não foi escrita. Um botão que parece funcionar e não faz
+  nada é pior do que um botão visivelmente indisponível — o mesmo raciocínio
+  do "Sair" em shell.js antes de a autenticação existir.
+-->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Lançamento de Resíduos · Acompanhamento ESG</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+    <!-- A ordem abaixo é a cascata do projeto e não muda: tokens definem os
+         valores, base reseta e cria os utilitários, components traz os blocos
+         reutilizáveis e o CSS da página só arranja esses blocos na tela. -->
+    <link rel="stylesheet" href="/static/css/tokens.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/residuos.css">
+</head>
+
+<body>
+<!-- Primeiro tabstop de toda página do app. Fica no HTML, e não no shell em JS,
+     justamente para ser o primeiro tabstop desde o primeiro instante. -->
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+<div class="app" data-app>
+
+    <!-- PREENCHIDO VIA JS (js/pages/shell.js) -->
+    <header class="topbar" data-topbar></header>
+
+    <div class="app__body">
+
+        <!-- PREENCHIDO VIA JS (js/pages/shell.js) -->
+        <aside class="sidebar on-inverse" id="sidebar" data-sidebar></aside>
+
+        <!-- Fundo escuro do menu em overlay (mobile) -->
+        <div class="sidebar-scrim" data-sidebar-scrim hidden></div>
+
+        <main class="app__main" id="conteudo">
+            <div class="container stack-32">
+
+                <!-- =====================================================
+                     1. Cabeçalho da página
+                     ===================================================== -->
+                <header class="page-head">
+                    <div class="page-head__text">
+                        <h1 class="page-head__title">Lançamento de Resíduos</h1>
+                        <p class="page-head__subtitle">
+                            Registre o peso coletado por unidade, tipo de resíduo e
+                            destino. Cada lançamento alimenta os indicadores de
+                            resíduos do dashboard.
+                        </p>
+                    </div>
+
+                    <div class="page-head__actions">
+                        <!-- Nasce desabilitado: só libera depois que unidades e tipos
+                             de resíduo carregarem, para o modal nunca abrir com
+                             seletores vazios. Ver js/pages/residuos.js. -->
+                        <button type="button" class="btn btn--primary" data-new-record-trigger disabled>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.5"
+                                      stroke-linecap="round"/>
+                            </svg>
+                            Novo lançamento
+                        </button>
+                    </div>
+                </header>
+
+                <!-- =====================================================
+                     2. Lançamentos
+
+                     Três estados, mutuamente exclusivos via hidden:
+                     carregando, com dado (tabela) e falha — o mesmo desenho
+                     de js/pages/home.js. Dentro do estado "com dado", a
+                     ausência de resultado (sem lançamento nenhum, ou filtro
+                     sem correspondência) é uma linha própria dentro da
+                     tabela, não um estado à parte: os filtros continuam
+                     visíveis e prontos para serem ajustados.
+                     ===================================================== -->
+                <section aria-labelledby="titulo-lancamentos">
+                    <h2 class="visually-hidden" id="titulo-lancamentos">Lançamentos de resíduos</h2>
+
+                    <!-- Carregando — é o estado inicial, o único visível no HTML. -->
+                    <div class="card" data-records-loading>
+                        <div class="card__body stack-16">
+                            <span class="skeleton skeleton--row"></span>
+                            <span class="skeleton skeleton--row"></span>
+                            <span class="skeleton skeleton--row"></span>
+                            <span class="skeleton skeleton--row"></span>
+                        </div>
+                    </div>
+
+                    <!-- Com dado — toolbar de filtros + tabela. Nasce oculto. -->
+                    <div class="card" data-records-content hidden>
+                        <div class="toolbar">
+                            <div class="toolbar__search">
+                                <label class="field__label" for="filtro-busca">Buscar</label>
+                                <input class="input" type="search" id="filtro-busca"
+                                       placeholder="Unidade, tipo, observação..."
+                                       data-filter-search>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-unidade">Unidade</label>
+                                <select class="select" id="filtro-unidade" data-filter-unit></select>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-tipo">Tipo de resíduo</label>
+                                <select class="select" id="filtro-tipo" data-filter-type></select>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-data-de">De</label>
+                                <input class="input" type="date" id="filtro-data-de" data-filter-date-from>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-data-ate">Até</label>
+                                <input class="input" type="date" id="filtro-data-ate" data-filter-date-to>
+                            </div>
+
+                            <button type="button" class="btn btn--ghost" data-filter-clear>
+                                Limpar filtros
+                            </button>
+                        </div>
+
+                        <div class="table-wrap">
+                            <table class="table table--cards">
+                                <caption>Lançamentos de resíduos por unidade, tipo e período.</caption>
+                                <thead>
+                                <tr>
+                                    <th scope="col">Data</th>
+                                    <th scope="col">Unidade</th>
+                                    <th scope="col">Tipo de resíduo</th>
+                                    <th scope="col" class="table__num">Peso (kg)</th>
+                                    <th scope="col">Observações</th>
+                                    <th scope="col">Lançado por</th>
+                                    <th scope="col" class="table__actions">Ações</th>
+                                </tr>
+                                </thead>
+                                <tbody data-records-body>
+                                <!-- Linhas escritas por js/pages/residuos.js. A linha de
+                                     "nenhum resultado" abaixo é fixa e só alterna hidden. -->
+                                <tr class="records-empty-row" data-records-empty-row hidden>
+                                    <td colspan="7" data-records-empty-message>Carregando...</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Falha. Reaproveita a superfície de recado centralizado que o
+                         projeto já usa em home.html — falha de rede não é "nenhum
+                         lançamento". -->
+                    <div class="card" data-records-error hidden>
+                        <div class="empty">
+                            <div class="empty__seal seal" aria-hidden="true">
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                            </div>
+                            <p class="empty__title">Não foi possível carregar os lançamentos</p>
+                            <p class="empty__text">
+                                Verifique a conexão e atualize a página. Se continuar, avise a
+                                equipe responsável pelo sistema.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- =====================================================================
+     Modal de novo lançamento
+
+     <dialog> nativo: Esc, foco preso dentro e fundo inerte já vêm do
+     elemento. novalidate porque a validação é feita em residuos.js, que
+     escreve em .field__error e marca aria-invalid — mesmo desenho do
+     formulário de login.
+     ===================================================================== -->
+<dialog class="modal" data-record-modal aria-labelledby="titulo-modal-lancamento">
+    <div class="modal__head">
+        <div>
+            <h2 class="modal__title" id="titulo-modal-lancamento">Novo lançamento de resíduo</h2>
+            <p class="modal__subtitle">Peso coletado em uma unidade, para um tipo de resíduo, em uma data.</p>
+        </div>
+        <button type="button" class="btn-icon modal__close" data-record-modal-close aria-label="Fechar">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+        </button>
+    </div>
+
+    <form data-record-form novalidate>
+        <div class="modal__body">
+
+            <div class="field">
+                <label class="field__label" for="record-date">Data</label>
+                <input class="input" type="date" id="record-date" name="record_date" required
+                       aria-describedby="erro-record-date">
+                <p class="field__error" id="erro-record-date" data-error-for="record-date" hidden></p>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="record-unit">Unidade</label>
+                    <select class="select" id="record-unit" name="unit_id" required
+                            data-form-unit aria-describedby="erro-record-unit">
+                        <option value="">Selecione</option>
+                    </select>
+                    <p class="field__error" id="erro-record-unit" data-error-for="record-unit" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="record-type">Tipo de resíduo</label>
+                    <select class="select" id="record-type" name="waste_type_id" required
+                            data-form-type aria-describedby="erro-record-type">
+                        <option value="">Selecione</option>
+                    </select>
+                    <p class="field__error" id="erro-record-type" data-error-for="record-type" hidden></p>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="field__label" for="record-weight">Peso</label>
+                <div class="input-unit">
+                    <input class="input" type="number" id="record-weight" name="weight_kg"
+                           min="0" step="0.001" inputmode="decimal" required
+                           aria-describedby="erro-record-weight">
+                    <span class="input-unit__suffix">kg</span>
+                </div>
+                <p class="field__error" id="erro-record-weight" data-error-for="record-weight" hidden></p>
+            </div>
+
+            <div class="field">
+                <label class="field__label" for="record-observations">
+                    Observações <span class="field__optional">(opcional)</span>
+                </label>
+                <textarea class="textarea" id="record-observations" name="observations"></textarea>
+            </div>
+
+            <div class="cluster">
+                <span class="spacer"></span>
+                <button type="button" class="btn btn--secondary" data-record-modal-close>Cancelar</button>
+                <button type="submit" class="btn btn--primary" data-record-submit>Salvar lançamento</button>
+            </div>
+
+        </div>
+    </form>
+</dialog>
+
+<!-- Shell (topbar, sidebar, menu da conta e usuário logado), comum a todas as
+     telas. Vem antes do script da página, sempre. -->
+<script type="module" src="/static/js/pages/shell.js"></script>
+<script type="module" src="/static/js/pages/residuos.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+/* ==========================================================================
+   residuos.css — estilos exclusivos da tela de lançamento de resíduos.
+
+   Toolbar, tabela, badge e modal vêm inteiros de components.css. As duas
+   regras abaixo são o que sobra depois disso: o par nome+badge dentro da
+   célula de tipo de resíduo, e a linha de "nenhum resultado" da tabela, que
+   nenhuma tela usa ainda.
+   ========================================================================== */
+
+.type-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.records-empty-row td {
+  text-align: center;
+  padding: var(--space-48) var(--space-16);
+  color: var(--color-text-muted);
+}
