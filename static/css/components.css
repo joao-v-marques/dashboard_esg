@@ -1858,6 +1858,20 @@ button.input-wrap__affix[aria-pressed="true"] {
 
 .nav__group { display: flex; flex-direction: column; }
 
+/* Moldura da seção atual — só aparece quando a página aberta é uma das
+   subpáginas do grupo (ver hasActiveChild em navGroupMarkup, shell.js). É um
+   contorno em volta do grupo inteiro, não mais um preenchimento sólido: o
+   gatilho e o subitem ativo já usam --color-brand-deep-active para isso, e
+   uma segunda cor sólida aqui competiria com as duas.
+   padding + margin negativa do mesmo tamanho: a moldura cresce para fora sem
+   empurrar o conteúdo interno, que continua na mesma posição de antes. */
+.nav__group.is-current-section {
+  margin: calc(var(--space-8) * -1);
+  padding: var(--space-8);
+  border-radius: var(--radius-card);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
 .nav__group-trigger {
   width: 100%;
   background: none;
@@ -1876,17 +1890,23 @@ button.input-wrap__affix[aria-pressed="true"] {
   transform: rotate(180deg);
 }
 
-.nav__group-panel {
+/* Qualificado com o elemento (ul.nav__group-panel, não só a classe): o painel
+   é uma <ul>, e o reset global de listas em base.css (`ul[class] { margin: 0;
+   padding: 0; }`) tem a mesma especificidade de uma classe sozinha mais o
+   elemento — sem o "ul." aqui, o reset vence e margin-top/padding-left nunca
+   chegam a valer, não importa o valor escrito. */
+ul.nav__group-panel {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  margin-top: var(--space-4);
+  margin-top: var(--space-8);
   padding-left: var(--space-24);
 }
 
 .nav__group-panel[hidden] { display: none; }
 
 .nav__sublink {
+  position: relative;
   display: flex;
   align-items: center;
   height: var(--control-height);
@@ -1915,6 +1935,25 @@ button.input-wrap__affix[aria-pressed="true"] {
   background-color: var(--color-brand-deep-active);
   color: var(--palette-white);
   font-weight: var(--weight-semibold);
+}
+
+/* Marcador de "página atual" do subitem: um ponto, não a barra que
+   .nav__link.is-active usa — a barra ficaria colada na borda do preenchimento
+   sólido do subitem, e há espaço de sobra no recuo à esquerda dele (o
+   padding-left de ul.nav__group-panel) para um ponto centralizado ali, como
+   os pontos de status de .badge::before.
+   O left negativo empurra o ponto para dentro desse recuo: --space-24 é a
+   largura do recuo, --space-8 centraliza o ponto de 8px nele. */
+.nav__sublink.is-active::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--space-8) - var(--space-24));
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent);
 }
 
 .sidebar__footer {
