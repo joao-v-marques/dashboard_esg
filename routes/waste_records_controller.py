@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from services.waste_records_service import WasteRecordService
+from utils.exceptions import ValidationError
 
 bp_waste_records = Blueprint("bp_waste_records", __name__)
 
@@ -27,4 +28,16 @@ def get_by_id(waste_record_id):
         return jsonify({
             "message": str(e)
         }), 500
-    
+
+@bp_waste_records.route("/api/waste-records", methods=['POST'])
+def create():
+    try:
+        data = request.get_json()
+
+        created_waste_record = WasteRecordService.create(data)
+
+        return jsonify(created_waste_record.created_to_dict()), 201
+    except Exception as e:
+        return jsonify({
+            "message": str(e)
+        }), 500

@@ -35,6 +35,17 @@ class WasteRecord:
             "updated_by_name": self.updated_by_name,
         }
 
+    def created_to_dict(self):
+        return {
+            "id": self.id,
+            "record_date": self.record_date,
+            "unit_id": self.unit_id,
+            "waste_type_id": self.waste_type_id,
+            "weight_kg": self.weight_kg,
+            "observations": self.observations,
+            "inserted_by": self.inserted_by
+        }
+
 class WasteRecordModel:
     # GET de todos os Registros de Residuos cadastrados no sistema
     @staticmethod
@@ -92,6 +103,36 @@ class WasteRecordModel:
 
             waste_record = WasteRecord(**waste_record_data)
 
+            return waste_record
+        except Exception as e:
+            raise Exception(str(e))
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    # POST de um registro de Resíduo, realizado pelos colaboradores do compras
+    @staticmethod
+    def create(waste_record):
+        conn = None
+        cursor = None
+        try:
+            conn, cursor = get_db_connection()
+
+            sql_query = """
+                INSERT INTO waste_records (record_date, unit_id, waste_type_id, weight_kg, observations, inserted_by)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id;
+            """
+            values = (waste_record.record_date, waste_record.unit_id, waste_record.waste_type_id, waste_record.weight_kg, waste_record.observations, waste_record.inserted_by)
+
+            cursor.execute(sql_query, values)
+            new_id = cursor.fetchone()["id"]
+
+            conn.commit()
+
+            waste_record.id = new_id
             return waste_record
         except Exception as e:
             raise Exception(str(e))
