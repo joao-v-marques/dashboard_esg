@@ -1,4 +1,6 @@
+from psycopg.errors import UniqueViolation
 from database.connect_db import get_db_connection
+from utils.exceptions import ValidationError
 
 class WasteRecord:
     def __init__(self, record_date, unit_id, waste_type_id, weight_kg, observations, inserted_by, created_at=None, updated_at=None, updated_by=None, id=None, unit_name=None, waste_type_name=None, inserted_by_name=None, updated_by_name=None):
@@ -134,6 +136,12 @@ class WasteRecordModel:
 
             waste_record.id = new_id
             return waste_record
+        # Adicionado tratativa para erro de UniqueViolation, que é usado na tabela de residuos, antes estava indo tudo direto para o cliente
+        except UniqueViolation:
+            raise ValidationError(
+                "Já existe um lançamento para esta data, unidade e tipo de resíduo. "
+                "Edite o lançamento existente em vez de criar um novo."
+            )
         except Exception as e:
             raise Exception(str(e))
         finally:

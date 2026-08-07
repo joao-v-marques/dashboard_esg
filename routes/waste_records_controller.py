@@ -37,6 +37,10 @@ def create():
         created_waste_record = WasteRecordService.create(data)
 
         return jsonify(created_waste_record.created_to_dict()), 201
+    except ValidationError as e:
+        return jsonify({
+            "message": str(e)
+        }), 400
     except Exception as e:
         return jsonify({
             "message": str(e)
