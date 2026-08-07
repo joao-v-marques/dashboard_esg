@@ -68,3 +68,35 @@ class WasteRecordModel:
                 cursor.close()
             if conn:
                 conn.close()
+
+    # GET de um Registro de Resíduo pelo ID
+    @staticmethod
+    def get_by_id(waste_record_id):
+        conn = None
+        cursor = None
+        try:
+            conn, cursor = get_db_connection()
+
+            sql_query = """
+                SELECT wr.id, wr.record_date, wr.unit_id, u.name AS unit_name, wr.waste_type_id, wt.name AS waste_type_name, wr.weight_kg, wr.observations, wr.inserted_by, us.name AS inserted_by_name
+                FROM waste_records wr
+                INNER JOIN units u ON u.id = wr.unit_id
+                INNER JOIN waste_types wt ON wt.id = wr.waste_type_id
+                INNER JOIN users us ON us.id = wr.inserted_by
+                WHERE wr.id = %s
+            """
+            values = (waste_record_id,)
+
+            cursor.execute(sql_query, values)
+            waste_record_data = cursor.fetchone()
+
+            waste_record = WasteRecord(**waste_record_data)
+
+            return waste_record
+        except Exception as e:
+            raise Exception(str(e))
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()

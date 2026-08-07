@@ -8,3 +8,11 @@ class WasteRecordService:
             return waste_records
         except Exception as e:
             raise Exception(str(e))
+
+    def get_by_id(waste_record_id):
+        try:
+            waste_record = WasteRecordModel.get_by_id(waste_record_id)
+
+            return waste_record
+        except Exception as e:
+            raise Exception(str(e))
