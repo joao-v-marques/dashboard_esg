@@ -17,6 +17,7 @@ export const PAGES = {
     home: `${BASE_PATH}/home`,
     dashboard: `${BASE_PATH}/dashboard`,
     login: `${BASE_PATH}/login`,
+    wasteRecords: `${BASE_PATH}/residuos`,
 };
 
 /**
@@ -25,15 +26,19 @@ export const PAGES = {
  * Padrão do backend: `${BASE_PATH}/api/<endpoint>` — as páginas ficam na raiz
  * do prefixo, a API sob /api. Endpoint novo entra aqui seguindo essa forma.
  *
- * Os de autenticação já existem (routes/auth_controller.py). O de overview
- * ainda não: quem o criar deve virar OVERVIEW_ENABLED em pages/home.js no
- * mesmo commit.
+ * Os de autenticação já existem (routes/auth_controller.py), assim como os de
+ * resíduos (routes/waste_records_controller.py, waste_types_controller.py,
+ * unit_controller.py). O de overview ainda não: quem o criar deve virar
+ * OVERVIEW_ENABLED em pages/home.js no mesmo commit.
  */
 export const API = {
     login: `${BASE_PATH}/api/login`,
     logout: `${BASE_PATH}/api/logout`,
     currentUser: `${BASE_PATH}/api/me`,
     overview: `${BASE_PATH}/api/overview`,
+    wasteRecords: `${BASE_PATH}/api/waste-records`,
+    wasteTypes: `${BASE_PATH}/api/waste-types`,
+    units: `${BASE_PATH}/api/units`,
 };
 
 /**
