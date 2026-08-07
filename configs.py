@@ -3,6 +3,7 @@ from routes.render_pages.render_login import bp_render_login
 from routes.render_pages.render_dashboard import bp_render_dashboard
 
 from routes.auth_controller import bp_auth
+from routes.unit_controller import bp_unit
 
 PREFIX = "/dashboard-esg"
 
@@ -14,3 +15,4 @@ def config_bps(app):
     app.register_blueprint(bp_render_login, url_prefix=PREFIX)
     app.register_blueprint(bp_render_dashboard, url_prefix=PREFIX)
     app.register_blueprint(bp_auth, url_prefix=PREFIX)
+    app.register_blueprint(bp_unit, url_prefix=PREFIX)
