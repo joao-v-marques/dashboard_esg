@@ -100,9 +100,34 @@ const notyf = new Notyf({
    API
    ========================================================================= */
 
+/**
+ * Garante que o toast pinte por cima de um <dialog> aberto.
+ *
+ * showModal() promove o <dialog> para a "top layer" do navegador, uma camada
+ * acima de todo o resto do documento — nenhum z-index de um elemento comum
+ * (nosso --z-toast incluído) consegue vencer isso de fora. A saída é
+ * reparentar o próprio container do Notyf para dentro do <dialog> aberto:
+ * como descendente dele, o toast passa a pintar dentro da mesma top layer,
+ * por cima do conteúdo do modal. position: fixed do container continua
+ * ancorado na viewport normalmente — o <dialog> não tem transform nem
+ * propriedade parecida, então não vira containing block para ele.
+ * Sem modal aberto, o container mora no body, como sempre.
+ */
+function ensureContainerAboveOpenDialog() {
+    const container = document.querySelector(".notyf");
+    if (!container) return;
+
+    const openDialog = document.querySelector("dialog[open]");
+    const target = openDialog ?? document.body;
+
+    if (container.parentElement !== target) target.appendChild(container);
+}
+
 // A mensagem quase sempre vem da API, então pode chegar vazia ou nula. Um toast
 // em branco é pior do que um texto genérico.
 function open(type, message, fallback) {
+    ensureContainerAboveOpenDialog();
+
     const text = String(message ?? "").trim() || fallback;
     const notification = notyf.open({type, message: text});
 
