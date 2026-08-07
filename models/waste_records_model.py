@@ -149,3 +149,45 @@ class WasteRecordModel:
                 cursor.close()
             if conn:
                 conn.close()
+
+    # PUT de um cadastro já realizado, para corrigir erros caso já tenha lançado
+    @staticmethod
+    def update(waste_record):
+        conn = None
+        cursor = None
+        try:
+            conn, cursor = get_db_connection()
+
+            sql_query = """
+                UPDATE waste_records
+                SET
+                    record_date = %s,
+                    unit_id = %s,
+                    waste_type_id = %s,
+                    weight_kg = %s,
+                    observations = %s,
+                    updated_at = %s,
+                    updated_by = %s
+                WHERE id = %s
+                RETURNING *
+            """
+            values = (waste_record.record_date, waste_record.unit_id, waste_record.waste_type_id, waste_record.weight_kg, waste_record.observations, waste_record.updated_at, waste_record.updated_by, waste_record.id)
+
+            cursor.execute(sql_query, values)
+            updated_waste_record = cursor.fetchone()
+
+            conn.commit()
+
+            return WasteRecord(**updated_waste_record)
+        except UniqueViolation:
+            raise ValidationError(
+                "Já existe um lançamento para esta data, unidade e tipo de resíduo. "
+                "Altere as informações da edição e tente novamente."
+            )
+        except Exception as e:
+            raise Exception(str(e))
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()

@@ -45,3 +45,20 @@ def create():
         return jsonify({
             "message": str(e)
         }), 500
+
+@bp_waste_records.route("/api/waste_records", methods=['PUT'])
+def update():
+    try:
+        data = request.get_json()
+
+        updated_waste_record = WasteRecordService.update(data)
+
+        return jsonify({updated_waste_record.to_dict()}), 200
+    except ValidationError as e:
+        return jsonify({
+            "message": str(e)
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "message": str(e)
+        }), 500
