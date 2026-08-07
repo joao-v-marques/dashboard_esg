@@ -29,6 +29,9 @@
  *   [data-user-role]        perfil de acesso
  *   [data-user-email]       e-mail, dentro do menu
  *   [data-logout]           botão de encerrar a sessão
+ *   [data-nav-group]          item de navegação com subitens (ex.: "Resíduos")
+ *     [data-nav-group-trigger]  botão que abre/fecha, com aria-expanded
+ *     [data-nav-group-panel]    lista de subitens, controlada por hidden
  *
  * [data-user-name] aparece na topbar e também pode aparecer no conteúdo da
  * página (a saudação da home, por exemplo): a escrita é feita em todas as
@@ -50,6 +53,10 @@ import { API, PAGES, isCurrentPage } from "../utils/routes.js";
 /**
  * Itens da navegação principal, na ordem em que aparecem.
  * Acrescentar uma tela ao menu é acrescentar uma entrada aqui.
+ *
+ * Dois formatos: link direto (`href`) e grupo com subitens (`children`) — o
+ * grupo existe para telas que crescem em família (Resíduos hoje só tem
+ * "Lançar Resíduo", mas é onde entram as próximas telas do mesmo assunto).
  */
 const NAV_ITEMS = [
     {
@@ -71,6 +78,21 @@ const NAV_ITEMS = [
                       stroke-linecap="round"/>
             </svg>`,
     },
+    {
+        id: "residuos",
+        label: "Resíduos",
+        icon: `
+            <svg class="nav__icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M6.5 6.5v9a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4.5 6.5h11M8.5 6.5V4a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v2.5" stroke="currentColor"
+                      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8.5 9.5v4M11.5 9.5v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>`,
+        children: [
+            { href: PAGES.wasteRecords, label: "Lançar Resíduo" },
+        ],
+    },
     // TODO: os demais itens entram aqui conforme as telas forem criadas.
 ];
 
@@ -83,8 +105,13 @@ const SEAL_CELLS = "<span></span>".repeat(16);
  * A tela atual leva `is-active` e `aria-current="page"` — os dois, não só um:
  * a classe é o destaque visual, o aria é o que o leitor de tela anuncia. Qual
  * é a tela atual sai da própria URL, então nenhuma página precisa se declarar.
+ *
+ * Item com `children` vira grupo expansível em vez de link; despacha para
+ * navGroupMarkup().
  */
 function navItemMarkup(item) {
+    if (item.children) return navGroupMarkup(item);
+
     const current = isCurrentPage(item.href);
 
     return `
@@ -94,6 +121,53 @@ function navItemMarkup(item) {
                 ${item.icon}
                 <span class="nav__label">${item.label}</span>
             </a>
+        </li>`;
+}
+
+/** Subitem dentro de um grupo — mesmo tratamento de tela atual do link comum. */
+function navSublinkMarkup(child) {
+    const current = isCurrentPage(child.href);
+
+    return `
+        <li>
+            <a class="nav__sublink${current ? " is-active" : ""}"
+               href="${child.href}"${current ? ' aria-current="page"' : ""}>
+                <span class="nav__label">${child.label}</span>
+            </a>
+        </li>`;
+}
+
+/**
+ * Grupo expansível da sidebar (ex.: "Resíduos" → "Lançar Resíduo").
+ *
+ * Abre sozinho quando a tela atual é um dos subitens — assim a pessoa entende
+ * onde está sem precisar clicar. O painel é uma <ul> própria, e não uma
+ * continuação do <ul class="nav"> pai: precisa de um id para o aria-controls
+ * do gatilho apontar, e uma lista dentro de item de lista exige o próprio
+ * elemento de lista.
+ */
+function navGroupMarkup(item) {
+    const hasActiveChild = item.children.some((child) => isCurrentPage(child.href));
+    const panelId = `nav-group-${item.id}`;
+
+    return `
+        <li class="nav__group" data-nav-group>
+            <button type="button"
+                    class="nav__link nav__group-trigger${hasActiveChild ? " is-active" : ""}"
+                    data-nav-group-trigger
+                    aria-expanded="${hasActiveChild ? "true" : "false"}"
+                    aria-controls="${panelId}">
+                ${item.icon}
+                <span class="nav__label">${item.label}</span>
+                <svg class="nav__group-caret" width="16" height="16" viewBox="0 0 16 16" fill="none"
+                     aria-hidden="true">
+                    <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <ul class="nav__group-panel" id="${panelId}" data-nav-group-panel${hasActiveChild ? "" : " hidden"}>
+                ${item.children.map(navSublinkMarkup).join("")}
+            </ul>
         </li>`;
 }
 
@@ -286,6 +360,29 @@ function initSidebar() {
 
     restoreCollapsed();
     return { isOpen, close };
+}
+
+/* =========================================================================
+   Grupos da sidebar
+
+   Acordeão simples: cada grupo abre e fecha por conta própria, sem fechar os
+   outros — diferente do menu da conta, dois grupos abertos ao mesmo tempo não
+   competem pelo mesmo espaço. Estado não persiste entre páginas porque não há
+   SPA aqui; navGroupMarkup() já abre o grupo certo com base na URL atual.
+   ========================================================================= */
+
+function initNavGroups() {
+    document.querySelectorAll("[data-nav-group]").forEach((group) => {
+        const trigger = group.querySelector("[data-nav-group-trigger]");
+        const panel = group.querySelector("[data-nav-group-panel]");
+        if (!trigger || !panel) return;
+
+        trigger.addEventListener("click", () => {
+            const expanded = trigger.getAttribute("aria-expanded") === "true";
+            trigger.setAttribute("aria-expanded", String(!expanded));
+            panel.hidden = expanded;
+        });
+    });
 }
 
 /* =========================================================================
@@ -508,6 +605,7 @@ function init() {
     const sidebar = initSidebar();
     const dropdowns = initDropdowns();
 
+    initNavGroups();
     initCurrentUser();
     initLogout();
     initEscape(sidebar, dropdowns);

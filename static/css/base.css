@@ -209,6 +209,13 @@ hr {
   display: none !important;
 }
 
+/* Trava a rolagem da página por trás de um modal aberto. showModal() já
+   bloqueia interação com o fundo, mas não impede o scroll — quem abre o
+   <dialog> aplica esta classe ao body, e a remove no evento "close". */
+.no-scroll {
+  overflow: hidden;
+}
+
 /* Link "pular para o conteúdo" — primeiro tabstop de toda página do app. */
 .skip-link {
   position: absolute;
