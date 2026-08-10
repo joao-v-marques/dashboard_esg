@@ -15,16 +15,21 @@
  *   [data-filter-unit] / [data-filter-type]   selects de filtro
  *   [data-filter-date-from] / [data-filter-date-to]
  *   [data-filter-clear]        limpa os cinco campos acima
- *   [data-record-modal]        <dialog> do formulário
+ *   [data-record-modal]        <dialog> do formulário — serve para criar e editar
+ *     [data-record-modal-subtitle]  texto trocado por setModalMode()
  *     [data-record-modal-close]  fecha (botão X e Cancelar, os dois têm o atributo)
  *     [data-record-form]         formulário; o submit é interceptado
  *     [data-form-unit] / [data-form-type]   selects do formulário
- *     [data-record-submit]       botão de salvar
+ *     [data-record-submit]       botão de salvar; o texto também troca com o modo
  *   [data-error-for="<id>"]    mensagem de erro do campo de mesmo id
+ *
+ * O botão "Editar" de cada linha abre o mesmo modal do "Novo lançamento",
+ * pré-preenchido — ver startEditingRecord() e editingRecordId, a variável que
+ * diz se o próximo envio do formulário é POST (criar) ou PUT (editar).
  *
  * O peso e as datas que a API devolve podem chegar como texto (Decimal vira
  * string no jsonify do Flask) ou em formato HTTP em vez de ISO — ver
- * models/waste_records_model.py. parseWeight() e as funções de data abaixo
+ * models/waste_records_model.py. As funções de data e fillFormForEdit()
  * tratam os dois formatos; o ideal é corrigir na origem (to_dict()), mas a
  * tela funciona sem depender disso.
  */
@@ -41,6 +46,11 @@ let allRecords = [];
 let units = [];
 let wasteTypes = [];
 let wasteTypesById = {};
+
+// null => próximo envio do formulário é POST (criar). Com um id => é PUT
+// (editar) daquele lançamento. Ver startEditingRecord() e o gatilho de
+// "Novo lançamento" em initModal().
+let editingRecordId = null;
 
 /* =========================================================================
    Estado da página (carregando / conteúdo / erro)
@@ -201,7 +211,7 @@ function buildTypeCell(record) {
     return td;
 }
 
-function buildActionsCell() {
+function buildActionsCell(record) {
     const td = document.createElement("td");
     td.dataset.label = "Ações";
     td.className = "table__actions";
@@ -210,10 +220,9 @@ function buildActionsCell() {
     button.type = "button";
     button.className = "btn-link";
     button.textContent = "Editar";
-    // A lógica de edição (PUT) ainda não existe — botão presente e
-    // desabilitado, não ausente: o lugar dele na tela já fica reservado.
-    button.disabled = true;
-    button.title = "Disponível quando a edição de lançamentos existir.";
+    // Closure sobre o record da própria linha: os dados para preencher o
+    // formulário já estão em mãos, sem precisar buscar de novo por id.
+    button.addEventListener("click", () => startEditingRecord(record));
 
     td.appendChild(button);
     return td;
@@ -235,7 +244,7 @@ function buildRecordRow(record) {
     }));
     tr.appendChild(buildCell({ label: "Observações", text: record.observations || "—" }));
     tr.appendChild(buildCell({ label: "Lançado por", text: record.inserted_by_name }));
-    tr.appendChild(buildActionsCell());
+    tr.appendChild(buildActionsCell(record));
 
     return tr;
 }
@@ -328,8 +337,50 @@ function initFilters() {
 }
 
 /* =========================================================================
-   Modal de novo lançamento
+   Modal de lançamento (criar e editar)
    ========================================================================= */
+
+const MODAL_TEXT = {
+    create: {
+        title: "Novo lançamento de resíduo",
+        subtitle: "Peso coletado em uma unidade, para um tipo de resíduo, em uma data.",
+        submit: "Salvar lançamento",
+    },
+    edit: {
+        title: "Editar lançamento de resíduo",
+        subtitle: "Altere os dados do lançamento e salve para atualizar.",
+        submit: "Salvar alterações",
+    },
+};
+
+/** Troca o texto do modal entre os dois modos — o formulário é o mesmo, só o que ele faz muda. */
+function setModalMode(mode) {
+    const texts = MODAL_TEXT[mode];
+
+    const titleEl = document.getElementById("titulo-modal-lancamento");
+    const subtitleEl = document.querySelector("[data-record-modal-subtitle]");
+    const submitEl = document.querySelector("[data-record-submit]");
+
+    if (titleEl) titleEl.textContent = texts.title;
+    if (subtitleEl) subtitleEl.textContent = texts.subtitle;
+    if (submitEl) submitEl.textContent = texts.submit;
+}
+
+function openRecordModal() {
+    const modal = document.querySelector("[data-record-modal]");
+    if (!modal) return;
+
+    modal.showModal();
+    document.body.classList.add("no-scroll");
+}
+
+/** Abre o modal já preenchido com um lançamento existente, em modo de edição. */
+function startEditingRecord(record) {
+    editingRecordId = record.id;
+    setModalMode("edit");
+    fillFormForEdit(record);
+    openRecordModal();
+}
 
 function initModal() {
     const modal = document.querySelector("[data-record-modal]");
@@ -337,9 +388,10 @@ function initModal() {
     if (!modal) return;
 
     trigger?.addEventListener("click", () => {
+        editingRecordId = null;
+        setModalMode("create");
         resetForm();
-        modal.showModal();
-        document.body.classList.add("no-scroll");
+        openRecordModal();
     });
 
     document.querySelectorAll("[data-record-modal-close]").forEach((button) => {
@@ -414,6 +466,24 @@ function resetForm() {
     clearFormErrors();
 }
 
+/**
+ * Preenche o formulário com um lançamento existente, para edição.
+ *
+ * weight_kg chega como Decimal (string, ver nota no topo do arquivo);
+ * Number() normaliza antes de escrever no campo — um <input type="number">
+ * só aceita ponto decimal, nunca vírgula, então formatWeight() (que devolve
+ * texto em pt-BR) não serve aqui.
+ */
+function fillFormForEdit(record) {
+    document.getElementById("record-date").value = toIsoDate(record.record_date);
+    document.getElementById("record-unit").value = String(record.unit_id);
+    document.getElementById("record-type").value = String(record.waste_type_id);
+    document.getElementById("record-weight").value = String(Number(record.weight_kg));
+    document.getElementById("record-observations").value = record.observations ?? "";
+
+    clearFormErrors();
+}
+
 function setLoading(button, loading) {
     if (!button) return;
     button.disabled = loading;
@@ -451,39 +521,46 @@ function initForm() {
         const submit = form.querySelector("[data-record-submit]");
         setLoading(submit, true);
 
-        // inserted_by vai no corpo porque é o que o endpoint espera hoje
-        // (routes/waste_records_controller.py não lê o usuário da sessão) —
-        // ver a nota de segurança sobre essa rota não exigir autenticação.
+        const isEditing = editingRecordId !== null;
+
         const payload = {
             record_date: document.getElementById("record-date").value,
             unit_id: Number(document.getElementById("record-unit").value),
             waste_type_id: Number(document.getElementById("record-type").value),
             weight_kg: Number(document.getElementById("record-weight").value),
             observations: document.getElementById("record-observations").value.trim(),
-            inserted_by: currentUser.id,
         };
+
+        // POST espera inserted_by no corpo — o endpoint de criação ainda não
+        // lê o usuário da sessão (ver nota de segurança sobre essa rota).
+        // PUT não: updated_by e updated_at são calculados no servidor a
+        // partir da sessão autenticada, e é o id do lançamento que entra no
+        // lugar, para o backend saber qual registro alterar.
+        if (isEditing) {
+            payload.id = editingRecordId;
+        } else {
+            payload.inserted_by = currentUser.id;
+        }
 
         try {
             const response = await fetch(API.wasteRecords, {
-                method: "POST",
+                method: isEditing ? "PUT" : "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "same-origin",
                 body: JSON.stringify(payload),
             });
 
-            if (response.status === 201) {
+            const successStatus = isEditing ? 200 : 201;
+
+            if (response.status === successStatus) {
                 document.querySelector("[data-record-modal]")?.close();
-                notifySuccess("Lançamento registrado com sucesso.");
+                notifySuccess(isEditing ? "Lançamento atualizado com sucesso." : "Lançamento registrado com sucesso.");
                 await loadRecords();
                 return;
             }
 
-            // O controller devolve toda falha como 500 hoje, inclusive
-            // validação de negócio (data fora do intervalo permitido, por
-            // exemplo) — por isso o tratamento não distingue por status,
-            // só usa a mensagem que o servidor mandar.
             const data = await readJson(response);
-            notifyError(data?.message ?? "Não foi possível registrar o lançamento.");
+            notifyError(data?.message ?? "Não foi possível salvar o lançamento.");
             console.error(`A API respondeu ${response.status}`);
         } catch (error) {
             notifyError("Não foi possível falar com o servidor. Verifique sua conexão e tente de novo.");

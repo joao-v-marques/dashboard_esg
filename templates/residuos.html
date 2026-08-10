@@ -199,18 +199,20 @@
 </div>
 
 <!-- =====================================================================
-     Modal de novo lançamento
+     Modal de lançamento — serve para criar e para editar
 
-     <dialog> nativo: Esc, foco preso dentro e fundo inerte já vêm do
-     elemento. novalidate porque a validação é feita em residuos.js, que
-     escreve em .field__error e marca aria-invalid — mesmo desenho do
-     formulário de login.
+     Mesmo formulário nos dois casos (os campos são idênticos); só o título,
+     o rótulo do botão e o método/corpo do envio mudam, escritos por
+     setModalMode() em residuos.js. <dialog> nativo: Esc, foco preso dentro e
+     fundo inerte já vêm do elemento. novalidate porque a validação é feita
+     em residuos.js, que escreve em .field__error e marca aria-invalid —
+     mesmo desenho do formulário de login.
      ===================================================================== -->
 <dialog class="modal" data-record-modal aria-labelledby="titulo-modal-lancamento">
     <div class="modal__head">
         <div>
             <h2 class="modal__title" id="titulo-modal-lancamento">Novo lançamento de resíduo</h2>
-            <p class="modal__subtitle">Peso coletado em uma unidade, para um tipo de resíduo, em uma data.</p>
+            <p class="modal__subtitle" data-record-modal-subtitle>Peso coletado em uma unidade, para um tipo de resíduo, em uma data.</p>
         </div>
         <button type="button" class="btn-icon modal__close" data-record-modal-close aria-label="Fechar">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
