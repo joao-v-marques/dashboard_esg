@@ -151,7 +151,7 @@ function navGroupMarkup(item) {
     const panelId = `nav-group-${item.id}`;
 
     return `
-        <li class="nav__group${hasActiveChild ? " is-current-section" : ""}" data-nav-group>
+        <li class="nav__group" data-nav-group>
             <button type="button"
                     class="nav__link nav__group-trigger${hasActiveChild ? " is-active" : ""}"
                     data-nav-group-trigger

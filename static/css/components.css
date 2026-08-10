@@ -1858,20 +1858,6 @@ button.input-wrap__affix[aria-pressed="true"] {
 
 .nav__group { display: flex; flex-direction: column; }
 
-/* Moldura da seção atual — só aparece quando a página aberta é uma das
-   subpáginas do grupo (ver hasActiveChild em navGroupMarkup, shell.js). É um
-   contorno em volta do grupo inteiro, não mais um preenchimento sólido: o
-   gatilho e o subitem ativo já usam --color-brand-deep-active para isso, e
-   uma segunda cor sólida aqui competiria com as duas.
-   padding + margin negativa do mesmo tamanho: a moldura cresce para fora sem
-   empurrar o conteúdo interno, que continua na mesma posição de antes. */
-.nav__group.is-current-section {
-  margin: calc(var(--space-8) * -1);
-  padding: var(--space-8);
-  border-radius: var(--radius-card);
-  box-shadow: inset 0 0 0 1px var(--color-accent);
-}
-
 .nav__group-trigger {
   width: 100%;
   background: none;
