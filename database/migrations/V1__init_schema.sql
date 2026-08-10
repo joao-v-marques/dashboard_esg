@@ -73,6 +73,40 @@ CREATE TABLE waste_records (
     CONSTRAINT uq_unique_waste_record UNIQUE (record_date, unit_id, waste_type_id) -- CONSTRAINT QUE IMPEDE DE LANÇAR COM A MESMA DATA, MESMA UNIDADE E MESMO TIPO TUDO JUNTO
 );
 
+-- Tabela para inserção/manipulação de valores energéticos
+-- Basicamente cada conta (mensalmente) será inserida no sistema, uma linha por unidade + competência
+-- CREATE TABLE energy_records (
+--     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+--     -- Informações principais
+--     competencia DATE NOT NULL, -- mês de referência da conta (dia 1)
+--     vencimento DATE NOT NULL,
+--     unit_id INT NOT NULL,
+
+--     consumo_total_kwh NUMERIC(12, 3) NOT NULL,
+--     consumo_total_valor NUMERIC(12, 2) NOT NULL,
+--     energia_compensada_kwh NUMERIC(12, 3) NOT NULL DEFAULT 0, -- kWh compensado/gerado (GD própria ou recebida de outra unidade)
+--     energia_compensada_valor NUMERIC(12, 2) NOT NULL DEFAULT 0,
+--     valor_a_pagar NUMERIC(12, 2) NOT NULL,
+--     saldo_final_kwh NUMERIC(12, 3), -- saldo acumulado de créditos de energia no fim do mês
+--     observations TEXT,
+
+--     -- Informações para auditoria
+--     inserted_by INT NOT NULL,
+--     created_at TIMESTAMPTZ DEFAULT NOW(),
+--     updated_at TIMESTAMPTZ,
+--     updated_by INT,
+
+--     -- Foreign Keys
+--     CONSTRAINT fk_energy_unit FOREIGN KEY (unit_id) REFERENCES units(id),
+--     CONSTRAINT fk_energy_user FOREIGN KEY (inserted_by) REFERENCES users(id),
+--     CONSTRAINT fk_energy_update_user FOREIGN KEY (updated_by) REFERENCES users(id),
+
+--     -- Constraints de CHECK
+--     CONSTRAINT ck_energy_consumo CHECK (consumo_total_kwh >= 0),
+--     CONSTRAINT uq_energy_record UNIQUE (competencia, unit_id) -- IMPEDE DE LANÇAR DUAS CONTAS PARA A MESMA UNIDADE NO MESMO MÊS
+-- );
+
 
 -- Inserção de todos os setores iniciais da aplicação
 INSERT INTO sectors (name)
