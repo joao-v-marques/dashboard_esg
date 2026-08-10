@@ -199,6 +199,38 @@
 </div>
 
 <!-- =====================================================================
+     Modal de responsabilidade — aparece a cada acesso a esta página, antes
+     de qualquer outra interação. showModal() já deixa o resto da página
+     inerte sozinho (nenhum botão, filtro ou link da sidebar responde
+     enquanto ele está aberto); só "Eu concordo" fecha — sem X, sem clique
+     no fundo, e o Esc é bloqueado em residuos.js, para não virar atalho
+     pra pular o aviso.
+     ===================================================================== -->
+<dialog class="modal" data-consent-modal aria-labelledby="titulo-modal-responsabilidade">
+    <div class="modal__head">
+        <div>
+            <h2 class="modal__title" id="titulo-modal-responsabilidade">Aviso de responsabilidade</h2>
+        </div>
+    </div>
+
+    <div class="modal__body">
+        <p>
+            As informações inseridas e editadas nesta página são de responsabilidade
+            do colaborador que realiza o lançamento. Antes de salvar, é necessário
+            validar e garantir a veracidade dos dados informados, já que esses
+            números alimentam diretamente os indicadores de resíduos exibidos no
+            dashboard da cooperativa. Lançamentos incorretos podem comprometer a
+            precisão desse acompanhamento.
+        </p>
+
+        <div class="cluster">
+            <span class="spacer"></span>
+            <button type="button" class="btn btn--primary" data-consent-accept>Eu concordo</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- =====================================================================
      Modal de lançamento — serve para criar e para editar
 
      Mesmo formulário nos dois casos (os campos são idênticos); só o título,

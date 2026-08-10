@@ -3,6 +3,9 @@
  * de cadastro.
  *
  * Contrato com o HTML (data-*):
+ *   [data-consent-modal]       <dialog> de aviso de responsabilidade, aberto
+ *                              sozinho a cada carregamento da página
+ *     [data-consent-accept]      único jeito de fechar — "Eu concordo"
  *   [data-new-record-trigger]  botão que abre o modal de novo lançamento
  *   [data-records-loading]     esqueleto; estado inicial
  *   [data-records-content]     card com toolbar + tabela; nasce hidden
@@ -374,12 +377,56 @@ function openRecordModal() {
     document.body.classList.add("no-scroll");
 }
 
+/**
+ * Fecha e libera o scroll no mesmo golpe, em vez de fechar e esperar o
+ * evento "close" fazer a segunda parte — em alguns ambientes esse evento não
+ * dispara de forma confiável (é despachado como tarefa assíncrona pelo
+ * spec, não sincronamente), então depender só dele deixa o body preso em
+ * overflow: hidden. Usada em todo close() que o próprio código dispara; o
+ * listener de "close" continua como reforço para o caminho do Esc, que não
+ * passa por aqui.
+ */
+function closeModal(modal) {
+    modal.close();
+    document.body.classList.remove("no-scroll");
+}
+
 /** Abre o modal já preenchido com um lançamento existente, em modo de edição. */
 function startEditingRecord(record) {
     editingRecordId = record.id;
     setModalMode("edit");
     fillFormForEdit(record);
     openRecordModal();
+}
+
+/* =========================================================================
+   Modal de responsabilidade
+   ========================================================================= */
+
+/**
+ * Aberto a cada carregamento da página, sem exceção — não fica gravado em
+ * localStorage nem em cookie, porque o pedido foi "sempre que eu acessar".
+ * showModal() já torna o resto da página inerte (tabela, filtros, sidebar)
+ * enquanto está aberto; o único jeito de sair é "Eu concordo".
+ */
+function initConsentModal() {
+    const modal = document.querySelector("[data-consent-modal]");
+    if (!modal) return;
+
+    // "cancel" é o evento nativo do Esc num <dialog> aberto por showModal().
+    // Bloquear aqui impede que o teclado vire um atalho pra pular o aviso.
+    modal.addEventListener("cancel", (event) => event.preventDefault());
+
+    document.querySelector("[data-consent-accept]")?.addEventListener("click", () => {
+        closeModal(modal);
+    });
+
+    modal.addEventListener("close", () => {
+        document.body.classList.remove("no-scroll");
+    });
+
+    modal.showModal();
+    document.body.classList.add("no-scroll");
 }
 
 function initModal() {
@@ -395,13 +442,13 @@ function initModal() {
     });
 
     document.querySelectorAll("[data-record-modal-close]").forEach((button) => {
-        button.addEventListener("click", () => modal.close());
+        button.addEventListener("click", () => closeModal(modal));
     });
 
     // <dialog> não fecha ao clicar fora sozinho — só o clique no próprio
     // elemento (o backdrop), nunca num filho, chega até aqui.
     modal.addEventListener("click", (event) => {
-        if (event.target === modal) modal.close();
+        if (event.target === modal) closeModal(modal);
     });
 
     // showModal() bloqueia interação com o fundo, mas não trava a rolagem da
@@ -553,7 +600,8 @@ function initForm() {
             const successStatus = isEditing ? 200 : 201;
 
             if (response.status === successStatus) {
-                document.querySelector("[data-record-modal]")?.close();
+                const modal = document.querySelector("[data-record-modal]");
+                if (modal) closeModal(modal);
                 notifySuccess(isEditing ? "Lançamento atualizado com sucesso." : "Lançamento registrado com sucesso.");
                 await loadRecords();
                 return;
@@ -599,6 +647,7 @@ async function loadPage() {
 }
 
 function init() {
+    initConsentModal();
     initModal();
     initFilters();
     initForm();
