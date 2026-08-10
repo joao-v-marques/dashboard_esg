@@ -47,10 +47,13 @@ class WasteRecordService:
         except Exception as e:
             raise Exception(str(e))
 
-    def update(data):
+    def update(data, current_user_id):
         try:
             if not isinstance(data, dict):
                 raise ValidationError("Envie um corpo JSON com os dados do lançamento")
+
+            if not current_user_id:
+                raise ValidationError("O ID do usuário é inválido")
 
             required_fields = {
                 'id': "O identificador do lançamento é obrigatório",
@@ -84,12 +87,10 @@ class WasteRecordService:
                 unit_id=data['unit_id'],
                 waste_type_id=data['waste_type_id'],
                 weight_kg=data['weight_kg'],
-                observations=data['observations'],
-                updated_at=data['updated_at'],
-                updated_by=data['updated_by']
+                observations=data['observations']
             )
 
-            new_waste_record = WasteRecordModel.update(new_waste_record)
+            new_waste_record = WasteRecordModel.update(new_waste_record, current_user_id)
 
             return new_waste_record
         except ValidationError:

@@ -3,7 +3,7 @@ from database.connect_db import get_db_connection
 from utils.exceptions import ValidationError
 
 class WasteRecord:
-    def __init__(self, record_date, unit_id, waste_type_id, weight_kg, observations, inserted_by, created_at=None, updated_at=None, updated_by=None, id=None, unit_name=None, waste_type_name=None, inserted_by_name=None, updated_by_name=None):
+    def __init__(self, record_date, unit_id, waste_type_id, weight_kg, observations, inserted_by=None, created_at=None, updated_at=None, updated_by=None, id=None, unit_name=None, waste_type_name=None, inserted_by_name=None, updated_by_name=None):
         self.record_date = record_date
         self.unit_id = unit_id
         self.waste_type_id = waste_type_id
@@ -152,7 +152,7 @@ class WasteRecordModel:
 
     # PUT de um cadastro já realizado, para corrigir erros caso já tenha lançado
     @staticmethod
-    def update(waste_record):
+    def update(waste_record, current_user_id):
         conn = None
         cursor = None
         try:
@@ -166,12 +166,12 @@ class WasteRecordModel:
                     waste_type_id = %s,
                     weight_kg = %s,
                     observations = %s,
-                    updated_at = %s,
+                    updated_at = NOW(),
                     updated_by = %s
                 WHERE id = %s
                 RETURNING *
             """
-            values = (waste_record.record_date, waste_record.unit_id, waste_record.waste_type_id, waste_record.weight_kg, waste_record.observations, waste_record.updated_at, waste_record.updated_by, waste_record.id)
+            values = (waste_record.record_date, waste_record.unit_id, waste_record.waste_type_id, waste_record.weight_kg, waste_record.observations, current_user_id, waste_record.id)
 
             cursor.execute(sql_query, values)
             updated_waste_record = cursor.fetchone()

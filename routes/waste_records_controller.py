@@ -55,10 +55,11 @@ def create():
 def update():
     try:
         data = request.get_json()
+        current_user_id = request.user["id"]
 
-        updated_waste_record = WasteRecordService.update(data)
+        updated_waste_record = WasteRecordService.update(data, current_user_id)
 
-        return jsonify({updated_waste_record.to_dict()}), 200
+        return jsonify(updated_waste_record.to_dict()), 200
     except ValidationError as e:
         return jsonify({
             "message": str(e)
