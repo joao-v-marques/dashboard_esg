@@ -28,8 +28,9 @@ export const PAGES = {
  *
  * Os de autenticação já existem (routes/auth_controller.py), assim como os de
  * resíduos (routes/waste_records_controller.py, waste_types_controller.py,
- * unit_controller.py). O de overview ainda não: quem o criar deve virar
- * OVERVIEW_ENABLED em pages/home.js no mesmo commit.
+ * unit_controller.py, waste_dashboard_controller.py). O de overview ainda
+ * não: quem o criar deve virar OVERVIEW_ENABLED em pages/home.js no mesmo
+ * commit.
  */
 export const API = {
     login: `${BASE_PATH}/api/login`,
@@ -39,6 +40,7 @@ export const API = {
     wasteRecords: `${BASE_PATH}/api/waste-records`,
     wasteTypes: `${BASE_PATH}/api/waste-types`,
     units: `${BASE_PATH}/api/units`,
+    wasteDashboard: `${BASE_PATH}/api/residuos/dashboard`,
 };
 
 /**

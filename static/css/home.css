@@ -1,48 +1,11 @@
 /* ==========================================================================
    home.css — estilos exclusivos da tela de início.
 
-   Cabeçalho de página, card, indicador (.stat), esqueleto de carregamento e
-   estado vazio vêm de components.css. Aqui só entra o arranjo dos dois blocos
-   da tela: a grade dos indicadores e a apresentação da aplicação.
+   Cabeçalho de página, card, indicador (.stat), grade de indicadores
+   (.stat-grid), esqueleto de carregamento e estado vazio vêm de
+   components.css — .stat-grid está lá porque o dashboard passou a usar a
+   mesma grade. Aqui só entra a apresentação da aplicação.
    ========================================================================== */
-
-/* --------------------------------------------------------------------------
-   Panorama — grade de 12 colunas, três cards de 4 colunas no desktop.
-
-   Os três estados da seção (carregando, com dado e falha) compartilham a mesma
-   grade, então o esqueleto ocupa exatamente o espaço que o card vai ocupar e a
-   página não salta quando o dado chega.
-   -------------------------------------------------------------------------- */
-
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: var(--gutter);
-}
-
-/* `display: grid` acima vence o `display: none` que o navegador aplica a
-   [hidden]; sem esta linha o bloco de dados apareceria mesmo oculto. Vale para
-   qualquer elemento que receba display no CSS e hidden no JS. */
-.stat-grid[hidden] {
-  display: none;
-}
-
-.stat-grid > .stat,
-.stat-grid > .skeleton {
-  grid-column: span 4;
-}
-
-@media (max-width: 1199px) {
-  .stat-grid > .stat,
-  .stat-grid > .skeleton { grid-column: span 6; }
-}
-
-@media (max-width: 599px) {
-  .stat-grid { gap: var(--space-16); }
-
-  .stat-grid > .stat,
-  .stat-grid > .skeleton { grid-column: span 12; }
-}
 
 /* --------------------------------------------------------------------------
    Apresentação — o que a aplicação faz

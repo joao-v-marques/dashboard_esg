@@ -736,6 +736,41 @@ button.input-wrap__affix[aria-pressed="true"] {
 
 /* Card de indicador ------------------------------------------------------- */
 
+/* Grade de 12 colunas, três cards de 4 colunas no desktop — usada por
+   qualquer tela com painel de indicadores (início, dashboard, e as próximas
+   seções de domínio que entrarem nele). Os três estados de uma seção
+   (carregando, com dado e falha) compartilham esta mesma grade, então o
+   esqueleto ocupa exatamente o espaço que o card vai ocupar e a página não
+   salta quando o dado chega. */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--gutter);
+}
+
+/* `display: grid` acima vence o `display: none` que o navegador aplica a
+   [hidden]; sem esta linha o bloco de dados apareceria mesmo oculto. */
+.stat-grid[hidden] {
+  display: none;
+}
+
+.stat-grid > .stat,
+.stat-grid > .skeleton {
+  grid-column: span 4;
+}
+
+@media (max-width: 1199px) {
+  .stat-grid > .stat,
+  .stat-grid > .skeleton { grid-column: span 6; }
+}
+
+@media (max-width: 599px) {
+  .stat-grid { gap: var(--space-16); }
+
+  .stat-grid > .stat,
+  .stat-grid > .skeleton { grid-column: span 12; }
+}
+
 .stat {
   display: flex;
   flex-direction: column;
@@ -762,6 +797,47 @@ button.input-wrap__affix[aria-pressed="true"] {
 .stat--negative::before { background-color: var(--color-negative); }
 .stat--info::before     { background-color: var(--color-info); }
 .stat--accent::before   { background-color: var(--color-accent); }
+
+/* Variante compacta — para telas com muitos indicadores lado a lado (o
+   dashboard cresce por domínio: Resíduos hoje, Energia e Água depois), onde
+   o tamanho de destaque do .stat comum ocuparia espaço demais por card.
+   Reduz o preenchimento e o valor um degrau, mantendo a mesma faixa lateral
+   e as mesmas variantes de cor. */
+.stat--compact {
+  padding: var(--space-16);
+}
+
+.stat--compact .stat__value {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
+}
+
+/* Selo do ícone — cor neutra por padrão; o ícone reforça o mesmo assunto que
+   a faixa lateral já indica, então herda a cor de texto da variante em vez
+   de repetir a cor de fundo (que em alguns tokens é clara demais para um
+   traço fino ficar legível). */
+.stat__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.stat__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface-sunken);
+  color: var(--color-primary-text);
+}
+
+.stat--accent .stat__icon   { color: var(--color-accent-text); }
+.stat--info .stat__icon     { color: var(--color-info-text); }
+.stat--warning .stat__icon  { color: var(--color-warning-text); }
+.stat--negative .stat__icon { color: var(--color-negative-text); }
 
 .stat__label {
   font-size: var(--text-sm);
@@ -1440,6 +1516,7 @@ button.input-wrap__affix[aria-pressed="true"] {
 .skeleton--title { height: 24px; width: 40%; }
 .skeleton--row   { height: var(--table-row-height); border-radius: var(--radius-control); }
 .skeleton--stat  { height: 128px; border-radius: var(--radius-card); }
+.skeleton--stat-compact { height: 114px; border-radius: var(--radius-card); }
 
 @keyframes skeleton-sweep {
   from { background-position: 200% 0; }
