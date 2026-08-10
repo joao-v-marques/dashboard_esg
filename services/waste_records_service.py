@@ -58,9 +58,7 @@ class WasteRecordService:
                 'unit_id': "A unidade é obrigatória",
                 'waste_type_id': "O tipo de resíduo é obrigatório",
                 'weight_kg': "O peso é obrigatório",
-                'observations': "As observações são obrigatórias",
-                'updated_at': "A data de atualização é obrigatória",
-                'updated_by': "O usuário responsável pela atualização é obrigatório",
+                'observations': "As observações são obrigatórias"
             }
 
             for field, message in required_fields.items():
