@@ -73,12 +73,16 @@ CREATE TABLE waste_records (
     CONSTRAINT uq_unique_waste_record UNIQUE (record_date, unit_id, waste_type_id) -- CONSTRAINT QUE IMPEDE DE LANÇAR COM A MESMA DATA, MESMA UNIDADE E MESMO TIPO TUDO JUNTO
 );
 
+
+-- Inserção de todos os setores iniciais da aplicação
 INSERT INTO sectors (name)
 VALUES ('TIC'), ('Compras');
 
+-- Inserção de todas as roles iniciais da aplicação
 INSERT INTO roles (name)
 VALUES ('administrator'), ('employee');
 
+-- Inserção de todos os usuários iniciais da aplicação
 INSERT INTO users (username, name, password_hash, email, role_id, sector_id)
 VALUES (
     'admin',
@@ -89,12 +93,14 @@ VALUES (
     1 -- Relacionado ao setor do TIC
 );
 
+-- Inserção de todas as unidades iniciais da aplicação
 INSERT INTO units (name, code)
 VALUES
     ('Sede', 'SEDE'),
     ('Centro Médico', 'CM'),
     ('Espaço Viver Bem', 'EVB');
 
+-- Inserção de todos os tipos de resíduos iniciais da aplicação
 INSERT INTO waste_types (name, code, is_recyclable)
 VALUES 
     ('Reciclável', 'REC', true),
