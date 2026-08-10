@@ -46,7 +46,7 @@ def create():
             "message": str(e)
         }), 500
 
-@bp_waste_records.route("/api/waste_records", methods=['PUT'])
+@bp_waste_records.route("/api/waste-records", methods=['PUT'])
 def update():
     try:
         data = request.get_json()
