@@ -7,6 +7,7 @@ from routes.auth_controller import bp_auth
 from routes.unit_controller import bp_unit
 from routes.waste_records_controller import bp_waste_records
 from routes.waste_types_controller import bp_waste_types
+from routes.waste_dashboard_controller import bp_waste_dashboard
 
 PREFIX = "/dashboard-esg"
 
@@ -22,3 +23,4 @@ def config_bps(app):
     app.register_blueprint(bp_unit, url_prefix=PREFIX)
     app.register_blueprint(bp_waste_records, url_prefix=PREFIX)
     app.register_blueprint(bp_waste_types, url_prefix=PREFIX)
+    app.register_blueprint(bp_waste_dashboard, url_prefix=PREFIX)
