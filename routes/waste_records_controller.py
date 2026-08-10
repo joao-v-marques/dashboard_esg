@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify, request
 from services.waste_records_service import WasteRecordService
 from utils.exceptions import ValidationError
+from middlewares.jwt_middleware import token_required_api
 
 bp_waste_records = Blueprint("bp_waste_records", __name__)
 
 @bp_waste_records.route("/api/waste-records", methods=['GET'])
+@token_required_api
 def get_all():
     try:
         waste_records = WasteRecordService.get_all()
@@ -19,6 +21,7 @@ def get_all():
         }), 500
 
 @bp_waste_records.route("/api/waste-records/<int:waste_record_id>", methods=['GET'])
+@token_required_api
 def get_by_id(waste_record_id):
     try:
         waste_record = WasteRecordService.get_by_id(waste_record_id)
@@ -30,6 +33,7 @@ def get_by_id(waste_record_id):
         }), 500
 
 @bp_waste_records.route("/api/waste-records", methods=['POST'])
+@token_required_api
 def create():
     try:
         data = request.get_json()
@@ -47,6 +51,7 @@ def create():
         }), 500
 
 @bp_waste_records.route("/api/waste-records", methods=['PUT'])
+@token_required_api
 def update():
     try:
         data = request.get_json()
