@@ -1,0 +1,65 @@
+from database.connect_db import get_db_connection
+
+class Nip:
+    def __init__(self, notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, inserted_by, created_at=None, updated_at=None, updated_by=None, id=None):
+        self.id = id
+        self.notification_date = notification_date
+        self.demand_code = demand_code
+        self.protocol_code = protocol_code
+        self.beneficiary_name = beneficiary_name
+        self.beneficiary_cpf = beneficiary_cpf
+        self.description = description
+        self.status_id = status_id
+        self.nature_id = nature_id
+        self.inserted_by = inserted_by
+        self.created_at = created_at
+        self.updated_at = updated_at
+        self.updated_by = updated_by
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "notification_date": self.notification_date,
+            "demand_code": self.demand_code,
+            "protocol_code": self.protocol_code,
+            "beneficiary_name": self.beneficiary_name,
+            "beneficiary_cpf": self.beneficiary_cpf,
+            "description": self.description,
+            "status_id": self.status_id,
+            "nature_id": self.nature_id,
+            "inserted_by": self.inserted_by,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "updated_by": self.updated_by
+        }
+
+class NipModel:
+    # GET ALL de todas as NIP's cadastrados na aplicação
+    @staticmethod
+    def get_all():
+        conn = None
+        cursor = None
+        try:
+            conn, cursor = get_db_connection()
+
+            sql_query = """
+                SELECT *
+                FROM nips
+            """
+
+            cursor.execute(sql_query)
+            nips_data = cursor.fetchall()
+
+            nips = [
+                Nip(**nip)
+                for nip in nips_data
+            ]
+
+            return nips
+        except Exception as e:
+            raise Exception(str(e))
+        finally:
+            if conn:
+                conn.close()
+            if cursor:
+                cursor.close()
