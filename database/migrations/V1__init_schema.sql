@@ -164,10 +164,13 @@ INSERT INTO nip_status (name, description)
 VALUES
     ('Finalizada - NIP Assistencial Inativa', 'NIP de natureza assistencial encerrada por inatividade, sem novas movimentações no prazo previsto'),
     ('Finalizada - NIP Não Assistencial Inativa', 'NIP de natureza não assistencial encerrada por inatividade, sem novas movimentações no prazo previsto'),
+    ('Finalizada - NIP Assistencial Não Procedente', 'NIP de natureza assistencial encerrada após a análise concluir que a demanda do beneficiário não era procedente'),
     ('Finalizada por Inexistência de Indício de Infração', 'NIP encerrada após análise não identificar indícios de infração pela operadora'),
     ('Finalizada - NIP Resolvida (RVE)', 'NIP encerrada com Resolução Verificada na Etapa (RVE), ou seja, a demanda do beneficiário foi atendida pela operadora'),
     ('Aguardando Classificação da Demanda NIP - RN388', 'NIP em aberto aguardando a classificação da demanda conforme os critérios da RN 388 da ANS'),
-    ('Finalizada por Duplicidade', 'NIP encerrada por ser registro duplicado de outra demanda já existente');
+    ('Aguardando Abertura de Processo', 'NIP com demanda não resolvida na fase de mediação, aguardando a abertura de processo administrativo sancionador pela ANS'),
+    ('Finalizada por Duplicidade', 'NIP encerrada por ser registro duplicado de outra demanda já existente'),
+    ('Finalizada - NIP Assistencial Não Resolvida', 'NIP de natureza assistencial encerrada sem que a demanda do beneficiário fosse atendida pela operadora');
 
 CREATE TABLE nips (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
