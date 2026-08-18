@@ -150,7 +150,11 @@ function initWasteKpis() {
    [data-cooperados-kpis-loading]         esqueleto; estado inicial
    [data-cooperados-kpis-content]         stats + tabela de faixas; nasce hidden
    [data-cooperados-kpis-error]           recado de falha; nasce hidden
-   [data-cooperados-kpi-cooperativismo]   % de cooperados capacitados em cooperativismo
+   [data-cooperados-kpi-cooperativismo-quantidade]
+                                          quantidade de cooperados capacitados em
+                                          cooperativismo
+   [data-cooperados-kpi-cooperativismo]   % que essa quantidade representa do total
+                                          de cooperados
    [data-cooperados-kpi-satisfacao]       índice de satisfação (%), "—" se não houver
                                            pesquisa cadastrada para o ano
    [data-cooperados-kpi-manifestacoes]    total de manifestações registradas no ano
@@ -224,11 +228,13 @@ function renderBandsTable(bands) {
 }
 
 function renderCooperadosKpis(data) {
+    const cooperativismoQuantidade = document.querySelector("[data-cooperados-kpi-cooperativismo-quantidade]");
     const cooperativismo = document.querySelector("[data-cooperados-kpi-cooperativismo]");
     const satisfacao = document.querySelector("[data-cooperados-kpi-satisfacao]");
     const manifestacoes = document.querySelector("[data-cooperados-kpi-manifestacoes]");
 
-    if (cooperativismo) cooperativismo.textContent = formatPercent(data.pct_capacitados_cooperativismo);
+    if (cooperativismoQuantidade) cooperativismoQuantidade.textContent = formatCount(data.capacitados_cooperativismo.quantidade);
+    if (cooperativismo) cooperativismo.textContent = formatPercent(data.capacitados_cooperativismo.percentual);
     // null quando não há pesquisa de satisfação cadastrada para o ano pedido —
     // ver services/cooperados_dashboard_service.py, _indice_satisfacao.
     if (satisfacao) satisfacao.textContent = data.indice_satisfacao === null ? "—" : formatPercent(data.indice_satisfacao);
