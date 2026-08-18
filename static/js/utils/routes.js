@@ -41,6 +41,7 @@ export const API = {
     wasteTypes: `${BASE_PATH}/api/waste-types`,
     units: `${BASE_PATH}/api/units`,
     wasteDashboard: `${BASE_PATH}/api/residuos/dashboard`,
+    cooperadosDashboard: `${BASE_PATH}/api/cooperados/dashboard`,
 };
 
 /**

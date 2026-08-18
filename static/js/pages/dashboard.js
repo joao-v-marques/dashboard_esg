@@ -143,11 +143,147 @@ function initWasteKpis() {
 }
 
 /* =========================================================================
+   Cooperados (KPIs de outra aplicação, certificados_cooperados)
+
+   Contrato com o HTML (data-*):
+   [data-cooperados-kpi-ano]              campo de ano; dispara nova busca ao mudar
+   [data-cooperados-kpis-loading]         esqueleto; estado inicial
+   [data-cooperados-kpis-content]         stats + tabela de faixas; nasce hidden
+   [data-cooperados-kpis-error]           recado de falha; nasce hidden
+   [data-cooperados-kpi-cooperativismo]   % de cooperados capacitados em cooperativismo
+   [data-cooperados-kpi-satisfacao]       índice de satisfação (%), "—" se não houver
+                                           pesquisa cadastrada para o ano
+   [data-cooperados-kpi-manifestacoes]    total de manifestações registradas no ano
+   [data-cooperados-bands-body]           <tbody> da tabela de cooperados por faixa
+
+   Diferente de Resíduos, o período aqui é um ano só (os indicadores de lá são
+   por ano-base), não um intervalo De/Até. Uma falha aqui — inclusive o 502 que
+   o backend devolve quando o certificados_cooperados está fora do ar — cai no
+   mesmo estado de erro, sem derrubar a seção de Resíduos ao lado.
+   ========================================================================= */
+
+function getCooperadosKpiElements() {
+    return {
+        loading: document.querySelector("[data-cooperados-kpis-loading]"),
+        content: document.querySelector("[data-cooperados-kpis-content]"),
+        error: document.querySelector("[data-cooperados-kpis-error]"),
+    };
+}
+
+function showCooperadosKpiState(name) {
+    const elements = getCooperadosKpiElements();
+    Object.entries(elements).forEach(([key, element]) => {
+        if (element) element.hidden = key !== name;
+    });
+}
+
+function formatCount(value) {
+    return Number(value).toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+}
+
+function buildBandCell(text, { numeric = false } = {}) {
+    const td = document.createElement("td");
+    if (numeric) td.classList.add("table__num");
+    td.textContent = text;
+    return td;
+}
+
+/**
+ * Célula da faixa: uma pílula colorida (.band--N), mesma cor por faixa do
+ * certificados_cooperados — ver --color-band-* em tokens.css. band.faixa vai
+ * de 1 a 5 (PointsBandPolicy.BAND_COUNT do outro app), então band--1..5 cobre
+ * tudo que a API pode mandar.
+ */
+function buildBandLabelCell(faixa) {
+    const td = document.createElement("td");
+
+    const pill = document.createElement("span");
+    pill.className = `band band--${faixa}`;
+    pill.textContent = `Faixa ${faixa}`;
+
+    td.appendChild(pill);
+    return td;
+}
+
+function buildBandRow(band) {
+    const tr = document.createElement("tr");
+
+    tr.appendChild(buildBandLabelCell(band.faixa));
+    tr.appendChild(buildBandCell(`${band.de}% a ${band.ate}%`));
+    tr.appendChild(buildBandCell(formatCount(band.quantidade), { numeric: true }));
+    tr.appendChild(buildBandCell(formatPercent(band.percentual), { numeric: true }));
+
+    return tr;
+}
+
+function renderBandsTable(bands) {
+    const body = document.querySelector("[data-cooperados-bands-body]");
+    if (!body) return;
+
+    body.replaceChildren(...bands.map(buildBandRow));
+}
+
+function renderCooperadosKpis(data) {
+    const cooperativismo = document.querySelector("[data-cooperados-kpi-cooperativismo]");
+    const satisfacao = document.querySelector("[data-cooperados-kpi-satisfacao]");
+    const manifestacoes = document.querySelector("[data-cooperados-kpi-manifestacoes]");
+
+    if (cooperativismo) cooperativismo.textContent = formatPercent(data.pct_capacitados_cooperativismo);
+    // null quando não há pesquisa de satisfação cadastrada para o ano pedido —
+    // ver services/cooperados_dashboard_service.py, _indice_satisfacao.
+    if (satisfacao) satisfacao.textContent = data.indice_satisfacao === null ? "—" : formatPercent(data.indice_satisfacao);
+    if (manifestacoes) manifestacoes.textContent = formatCount(data.manifestacoes_registradas);
+
+    renderBandsTable(data.cooperados_por_faixa);
+
+    showCooperadosKpiState("content");
+}
+
+async function loadCooperadosKpis(ano) {
+    showCooperadosKpiState("loading");
+
+    try {
+        const url = `${API.cooperadosDashboard}?ano=${ano}`;
+        const response = await fetch(url, { credentials: "same-origin" });
+
+        if (response.status === 401) {
+            window.location.replace(`${PAGES.login}?reason=session-expired`);
+            return;
+        }
+
+        if (!response.ok) throw new Error(`A API respondeu ${response.status}`);
+
+        const data = await response.json();
+        renderCooperadosKpis(data);
+    } catch (error) {
+        showCooperadosKpiState("error");
+        console.error(error);
+    }
+}
+
+function initCooperadosKpis() {
+    const yearInput = document.querySelector("[data-cooperados-kpi-ano]");
+    if (!yearInput) return;
+
+    const currentYear = new Date().getFullYear();
+    yearInput.value = String(currentYear);
+    yearInput.max = String(currentYear);
+
+    yearInput.addEventListener("change", () => {
+        if (!yearInput.value) return;
+        loadCooperadosKpis(yearInput.value);
+    });
+
+    loadCooperadosKpis(currentYear);
+}
+
+/* =========================================================================
    Ligação
    ========================================================================= */
 
 function init() {
     initWasteKpis();
+    initCooperadosKpis();
 }
 
 if (document.readyState === "loading") {
