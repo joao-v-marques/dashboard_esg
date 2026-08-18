@@ -63,3 +63,32 @@ class NipModel:
                 conn.close()
             if cursor:
                 cursor.close()
+
+    # POST de uma nova NIP
+    @staticmethod
+    def create(nip):
+        conn = None
+        cursor = None
+        try:
+            conn, cursor = get_db_connection()
+
+            sql_query = """
+                INSERT INTO nips (notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, inserted_by)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """
+            values = (nip.notification_date, nip.demand_code, nip.protocol_code, nip.beneficiary_name, nip.beneficiary_cpf, nip.description, nip.status_id, nip.nature_id, nip.inserted_by)
+
+            cursor.execute(sql_query, values)
+            conn.commit()
+            new_id = cursor.fetchone()["id"]
+
+            nip.id = new_id
+            return nip
+        except Exception as e:
+            raise Exception(str(e))
+        finally:
+            if conn:
+                conn.close()
+            if cursor:
+                cursor.close()
