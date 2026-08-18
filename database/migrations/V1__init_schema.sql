@@ -123,8 +123,8 @@ VALUES (
     'Administrador do Sistema',
     '$argon2id$v=19$m=65536,t=3,p=4$LZh7MQYZvSLvbZ42dtFk8A$R1vNqZD/XoQyhJOoOjX7BY8HtYj7mpFsxGSxbSd2or4',
     'joaovictor@unimedssp.coop.br',
-    1, -- Role de administrator
-    1 -- Relacionado ao setor do TIC
+    1,
+    1
 );
 
 -- Inserção de todas as unidades iniciais da aplicação
@@ -140,3 +140,55 @@ VALUES
     ('Reciclável', 'REC', true),
     ('Não Reciclável', 'NREC', false),
     ('Orgânico', 'ORG', true);
+
+CREATE TABLE nip_natures (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT
+);
+
+INSERT INTO nip_natures (name, description)
+VALUES
+    ('Assistencial', 'NIPs de natureza assistencial'),
+    ('Não Assistencial', 'NIPs que não são de natureza assistencial');
+
+CREATE TABLE nip_status (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT
+);
+
+INSERT INTO nip_status (name, description)
+VALUES
+    ('Finalizada - NIP Assistencial Inativa', 'NIP de natureza assistencial encerrada por inatividade, sem novas movimentações no prazo previsto'),
+    ('Finalizada - NIP Não Assistencial Inativa', 'NIP de natureza não assistencial encerrada por inatividade, sem novas movimentações no prazo previsto'),
+    ('Finalizada por Inexistência de Indício de Infração', 'NIP encerrada após análise não identificar indícios de infração pela operadora'),
+    ('Finalizada - NIP Resolvida (RVE)', 'NIP encerrada com Resolução Verificada na Etapa (RVE), ou seja, a demanda do beneficiário foi atendida pela operadora'),
+    ('Aguardando Classificação da Demanda NIP - RN388', 'NIP em aberto aguardando a classificação da demanda conforme os critérios da RN 388 da ANS'),
+    ('Finalizada por Duplicidade', 'NIP encerrada por ser registro duplicado de outra demanda já existente');
+
+CREATE TABLE nips (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    notification_date DATE NOT NULL,
+    demand_code VARCHAR(50) NOT NULL,
+    protocol_code VARCHAR(50) NOT NULL UNIQUE,
+    beneficiary_name VARCHAR(150) NOT NULL,
+    beneficiary_cpf CHAR(11) NOT NULL,
+    description TEXT,
+
+    status_id INT NOT NULL,    -- FK nip_status
+    nature_id INT NOT NULL,    -- FK nip_nature
+    inserted_by INT NOT NULL,  -- FK users
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ,
+    updated_by INT,            -- FK users
+
+    -- FOREIGN KEYS
+    CONSTRAINT fk_nip_status FOREIGN KEY (status_id) REFERENCES nip_status(id),
+    CONSTRAINT fk_nip_nature FOREIGN KEY (nature_id) REFERENCES nip_natures(id),  
+    CONSTRAINT fk_nip_inserted_by FOREIGN KEY (inserted_by) REFERENCES users(id),
+    CONSTRAINT fk_nip_updated_by FOREIGN KEY (updated_by) REFERENCES users(id)
+);
