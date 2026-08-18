@@ -1,7 +1,11 @@
 from database.connect_db import get_db_connection
 
 class Nip:
-    def __init__(self, notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, inserted_by=None, created_at=None, updated_at=None, updated_by=None, id=None):
+    # Os campos *_name não existem na tabela nips: vêm dos JOINs de get_all/
+    # get_by_id, do mesmo jeito que unit_name e inserted_by_name em
+    # WasteRecord. Por isso são opcionais — o UPDATE usa RETURNING *, que
+    # devolve só as colunas da própria tabela, e o objeto continua válido.
+    def __init__(self, notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, inserted_by=None, created_at=None, updated_at=None, updated_by=None, id=None, status_name=None, nature_name=None, inserted_by_name=None, updated_by_name=None):
         self.id = id
         self.notification_date = notification_date
         self.demand_code = demand_code
@@ -10,11 +14,15 @@ class Nip:
         self.beneficiary_cpf = beneficiary_cpf
         self.description = description
         self.status_id = status_id
+        self.status_name = status_name
         self.nature_id = nature_id
+        self.nature_name = nature_name
         self.inserted_by = inserted_by
+        self.inserted_by_name = inserted_by_name
         self.created_at = created_at
         self.updated_at = updated_at
         self.updated_by = updated_by
+        self.updated_by_name = updated_by_name
 
     def to_dict(self):
         return {
@@ -26,11 +34,15 @@ class Nip:
             "beneficiary_cpf": self.beneficiary_cpf,
             "description": self.description,
             "status_id": self.status_id,
+            "status_name": self.status_name,
             "nature_id": self.nature_id,
+            "nature_name": self.nature_name,
             "inserted_by": self.inserted_by,
+            "inserted_by_name": self.inserted_by_name,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
-            "updated_by": self.updated_by
+            "updated_by": self.updated_by,
+            "updated_by_name": self.updated_by_name
         }
 
 class NipModel:
@@ -42,9 +54,22 @@ class NipModel:
         try:
             conn, cursor = get_db_connection()
 
+            # updated_by entra por LEFT JOIN, e não INNER: ele é nulo até a NIP
+            # ser editada pela primeira vez, e um INNER esconderia da listagem
+            # justamente toda NIP que nunca foi alterada.
             sql_query = """
-                SELECT *
-                FROM nips
+                SELECT n.id, n.notification_date, n.demand_code, n.protocol_code,
+                       n.beneficiary_name, n.beneficiary_cpf, n.description,
+                       n.status_id, s.name AS status_name,
+                       n.nature_id, nt.name AS nature_name,
+                       n.inserted_by, ui.name AS inserted_by_name,
+                       n.created_at, n.updated_at,
+                       n.updated_by, uu.name AS updated_by_name
+                FROM nips n
+                INNER JOIN nip_status s ON s.id = n.status_id
+                INNER JOIN nip_natures nt ON nt.id = n.nature_id
+                INNER JOIN users ui ON ui.id = n.inserted_by
+                LEFT JOIN users uu ON uu.id = n.updated_by
             """
 
             cursor.execute(sql_query)
@@ -81,6 +106,11 @@ class NipModel:
 
             cursor.execute(sql_query, values)
             nip_data = cursor.fetchone()
+
+            # Sem o guard, id inexistente estoura em Nip(**None) antes do
+            # "if not nip" do service conseguir devolver a mensagem certa.
+            if not nip_data:
+                return None
 
             nip = Nip(**nip_data)
 
