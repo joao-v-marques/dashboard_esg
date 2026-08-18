@@ -18,7 +18,7 @@ class CooperadosDashboardService:
             return {
                 "ano": year,
                 "cooperados_por_faixa": CooperadosDashboardService._faixas(bands_raw),
-                "pct_capacitados_cooperativismo": CooperadosDashboardService._pct_cooperativismo(annual_report_raw),
+                "capacitados_cooperativismo": CooperadosDashboardService._capacitados_cooperativismo(annual_report_raw),
                 "indice_satisfacao": CooperadosDashboardService._indice_satisfacao(surveys_raw, year),
                 "manifestacoes_registradas": CooperadosDashboardService._manifestacoes_registradas(occurrences_raw, year),
             }
@@ -55,11 +55,18 @@ class CooperadosDashboardService:
         ]
 
     @staticmethod
-    def _pct_cooperativismo(annual_report_raw):
+    def _capacitados_cooperativismo(annual_report_raw):
         total_members = annual_report_raw["totalMembers"]
         trained = annual_report_raw["membersTrainedInCooperativism"]
 
-        return round(trained / total_members * 100, 2) if total_members else 0
+        # O card mostra o absoluto junto do %, então os dois vao no payload —
+        # e o % segue a mesma regra do resto do dashboard: recalculado aqui a
+        # partir do numerador/denominador brutos.
+        return {
+            "quantidade": trained,
+            "total": total_members,
+            "percentual": round(trained / total_members * 100, 2) if total_members else 0,
+        }
 
     @staticmethod
     def _indice_satisfacao(surveys_raw, year):
