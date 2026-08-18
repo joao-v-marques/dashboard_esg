@@ -1953,92 +1953,137 @@ button.input-wrap__affix[aria-pressed="true"] {
 
 .nav__icon { flex: none; }
 
-/* Grupo expansível (ex.: "Resíduos" → "Lançar Resíduo") ------------------- */
+/* Grupo da navegação (accordion) ------------------------------------------ */
 
-.nav__group { display: flex; flex-direction: column; }
+/*
+   Três coisas diferentes dividem a mesma coluna: o rótulo de seção, que não
+   clica; o link, que leva a uma página; e o grupo, que não leva a lugar nenhum
+   e só guarda outros links. Os dois últimos eram desenhados iguais, e a única
+   diferença era o caret de 16px — pequeno demais para sustentar sozinho a
+   distinção entre "isto navega" e "isto abre".
 
-.nav__group-trigger {
+   O grupo vira um poço: fundo mais escuro que a sidebar, e os filhos pendurados
+   numa guia vertical quando ele abre. Escuro, e não claro, porque os tons claros
+   do petróleo já estão ocupados por hover e item atual — clarear aqui apagaria
+   o realce de quem passa o mouse dentro do próprio grupo.
+
+   O fundo fica também com o grupo fechado, de propósito: fechado é justamente
+   quando ele mais se parece com um link, e o caret sozinho é sutil demais para
+   avisar que aquela linha abre em vez de navegar. De quebra, a margem não muda
+   ao abrir, então os itens de baixo não pulam a cada clique.
+*/
+/* A margem é pequena porque o fundo já faz a separação: dobrá-la só empurraria
+   a sidebar para o scroll em telas de notebook, com o grupo aberto. */
+.nav-group {
+  margin-block: var(--space-4);
+  border-radius: var(--radius-control);
+  background-color: var(--color-brand-deep-dark);
+}
+
+/* Fecha o poço embaixo do último filho. Quem liga e desliga a classe é o
+   js/pages/shell.js, junto com o aria-expanded. */
+.nav-group.is-open { padding-bottom: var(--space-4); }
+
+/* O gatilho é <button>, e não <a>: ele não leva a lugar nenhum, só abre o
+   grupo. Herda .nav__link para o alinhamento e a altura dos vizinhos, e o
+   reset abaixo desfaz o que o navegador impõe a botão. */
+.nav-group__trigger {
   width: 100%;
-  background: none;
   border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
   cursor: pointer;
 }
 
-.nav__group-caret {
-  flex: none;
-  margin-left: auto;
-  color: var(--color-text-on-inverse);
-  transition: transform var(--duration-fast) var(--ease);
-}
-
-.nav__group-trigger[aria-expanded="true"] .nav__group-caret {
-  transform: rotate(180deg);
-}
-
-/* Qualificado com o elemento (ul.nav__group-panel, não só a classe): o painel
-   é uma <ul>, e o reset global de listas em base.css (`ul[class] { margin: 0;
-   padding: 0; }`) tem a mesma especificidade de uma classe sozinha mais o
-   elemento — sem o "ul." aqui, o reset vence e margin-top/padding-left nunca
-   chegam a valer, não importa o valor escrito. */
-ul.nav__group-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  margin-top: var(--space-8);
-  padding-left: var(--space-24);
-}
-
-.nav__group-panel[hidden] { display: none; }
-
-.nav__sublink {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: var(--control-height);
-  padding-inline: var(--space-8);
-  border-radius: var(--radius-control);
-  color: var(--color-text-on-inverse);
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-  font-weight: var(--weight-medium);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background-color var(--duration-fast) var(--ease),
-    color var(--duration-fast) var(--ease);
-}
-
-.nav__sublink:hover {
-  background-color: var(--color-brand-deep-hover);
-  color: var(--palette-white);
-}
-
-.nav__sublink:active {
-  background-color: var(--color-brand-deep-active);
-}
-
-.nav__sublink.is-active {
-  background-color: var(--color-brand-deep-active);
+/* Aberto, o gatilho deixa de ser um item da lista e passa a ser o cabeçalho do
+   poço — é o único momento em que ganha o peso que o item atual tem. */
+.nav-group.is-open > .nav-group__trigger {
   color: var(--palette-white);
   font-weight: var(--weight-semibold);
 }
 
-/* Marcador de "página atual" do subitem: um ponto, não a barra que
-   .nav__link.is-active usa — a barra ficaria colada na borda do preenchimento
-   sólido do subitem, e há espaço de sobra no recuo à esquerda dele (o
-   padding-left de ul.nav__group-panel) para um ponto centralizado ali, como
-   os pontos de status de .badge::before.
-   O left negativo empurra o ponto para dentro desse recuo: --space-24 é a
-   largura do recuo, --space-8 centraliza o ponto de 8px nele. */
-.nav__sublink.is-active::before {
+/* Empurra o caret para a direita, sem precisar de elemento espaçador. */
+.nav-group__trigger .nav__label { flex: 1 1 auto; }
+
+/* Mais apagado que o rótulo: o caret é controle, não conteúdo. Ele acende no
+   hover e no grupo aberto, que é quando importa saber que aquilo abre. */
+.nav-group__caret {
+  flex: none;
+  color: var(--palette-teal-200);
+  transition: transform var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.nav-group__trigger:hover .nav-group__caret,
+.nav-group.is-open > .nav-group__trigger .nav-group__caret {
+  color: var(--palette-white);
+}
+
+.nav-group__trigger[aria-expanded="true"] .nav-group__caret {
+  transform: rotate(180deg);
+}
+
+/* Grupo fechado guardando a página atual: uma pílula curta no lugar em que o
+   item atual usa a barra inteira. Diz "o que você está vendo está aqui dentro"
+   sem afirmar que o próprio gatilho é a página — ele não é destino nenhum.
+   A classe vem do shell.js. Aberto, quem marca é a barra do filho. */
+.nav-group.has-active > .nav-group__trigger[aria-expanded="false"]::before {
   content: "";
   position: absolute;
-  left: calc(var(--space-8) - var(--space-24));
-  top: 50%;
-  transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
+  left: 0;
+  top: 30%;
+  bottom: 30%;
+  width: 4px;
   border-radius: var(--radius-pill);
   background-color: var(--color-accent);
+}
+
+/* Recuo que liga visualmente os filhos ao grupo. O padding entra à esquerda
+   para o realce de hover continuar ocupando a largura toda do item.
+
+   O seletor repete a classe de propósito: o reset `ul[class]` do base.css zera
+   o padding de toda lista com classe e, por ter um seletor de atributo, vence
+   uma classe sozinha. Sem isso o recuo não sai do papel — os filhos vêm
+   alinhados com os itens de primeiro nível, e o grupo parece um punhado de
+   links soltos. Simplificar para `.nav-group__items` desfaz o recuo de novo. */
+.nav.nav-group__items {
+  position: relative;
+  margin-top: var(--space-4);
+  padding-left: var(--space-16);
+}
+
+/* A guia vertical que prende os filhos ao cabeçalho. Fica exatamente onde a
+   barra do item atual nasce (borda esquerda do link, já recuada pelo padding
+   do <ul>): o realce do filho ativo cobre o trecho correspondente da guia, e o
+   caminho até a página atual se lê de uma vez. */
+.nav-group.is-open .nav-group__items::before {
+  content: "";
+  position: absolute;
+  left: var(--space-16);
+  top: var(--space-4);
+  bottom: 0;
+  width: 2px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-border-inverse);
+}
+
+/* O <ul> também é .nav, que define display:flex — e qualquer regra de autor
+   vence o [hidden]{display:none} da folha do navegador, por mais específico
+   que ele pareça. Sem esta linha o atributo hidden não esconde nada e o grupo
+   fica permanentemente aberto. */
+.nav-group__items[hidden] { display: none; }
+
+/* Os filhos são destino como qualquer outro, um degrau abaixo na hierarquia da
+   coluna. Quem marca o degrau é o recuo, a guia e o peso — não a cor: apagá-los
+   sobre o fundo do poço custaria legibilidade sem dizer nada que o recuo já não
+   diga. */
+.nav-group__items .nav__link { font-weight: var(--weight-regular); }
+
+.nav-group__items .nav__link.is-active { font-weight: var(--weight-semibold); }
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-group__caret { transition: none; }
 }
 
 .sidebar__footer {
@@ -2081,15 +2126,34 @@ ul.nav__group-panel {
 
 .app.is-collapsed .nav__link.is-active::before { display: none; }
 
-/* Faixa de ícones não tem largura para o painel do grupo (nem para o rótulo,
-   que essa mesma seção já esconde). Sem um flyout por hover, que este projeto
-   ainda não tem, o grupo recolhido funciona como ícone mudo. */
-.app.is-collapsed .nav__group-caret { display: none; }
-.app.is-collapsed .nav__group-panel { display: none; }
-
 .app.is-collapsed .nav__link.is-active {
   box-shadow: inset 0 0 0 1px var(--color-accent);
 }
+
+/* Na faixa de ícones não há espaço para abrir e fechar grupo: o gatilho sai e
+   os filhos ficam sempre à mostra, como itens comuns. Recolher a sidebar não
+   pode esconder destino de navegação atrás de um clique a mais.
+   O seletor precisa vencer o [hidden] do navegador, por isso repete o
+   atributo em vez de só nomear a classe. */
+.app.is-collapsed .nav-group__trigger { display: none; }
+
+.app.is-collapsed .nav-group__items,
+.app.is-collapsed .nav-group__items[hidden] {
+  display: flex;
+  margin-top: 0;
+  padding-left: 0;
+}
+
+/* Sem gatilho e sem recuo não há grupo a delimitar: o poço e a guia sairiam
+   como um retângulo escuro solto no meio da faixa de ícones. */
+.app.is-collapsed .nav-group {
+  margin-block: 0;
+  background-color: transparent;
+}
+
+.app.is-collapsed .nav-group.is-open { padding-bottom: 0; }
+
+.app.is-collapsed .nav-group__items::before { display: none; }
 
 /* Área de conteúdo -------------------------------------------------------- */
 
@@ -2159,11 +2223,26 @@ ul.nav__group-panel {
   .app.is-collapsed .nav__link.is-active::before { display: block; }
   .app.is-collapsed .nav__link.is-active { box-shadow: none; }
 
-  /* O overlay do celular não é a faixa de ícones: o grupo volta a se comportar
-     como no desktop expandido, mesmo com uma preferência de recolhido salva. */
-  .app.is-collapsed .nav__group-caret { display: block; }
-  .app.is-collapsed .nav__group-panel { display: flex; }
-  .app.is-collapsed .nav__group-panel[hidden] { display: none; }
+  /* O grupo volta a ser accordion: em overlay há largura para rótulo e para
+     abrir e fechar, então a preferência de recolher guardada no desktop não
+     pode continuar valendo aqui. */
+  .app.is-collapsed .nav-group__trigger { display: flex; }
+  .app.is-collapsed .nav-group__items[hidden] { display: none; }
+
+  .app.is-collapsed .nav-group__items {
+    margin-top: var(--space-4);
+    padding-left: var(--space-16);
+  }
+
+  /* Com o accordion de volta, o poço e a guia voltam junto. */
+  .app.is-collapsed .nav-group {
+    margin-block: var(--space-4);
+    background-color: var(--color-brand-deep-dark);
+  }
+
+  .app.is-collapsed .nav-group.is-open { padding-bottom: var(--space-4); }
+
+  .app.is-collapsed .nav-group.is-open .nav-group__items::before { display: block; }
 }
 
 @media (max-width: 899px) {

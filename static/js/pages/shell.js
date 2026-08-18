@@ -31,7 +31,7 @@
  *   [data-logout]           botão de encerrar a sessão
  *   [data-nav-group]          item de navegação com subitens (ex.: "Resíduos")
  *     [data-nav-group-trigger]  botão que abre/fecha, com aria-expanded
- *     [data-nav-group-panel]    lista de subitens, controlada por hidden
+ *     [data-nav-group-items]    lista de subitens, controlada por hidden
  *
  * [data-user-name] aparece na topbar e também pode aparecer no conteúdo da
  * página (a saudação da home, por exemplo): a escrita é feita em todas as
@@ -90,7 +90,17 @@ const NAV_ITEMS = [
                 <path d="M8.5 9.5v4M11.5 9.5v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>`,
         children: [
-            { href: PAGES.wasteRecords, label: "Lançar Resíduo" },
+            {
+                href: PAGES.wasteRecords,
+                label: "Lançar Resíduo",
+                icon: `
+            <svg class="nav__icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M5.5 3.5h5l4 4V16a.5.5 0 0 1-.5.5H5.5A.5.5 0 0 1 5 16V4a.5.5 0 0 1 .5-.5Z"
+                      stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M10 10v3.5M8.25 11.75h3.5" stroke="currentColor" stroke-width="1.5"
+                      stroke-linecap="round"/>
+            </svg>`,
+            },
         ],
     },
     // TODO: os demais itens entram aqui conforme as telas forem criadas.
@@ -124,49 +134,43 @@ function navItemMarkup(item) {
         </li>`;
 }
 
-/** Subitem dentro de um grupo — mesmo tratamento de tela atual do link comum. */
-function navSublinkMarkup(child) {
-    const current = isCurrentPage(child.href);
-
-    return `
-        <li>
-            <a class="nav__sublink${current ? " is-active" : ""}"
-               href="${child.href}"${current ? ' aria-current="page"' : ""}>
-                <span class="nav__label">${child.label}</span>
-            </a>
-        </li>`;
-}
-
 /**
  * Grupo expansível da sidebar (ex.: "Resíduos" → "Lançar Resíduo").
  *
- * Abre sozinho quando a tela atual é um dos subitens — assim a pessoa entende
- * onde está sem precisar clicar. O painel é uma <ul> própria, e não uma
- * continuação do <ul class="nav"> pai: precisa de um id para o aria-controls
- * do gatilho apontar, e uma lista dentro de item de lista exige o próprio
- * elemento de lista.
+ * O grupo é um poço: o gatilho é o cabeçalho e os subitens ficam pendurados
+ * numa guia vertical, recuados — é o que distingue "isto abre" de "isto
+ * navega", já que um caret de 16px sozinho não sustenta essa diferença.
+ *
+ * Os subitens são .nav__link como qualquer outro destino; quem marca o degrau
+ * a menos na hierarquia é o recuo, a guia e o peso da fonte, não uma classe
+ * própria.
+ *
+ * Nasce fechado; quem abre o grupo que guarda a tela atual é initNavGroups(),
+ * que também é quem liga as classes .is-open e .has-active. A lista é uma
+ * <ul> própria, e não uma continuação do <ul class="nav"> pai: precisa de um
+ * id para o aria-controls do gatilho apontar, e uma lista dentro de item de
+ * lista exige o próprio elemento de lista.
  */
 function navGroupMarkup(item) {
-    const hasActiveChild = item.children.some((child) => isCurrentPage(child.href));
     const panelId = `nav-group-${item.id}`;
 
     return `
-        <li class="nav__group" data-nav-group>
+        <li class="nav-group" data-nav-group>
             <button type="button"
-                    class="nav__link nav__group-trigger${hasActiveChild ? " is-active" : ""}"
+                    class="nav__link nav-group__trigger"
                     data-nav-group-trigger
-                    aria-expanded="${hasActiveChild ? "true" : "false"}"
+                    aria-expanded="false"
                     aria-controls="${panelId}">
                 ${item.icon}
                 <span class="nav__label">${item.label}</span>
-                <svg class="nav__group-caret" width="16" height="16" viewBox="0 0 16 16" fill="none"
+                <svg class="nav-group__caret" width="16" height="16" viewBox="0 0 16 16" fill="none"
                      aria-hidden="true">
                     <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                           stroke-linejoin="round"/>
                 </svg>
             </button>
-            <ul class="nav__group-panel" id="${panelId}" data-nav-group-panel${hasActiveChild ? "" : " hidden"}>
-                ${item.children.map(navSublinkMarkup).join("")}
+            <ul class="nav nav-group__items" id="${panelId}" data-nav-group-items hidden>
+                ${item.children.map(navItemMarkup).join("")}
             </ul>
         </li>`;
 }
@@ -363,25 +367,43 @@ function initSidebar() {
 }
 
 /* =========================================================================
-   Grupos da sidebar
+   Grupos da sidebar (acordeão)
 
-   Acordeão simples: cada grupo abre e fecha por conta própria, sem fechar os
-   outros — diferente do menu da conta, dois grupos abertos ao mesmo tempo não
-   competem pelo mesmo espaço. Estado não persiste entre páginas porque não há
-   SPA aqui; navGroupMarkup() já abre o grupo certo com base na URL atual.
+   Cada grupo abre e fecha por conta própria, sem fechar os outros — diferente
+   do menu da conta, dois grupos abertos ao mesmo tempo não competem pelo mesmo
+   espaço, e clicar no conteúdo da página não pode fechar o menu que mostra
+   onde o usuário está. Estado não persiste entre páginas porque não há SPA
+   aqui; o grupo certo abre sozinho a partir da URL atual.
+
+   Duas classes saem daqui para o CSS desenhar o grupo:
+     .is-open     acompanha o aria-expanded — é o que veste o grupo aberto de
+                  poço, com fundo próprio e a guia dos filhos. Precisa ser
+                  classe: o [hidden] fica no <ul>, e o fundo é do <li> em volta.
+     .has-active  o grupo guarda a página atual. Fechado, ele mostra por isso
+                  uma pílula curta no lugar da barra do item atual; não muda
+                  durante a sessão, então é marcada uma vez só.
    ========================================================================= */
 
 function initNavGroups() {
     document.querySelectorAll("[data-nav-group]").forEach((group) => {
         const trigger = group.querySelector("[data-nav-group-trigger]");
-        const panel = group.querySelector("[data-nav-group-panel]");
-        if (!trigger || !panel) return;
+        const items = group.querySelector("[data-nav-group-items]");
+        if (!trigger || !items) return;
 
-        trigger.addEventListener("click", () => {
-            const expanded = trigger.getAttribute("aria-expanded") === "true";
-            trigger.setAttribute("aria-expanded", String(!expanded));
-            panel.hidden = expanded;
-        });
+        const setOpen = (open) => {
+            items.hidden = !open;
+            trigger.setAttribute("aria-expanded", String(open));
+            group.classList.toggle("is-open", open);
+        };
+
+        const holdsCurrentPage = Boolean(items.querySelector(".is-active"));
+        group.classList.toggle("has-active", holdsCurrentPage);
+
+        // O grupo nasce aberto quando guarda a página atual: chegar em "Lançar
+        // Resíduo" com o grupo fechado esconderia justamente o item ativo.
+        setOpen(holdsCurrentPage);
+
+        trigger.addEventListener("click", () => setOpen(items.hidden));
     });
 }
 
