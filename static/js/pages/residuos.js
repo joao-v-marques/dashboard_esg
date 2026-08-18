@@ -39,6 +39,7 @@
 
 import { API, PAGES } from "../utils/routes.js";
 import { notifySuccess, notifyError } from "../utils/notyf.js";
+import { syncFilterClear } from "../utils/filters.js";
 
 // Espelha MIN_RECORD_DATE em services/waste_records_service.py. Só orienta o
 // campo de data no formulário; quem decide de verdade é o servidor.
@@ -145,8 +146,8 @@ async function loadReferenceData() {
     wasteTypes = await typesResponse.json();
     wasteTypesById = Object.fromEntries(wasteTypes.map((type) => [type.id, type]));
 
-    populateSelect(document.querySelector("[data-filter-unit]"), units, "Todas as unidades");
-    populateSelect(document.querySelector("[data-filter-type]"), wasteTypes, "Todos os tipos");
+    populateSelect(document.querySelector("[data-filter-unit]"), units, "Todas");
+    populateSelect(document.querySelector("[data-filter-type]"), wasteTypes, "Todos");
     populateSelect(document.querySelector("[data-form-unit]"), units, "Selecione");
     populateSelect(document.querySelector("[data-form-type]"), wasteTypes, "Selecione");
 }
@@ -277,6 +278,20 @@ function renderTable() {
    não pede endpoint novo.
    ========================================================================= */
 
+// Um lugar só dizendo quais campos filtram esta tela: applyFilters() lê os
+// valores, initFilters() escuta as mudanças e syncFilterClear() conta quantos
+// estão valendo. Uma lista por função faria as três divergirem no dia em que
+// um filtro novo entrar.
+const FILTER_SELECTORS = [
+    "[data-filter-search]",
+    "[data-filter-unit]",
+    "[data-filter-type]",
+    "[data-filter-date-from]",
+    "[data-filter-date-to]",
+];
+
+const filterInputs = () => FILTER_SELECTORS.map((selector) => document.querySelector(selector));
+
 function applyFilters() {
     const body = document.querySelector("[data-records-body]");
     const emptyRow = document.querySelector("[data-records-empty-row]");
@@ -314,16 +329,12 @@ function applyFilters() {
                 : "Nenhum lançamento encontrado para os filtros selecionados.";
         }
     }
+
+    syncFilterClear(filterInputs());
 }
 
 function initFilters() {
-    const inputs = [
-        "[data-filter-search]",
-        "[data-filter-unit]",
-        "[data-filter-type]",
-        "[data-filter-date-from]",
-        "[data-filter-date-to]",
-    ].map((selector) => document.querySelector(selector));
+    const inputs = filterInputs();
 
     inputs.forEach((input) => {
         if (!input) return;
@@ -336,6 +347,11 @@ function initFilters() {
             if (input) input.value = "";
         });
         applyFilters();
+
+        // Limpar desabilita o próprio botão, e o foco cairia no <body> — quem
+        // navega por teclado perderia o lugar no meio da barra. A busca é o
+        // começo natural de um novo filtro, então o foco vai para ela.
+        document.querySelector("[data-filter-search]")?.focus();
     });
 }
 

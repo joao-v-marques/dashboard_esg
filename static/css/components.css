@@ -1285,8 +1285,15 @@ button.input-wrap__affix[aria-pressed="true"] {
   min-width: 0;
 }
 
+/* Cresce para dividir a sobra e encolhe até 160px.
+
+   Antes eram 200px sem crescer: os cinco filtros ocupavam a linha inteira e
+   empurravam o botão de ação para uma segunda linha, sozinho. Deixando-os
+   encolher, a barra inteira — filtros e ação — cabe numa linha só nas larguras
+   de desktop, e o que sobra é distribuído entre os campos em vez de virar um
+   vão morto antes do botão. */
 .toolbar__filter {
-  flex: 0 1 200px;
+  flex: 1 1 160px;
   min-width: 160px;
 }
 
@@ -1296,6 +1303,60 @@ button.input-wrap__affix[aria-pressed="true"] {
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
+}
+
+/* Ações da barra de filtros — hoje só "Limpar filtros".
+
+   O botão precisa de âncora própria. Sem ela, ele é só mais um item do flex e
+   para onde o wrap o joga: em algumas larguras cola no último select como se
+   fosse parte dele, em outras cai sozinho no começo da linha de baixo, sob o
+   campo de busca. margin-inline-start: auto o prende na direita da barra em
+   qualquer largura — a posição fica previsível, e a folga que sobra separa
+   "ação" de "filtro" sem precisar de traço ou divisória.
+
+   Os filtros são colunas (rótulo em cima, controle embaixo) e o botão não tem
+   rótulo; quem alinha a base dele com a dos controles é o align-items:
+   flex-end da .toolbar, e as duas alturas batem porque campo e botão usam o
+   mesmo --control-height. */
+.toolbar__actions {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+/* Quantos filtros estão valendo agora.
+
+   O botão sozinho não conta essa história: com cinco campos, dá para ter um
+   filtro esquecido fora da vista (a busca rolou para fora, um select ficou
+   preenchido) e culpar a tabela por "não ter nada". O número aparece só
+   quando há o que limpar — zero filtros não vira um "0" pendurado. */
+.toolbar__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary-surface);
+  color: var(--color-text-on-brand);
+  font-size: var(--text-xs);
+  line-height: 1;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.toolbar__count[hidden] {
+  display: none;
+}
+
+/* Desabilitado é o estado normal desta barra: sem filtro aplicado, não há o
+   que limpar. .btn:disabled já veste o botão de indisponível; o que falta é
+   tirar o cursor de "proibido" e deixar claro que é só ausência de trabalho,
+   não bloqueio. */
+.toolbar__actions .btn:disabled {
+  cursor: default;
 }
 
 /* Rodapé da tabela: contagem à esquerda, paginação à direita. */
@@ -1328,6 +1389,18 @@ button.input-wrap__affix[aria-pressed="true"] {
   .toolbar__search,
   .toolbar__filter {
     flex: 1 1 100%;
+  }
+
+  /* Com os filtros empilhados em largura cheia, encostar o botão na direita
+     o deixaria sozinho num canto, longe do polegar. Ele vira a última faixa
+     da pilha, do mesmo tamanho dos campos acima. */
+  .toolbar__actions {
+    margin-inline-start: 0;
+    flex: 1 1 100%;
+  }
+
+  .toolbar__actions .btn {
+    width: 100%;
   }
 
   .table-wrap {

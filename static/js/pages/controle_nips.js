@@ -31,6 +31,7 @@
 
 import { API, PAGES } from "../utils/routes.js";
 import { notifySuccess, notifyError } from "../utils/notyf.js";
+import { syncFilterClear } from "../utils/filters.js";
 import {
     initCpfMask,
     populateSelect,
@@ -90,8 +91,8 @@ async function loadReferenceData() {
     natures = await naturesResponse.json();
     statusList = await statusResponse.json();
 
-    populateSelect(document.querySelector("[data-filter-nature]"), natures, "Todas as naturezas");
-    populateSelect(document.querySelector("[data-filter-status]"), statusList, "Todos os status");
+    populateSelect(document.querySelector("[data-filter-nature]"), natures, "Todas");
+    populateSelect(document.querySelector("[data-filter-status]"), statusList, "Todos");
     populateSelect(document.querySelector("[data-form-nature]"), natures, "Selecione");
     populateSelect(document.querySelector("[data-form-status]"), statusList, "Selecione");
 }
@@ -277,6 +278,20 @@ function renderTable() {
 /** Texto da linha + o CPF só com dígitos, para o CPF ser buscável dos dois jeitos. */
 const rowSearchText = (row) => `${row.textContent} ${row.dataset.cpfDigits}`.toLowerCase();
 
+// Um lugar só dizendo quais campos filtram esta tela: applyFilters() lê os
+// valores, initFilters() escuta as mudanças e syncFilterClear() conta quantos
+// estão valendo. Uma lista por função faria as três divergirem no dia em que
+// um filtro novo entrar.
+const FILTER_SELECTORS = [
+    "[data-filter-search]",
+    "[data-filter-nature]",
+    "[data-filter-status]",
+    "[data-filter-date-from]",
+    "[data-filter-date-to]",
+];
+
+const filterInputs = () => FILTER_SELECTORS.map((selector) => document.querySelector(selector));
+
 function applyFilters() {
     const body = document.querySelector("[data-nips-body]");
     const emptyRow = document.querySelector("[data-nips-empty-row]");
@@ -318,16 +333,12 @@ function applyFilters() {
                 : "Nenhuma NIP encontrada para os filtros selecionados.";
         }
     }
+
+    syncFilterClear(filterInputs());
 }
 
 function initFilters() {
-    const inputs = [
-        "[data-filter-search]",
-        "[data-filter-nature]",
-        "[data-filter-status]",
-        "[data-filter-date-from]",
-        "[data-filter-date-to]",
-    ].map((selector) => document.querySelector(selector));
+    const inputs = filterInputs();
 
     inputs.forEach((input) => {
         if (!input) return;
@@ -340,6 +351,11 @@ function initFilters() {
             if (input) input.value = "";
         });
         applyFilters();
+
+        // Limpar desabilita o próprio botão, e o foco cairia no <body> — quem
+        // navega por teclado perderia o lugar no meio da barra. A busca é o
+        // começo natural de um novo filtro, então o foco vai para ela.
+        document.querySelector("[data-filter-search]")?.focus();
     });
 }
 
