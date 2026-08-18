@@ -11,3 +11,6 @@ class ValidationError(ValueError):
 
 class AuthError(ValueError):
     """Credencial inválida ou sessão que não vale mais -> 401."""
+
+class UpstreamError(Exception):
+    """Uma API externa (ex.: certificados_cooperados) não respondeu ou respondeu com erro -> 502."""
