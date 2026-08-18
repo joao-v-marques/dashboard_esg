@@ -1,0 +1,39 @@
+/* ==========================================================================
+   nips.css — estilos exclusivos das telas de NIP.
+
+   Um arquivo para as duas ("Lançar NIP" e "Controle de NIP's"): elas são a
+   mesma família e compartilham o formulário, então separar em dois só criaria
+   a chance de as duas divergirem.
+
+   Card, toolbar, tabela, badge, campos e modal vêm inteiros de components.css.
+   O que sobra é o par nome+CPF dentro da célula de beneficiário, a linha de
+   "nenhum resultado" da tabela e o respiro do rodapé do formulário.
+   ========================================================================== */
+
+/* Nome em cima, CPF embaixo — na largura da tabela, duas colunas para a mesma
+   pessoa custam espaço que as colunas de demanda e protocolo precisam mais. */
+.beneficiary-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Mesma regra de residuos.css. Vive nos dois arquivos porque cada tela carrega
+   só o seu CSS; se uma terceira tela precisar, ela sobe para components.css. */
+.records-empty-row td {
+  text-align: center;
+  padding: var(--space-48) var(--space-16);
+  color: var(--color-text-muted);
+}
+
+/* O <fieldset> que envolve os campos do formulário de lançamento só existe
+   para desabilitar tudo de uma vez enquanto natureza e status carregam — ele
+   não desenha nada. A borda e o padding que o navegador dá de graça a todo
+   fieldset desalinhariam o conteúdo em relação ao .card__body, e o
+   min-width: min-content nativo faria o .field-row estourar a largura do card
+   (mesmo motivo do .fieldset em components.css). */
+.nip-fields {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+}

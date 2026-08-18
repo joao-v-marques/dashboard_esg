@@ -1,0 +1,314 @@
+<!doctype html>
+<!--
+  Controle de NIP's.
+
+  Lista todas as Notificações de Intermediação Preliminar cadastradas, com
+  filtros e edição. O cadastro em si mora na outra tela do grupo ("Lançar
+  NIP") — aqui o botão do cabeçalho é só um link para lá, não um modal.
+
+  Como nas demais telas, o HTML é puro e o shell (topbar, sidebar) nasce vazio
+  em [data-topbar]/[data-sidebar], preenchido por js/pages/shell.js.
+
+  A tabela carrega uma vez e os filtros escondem linha por linha no cliente
+  (ver o atributo `hidden` em .table tbody tr no components.css) — mesmo
+  desenho de residuos.html, e pelo mesmo motivo: sem paginação, filtrar no
+  DOM é instantâneo e não pede endpoint novo.
+
+  Editar abre um modal com os mesmos campos do formulário de cadastro. Um
+  <dialog> aqui, e não uma volta à tela de lançar: quem está conferindo a
+  lista perde o lugar (filtros, rolagem) se a edição trocar de página.
+-->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Controle de NIP's · Acompanhamento ESG</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+    <!-- A ordem abaixo é a cascata do projeto e não muda: tokens definem os
+         valores, base reseta e cria os utilitários, components traz os blocos
+         reutilizáveis e o CSS da página só arranja esses blocos na tela. -->
+    <link rel="stylesheet" href="/static/css/tokens.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/notyf.css">
+    <link rel="stylesheet" href="/static/css/nips.css">
+</head>
+
+<body>
+<!-- Primeiro tabstop de toda página do app. Fica no HTML, e não no shell em JS,
+     justamente para ser o primeiro tabstop desde o primeiro instante. -->
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+<div class="app" data-app>
+
+    <!-- PREENCHIDO VIA JS (js/pages/shell.js) -->
+    <header class="topbar" data-topbar></header>
+
+    <div class="app__body">
+
+        <!-- PREENCHIDO VIA JS (js/pages/shell.js) -->
+        <aside class="sidebar on-inverse" id="sidebar" data-sidebar></aside>
+
+        <!-- Fundo escuro do menu em overlay (mobile) -->
+        <div class="sidebar-scrim" data-sidebar-scrim hidden></div>
+
+        <main class="app__main" id="conteudo">
+            <div class="container stack-32">
+
+                <!-- =====================================================
+                     1. Cabeçalho da página
+                     ===================================================== -->
+                <header class="page-head">
+                    <div class="page-head__text">
+                        <h1 class="page-head__title">Controle de NIP's</h1>
+                        <p class="page-head__subtitle">
+                            Todas as Notificações de Intermediação Preliminar
+                            cadastradas, com filtro por natureza, status e período
+                            de notificação.
+                        </p>
+                    </div>
+
+                    <div class="page-head__actions">
+                        <!-- href escrito por js/pages/controle_nips.js a partir de
+                             PAGES.nipCreate, para o prefixo continuar em um lugar só. -->
+                        <a class="btn btn--primary" data-new-nip-link href="#">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.5"
+                                      stroke-linecap="round"/>
+                            </svg>
+                            Lançar NIP
+                        </a>
+                    </div>
+                </header>
+
+                <!-- =====================================================
+                     2. NIP's
+
+                     Três estados, mutuamente exclusivos via hidden:
+                     carregando, com dado (tabela) e falha — o mesmo desenho
+                     de js/pages/home.js. Dentro do estado "com dado", a
+                     ausência de resultado (nenhuma NIP, ou filtro sem
+                     correspondência) é uma linha própria dentro da tabela,
+                     não um estado à parte: os filtros continuam visíveis e
+                     prontos para serem ajustados.
+                     ===================================================== -->
+                <section aria-labelledby="titulo-nips">
+                    <h2 class="visually-hidden" id="titulo-nips">NIP's cadastradas</h2>
+
+                    <!-- Carregando — é o estado inicial, o único visível no HTML. -->
+                    <div class="card" data-nips-loading>
+                        <div class="card__body stack-16">
+                            <span class="skeleton skeleton--row"></span>
+                            <span class="skeleton skeleton--row"></span>
+                            <span class="skeleton skeleton--row"></span>
+                            <span class="skeleton skeleton--row"></span>
+                        </div>
+                    </div>
+
+                    <!-- Com dado — toolbar de filtros + tabela. Nasce oculto. -->
+                    <div class="card" data-nips-content hidden>
+                        <div class="toolbar">
+                            <div class="toolbar__search">
+                                <label class="field__label" for="filtro-busca">Buscar</label>
+                                <input class="input" type="search" id="filtro-busca"
+                                       placeholder="Beneficiário, CPF, demanda, protocolo..."
+                                       data-filter-search>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-natureza">Natureza</label>
+                                <select class="select" id="filtro-natureza" data-filter-nature></select>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-status">Status</label>
+                                <select class="select" id="filtro-status" data-filter-status></select>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-data-de">De</label>
+                                <input class="input" type="date" id="filtro-data-de" data-filter-date-from>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-data-ate">Até</label>
+                                <input class="input" type="date" id="filtro-data-ate" data-filter-date-to>
+                            </div>
+
+                            <button type="button" class="btn btn--ghost" data-filter-clear>
+                                Limpar filtros
+                            </button>
+                        </div>
+
+                        <div class="table-wrap">
+                            <table class="table table--cards">
+                                <caption class="visually-hidden">NIP's por natureza, status e período de notificação.</caption>
+                                <thead>
+                                <tr>
+                                    <th scope="col">Notificação</th>
+                                    <th scope="col">Demanda</th>
+                                    <th scope="col">Protocolo</th>
+                                    <th scope="col">Beneficiário</th>
+                                    <th scope="col">Natureza</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Lançado por</th>
+                                    <th scope="col" class="table__actions">Ações</th>
+                                </tr>
+                                </thead>
+                                <tbody data-nips-body>
+                                <!-- Linhas escritas por js/pages/controle_nips.js. A linha
+                                     de "nenhum resultado" abaixo é fixa e só alterna hidden. -->
+                                <tr class="records-empty-row" data-nips-empty-row hidden>
+                                    <td colspan="8" data-nips-empty-message>Carregando...</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Falha. Reaproveita a superfície de recado centralizado que o
+                         projeto já usa em home.html — falha de rede não é "nenhuma
+                         NIP cadastrada". -->
+                    <div class="card" data-nips-error hidden>
+                        <div class="empty">
+                            <div class="empty__seal seal" aria-hidden="true">
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                            </div>
+                            <p class="empty__title">Não foi possível carregar as NIP's</p>
+                            <p class="empty__text">
+                                Verifique a conexão e atualize a página. Se continuar, avise a
+                                equipe responsável pelo sistema.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- =====================================================================
+     Modal de edição
+
+     Os mesmos campos do formulário de lancar_nip.html, porque a NIP editada
+     é a mesma entidade cadastrada lá. <dialog> nativo: Esc, foco preso
+     dentro e fundo inerte já vêm do elemento. novalidate porque a validação
+     é feita em controle_nips.js, que escreve em .field__error e marca
+     aria-invalid — mesmo desenho do formulário de login.
+     ===================================================================== -->
+<dialog class="modal" data-nip-modal aria-labelledby="titulo-modal-nip">
+    <div class="modal__head">
+        <div>
+            <h2 class="modal__title" id="titulo-modal-nip">Editar NIP</h2>
+            <p class="modal__subtitle" data-nip-modal-subtitle>Altere os dados da NIP e salve para atualizar.</p>
+        </div>
+        <button type="button" class="btn-icon modal__close" data-nip-modal-close aria-label="Fechar">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+        </button>
+    </div>
+
+    <form data-nip-form novalidate>
+        <div class="modal__body stack-24">
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="nip-notification-date">Data da notificação</label>
+                    <input class="input" type="date" id="nip-notification-date" name="notification_date" required
+                           aria-describedby="erro-nip-notification-date">
+                    <p class="field__error" id="erro-nip-notification-date"
+                       data-error-for="nip-notification-date" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="nip-demand-code">Código da demanda</label>
+                    <input class="input" type="text" id="nip-demand-code" name="demand_code"
+                           maxlength="50" autocomplete="off" required
+                           aria-describedby="erro-nip-demand-code">
+                    <p class="field__error" id="erro-nip-demand-code" data-error-for="nip-demand-code" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="nip-protocol-code">Protocolo</label>
+                    <input class="input" type="text" id="nip-protocol-code" name="protocol_code"
+                           maxlength="50" autocomplete="off" required
+                           aria-describedby="erro-nip-protocol-code">
+                    <p class="field__error" id="erro-nip-protocol-code" data-error-for="nip-protocol-code" hidden></p>
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="nip-beneficiary-name">Beneficiário</label>
+                    <input class="input" type="text" id="nip-beneficiary-name" name="beneficiary_name"
+                           maxlength="150" autocomplete="off" required
+                           aria-describedby="erro-nip-beneficiary-name">
+                    <p class="field__error" id="erro-nip-beneficiary-name"
+                       data-error-for="nip-beneficiary-name" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="nip-beneficiary-cpf">CPF</label>
+                    <input class="input" type="text" id="nip-beneficiary-cpf" name="beneficiary_cpf"
+                           inputmode="numeric" maxlength="14" placeholder="000.000.000-00"
+                           autocomplete="off" required data-cpf-input
+                           aria-describedby="erro-nip-beneficiary-cpf">
+                    <p class="field__error" id="erro-nip-beneficiary-cpf"
+                       data-error-for="nip-beneficiary-cpf" hidden></p>
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="nip-nature">Natureza</label>
+                    <select class="select" id="nip-nature" name="nature_id" required
+                            data-form-nature aria-describedby="erro-nip-nature">
+                        <option value="">Selecione</option>
+                    </select>
+                    <p class="field__error" id="erro-nip-nature" data-error-for="nip-nature" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="nip-status">Status</label>
+                    <select class="select" id="nip-status" name="status_id" required
+                            data-form-status aria-describedby="erro-nip-status">
+                        <option value="">Selecione</option>
+                    </select>
+                    <p class="field__error" id="erro-nip-status" data-error-for="nip-status" hidden></p>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="field__label" for="nip-description">
+                    Descrição <span class="field__optional">(opcional)</span>
+                </label>
+                <textarea class="textarea" id="nip-description" name="description" rows="4"></textarea>
+            </div>
+
+            <div class="cluster">
+                <span class="spacer"></span>
+                <button type="button" class="btn btn--secondary" data-nip-modal-close>Cancelar</button>
+                <button type="submit" class="btn btn--primary" data-nip-submit>Salvar alterações</button>
+            </div>
+
+        </div>
+    </form>
+</dialog>
+
+<!-- Shell (topbar, sidebar, menu da conta e usuário logado), comum a todas as
+     telas. Vem antes do script da página, sempre. -->
+<script type="module" src="/static/js/pages/shell.js"></script>
+<script type="module" src="/static/js/pages/controle_nips.js"></script>
+</body>
+</html>
