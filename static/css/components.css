@@ -945,6 +945,28 @@ button.input-wrap__affix[aria-pressed="true"] {
   color: var(--color-text-muted);
 }
 
+/* --------------------------------------------------------------------------
+   PÍLULA DE FAIXA
+   Faixas de pontuação de cooperados (dashboard de Cooperados). Cores fixas
+   por faixa, não semânticas como .badge — ver --color-band-* em tokens.css.
+   -------------------------------------------------------------------------- */
+
+.band {
+  display: inline-block;
+  padding: 2px var(--space-8);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+.band--1 { background-color: var(--color-band-1-bg); color: var(--color-band-1-text); }
+.band--2 { background-color: var(--color-band-2-bg); color: var(--color-band-2-text); }
+.band--3 { background-color: var(--color-band-3-bg); color: var(--color-band-3-text); }
+.band--4 { background-color: var(--color-band-4-bg); color: var(--color-band-4-text); }
+.band--5 { background-color: var(--color-band-5-bg); color: var(--color-band-5-text); }
+
 /* Contagem discreta ao lado de um título. */
 .count-pill {
   display: inline-flex;
