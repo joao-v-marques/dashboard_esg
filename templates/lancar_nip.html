@@ -100,12 +100,22 @@
                             <h2 class="card__title">Dados da NIP</h2>
                         </div>
 
-                        <fieldset class="nip-fields card__body stack-24" data-nip-form-fields disabled>
+                        <!-- stack-32 entre as seções contra os 16px que separam os
+                             campos dentro de cada uma: a distância é o que diz o
+                             que anda junto. Um só espaçamento para as duas coisas
+                             deixaria os nove campos parecendo uma lista corrida. -->
+                        <fieldset class="nip-fields card__body stack-32" data-nip-form-fields disabled>
                             <legend class="visually-hidden">Dados da NIP</legend>
 
-                            <!-- Identificação ---------------------------- -->
-                            <div class="fieldset">
-                                <p class="fieldset__legend">Identificação</p>
+                            <!-- Identificação ----------------------------
+                                 role="group" + aria-labelledby porque a seção é
+                                 um <div> com <p>, e não <fieldset>/<legend> (ver
+                                 o comentário de .fieldset em components.css): sem
+                                 isso o agrupamento existiria só para quem enxerga
+                                 o traço, e o leitor de tela leria nove campos
+                                 soltos. -->
+                            <div class="fieldset" role="group" aria-labelledby="secao-identificacao">
+                                <p class="fieldset__legend" id="secao-identificacao">Identificação</p>
                                 <div class="fieldset__body">
                                     <div class="field-row">
                                         <div class="field">
@@ -140,8 +150,8 @@
                             </div>
 
                             <!-- Beneficiário ----------------------------- -->
-                            <div class="fieldset">
-                                <p class="fieldset__legend">Beneficiário</p>
+                            <div class="fieldset" role="group" aria-labelledby="secao-beneficiario">
+                                <p class="fieldset__legend" id="secao-beneficiario">Beneficiário</p>
                                 <div class="fieldset__body">
                                     <div class="field-row">
                                         <div class="field">
@@ -171,8 +181,8 @@
                             </div>
 
                             <!-- Classificação ---------------------------- -->
-                            <div class="fieldset">
-                                <p class="fieldset__legend">Classificação</p>
+                            <div class="fieldset" role="group" aria-labelledby="secao-classificacao">
+                                <p class="fieldset__legend" id="secao-classificacao">Classificação</p>
                                 <div class="fieldset__body">
                                     <div class="field-row">
                                         <div class="field">
@@ -198,13 +208,21 @@
                                 </div>
                             </div>
 
-                            <!-- Descrição -------------------------------- -->
-                            <div class="field">
-                                <label class="field__label" for="nip-description">
-                                    Descrição <span class="field__optional">(opcional)</span>
-                                </label>
-                                <textarea class="textarea" id="nip-description" name="description"
-                                          rows="4" placeholder="Resumo da demanda registrada pelo beneficiário."></textarea>
+                            <!-- Detalhes ---------------------------------
+                                 A descrição também entra numa seção: com as três
+                                 de cima marcadas por um traço, um campo solto no
+                                 fim seria lido como sobra da "Classificação". -->
+                            <div class="fieldset" role="group" aria-labelledby="secao-detalhes">
+                                <p class="fieldset__legend" id="secao-detalhes">Detalhes</p>
+                                <div class="fieldset__body">
+                                    <div class="field">
+                                        <label class="field__label" for="nip-description">
+                                            Descrição <span class="field__optional">(opcional)</span>
+                                        </label>
+                                        <textarea class="textarea" id="nip-description" name="description"
+                                                  rows="4" placeholder="Resumo da demanda registrada pelo beneficiário."></textarea>
+                                    </div>
+                                </div>
                             </div>
                         </fieldset>
 

@@ -256,6 +256,16 @@ hr {
 .stack-32 > * + * { margin-top: var(--space-32); }
 .stack-48 > * + * { margin-top: var(--space-48); }
 
+/* .visually-hidden é position: absolute — não ocupa linha nenhuma, então o
+   espaço que a pilha abriria depois dele seria um degrau em branco no topo do
+   grupo. Caso do <legend> invisível que nomeia um fieldset sem desenhar nada
+   (ver o formulário de lancar_nip.html). */
+.stack-8  > .visually-hidden + *,
+.stack-16 > .visually-hidden + *,
+.stack-24 > .visually-hidden + *,
+.stack-32 > .visually-hidden + *,
+.stack-48 > .visually-hidden + * { margin-top: 0; }
+
 .cluster {
   display: flex;
   align-items: center;

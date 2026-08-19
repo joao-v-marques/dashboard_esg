@@ -394,17 +394,50 @@
   /* fieldset nasce com min-width: min-content e estoura grid e flex. */
   min-width: 0;
   border: 0;
-  margin: 0;
   padding: 0;
+  /* Só o eixo horizontal, que é o único com margem nativa (2px de cada lado).
+     Um `margin: 0` aqui zerava também o topo: mesma especificidade de
+     .stack-24 / .stack-32 > * + *, e components.css vem depois de base.css na
+     cascata, então quem empilhava perdia. O efeito era o das seções de
+     lancar_nip.html sem um pixel entre elas, apesar do stack no container.
+     Espaçamento vertical é ritmo de página, e ritmo é de quem empilha. */
+  margin-inline: 0;
 }
 
+/* A legenda precisa se ler como "aqui começa uma seção", não como mais um
+   campo. Antes ela era text-sm + semibold + text-strong, exatamente os três
+   valores de .field__label logo abaixo dela: sem nada que a distinguisse,
+   "Identificação" parecia o rótulo de um campo que faltava desenhar.
+
+   O que separa as duas agora é o estilo do tipo, não o tamanho — caixa alta,
+   text-xs, tracking-caps e cor secundária, o mesmo tratamento do cabeçalho de
+   coluna da tabela (.table thead th). É o vocabulário que este projeto já usa
+   para "rótulo de estrutura", em oposição ao "rótulo de dado" dos campos, e
+   nenhum rótulo de campo é escrito em caixa alta — a confusão some. Menor e
+   mais claro que um label, sem competir com o .card__title acima.
+
+   O traço que sai do texto até a borda direita é o que o peso da fonte não faz
+   sozinho: desenha a faixa que a seção ocupa, em vez de deixar a divisão só
+   implícita no espaçamento. */
 .fieldset__legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
   padding: 0;
-  margin-bottom: var(--space-8);
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
+  margin-bottom: var(--space-16);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
   font-weight: var(--weight-semibold);
-  color: var(--color-text-strong);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.fieldset__legend::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background-color: var(--color-border);
 }
 
 .fieldset__body {
