@@ -40,6 +40,7 @@
 import { API, PAGES } from "../utils/routes.js";
 import { notifySuccess, notifyError } from "../utils/notyf.js";
 import { syncFilterClear } from "../utils/filters.js";
+import { buildEditButton } from "../utils/table_actions.js";
 
 // Espelha MIN_RECORD_DATE em services/waste_records_service.py. Só orienta o
 // campo de data no formulário; quem decide de verdade é o servidor.
@@ -220,15 +221,16 @@ function buildActionsCell(record) {
     td.dataset.label = "Ações";
     td.className = "table__actions";
 
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "btn-link";
-    button.textContent = "Editar";
-    // Closure sobre o record da própria linha: os dados para preencher o
-    // formulário já estão em mãos, sem precisar buscar de novo por id.
-    button.addEventListener("click", () => startEditingRecord(record));
+    // O aria-label descreve a linha, não a coluna: numa lista de vinte
+    // lançamentos, vinte botões chamados só "Editar" não dizem qual é qual
+    // para quem navega por teclado ou leitor de tela.
+    td.appendChild(buildEditButton({
+        label: `Editar lançamento de ${formatDate(record.record_date)} — ${record.unit_name}, ${record.waste_type_name}`,
+        // Closure sobre o record da própria linha: os dados para preencher o
+        // formulário já estão em mãos, sem precisar buscar de novo por id.
+        onClick: () => startEditingRecord(record),
+    }));
 
-    td.appendChild(button);
     return td;
 }
 

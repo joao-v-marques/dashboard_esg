@@ -14,10 +14,10 @@
   (ver o atributo `hidden` em .table tbody tr no components.css) — não há
   paginação ainda, e o volume de lançamentos não pede uma por enquanto.
 
-  O botão "Editar" de cada linha existe, mas nasce desabilitado: a lógica de
-  edição (PUT) ainda não foi escrita. Um botão que parece funcionar e não faz
-  nada é pior do que um botão visivelmente indisponível — o mesmo raciocínio
-  do "Sair" em shell.js antes de a autenticação existir.
+  A coluna "Ações" traz um botão só de ícone (lápis), escrito por
+  utils/table_actions.js: o nome da ação vive no aria-label e numa dica que
+  aparece no hover e no foco, para a palavra "Editar" não se repetir em todas
+  as linhas ao lado do dado que a pessoa veio ler.
 -->
 <html lang="pt-BR">
 <head>

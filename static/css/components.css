@@ -158,6 +158,68 @@
   background-color: var(--color-surface);
 }
 
+/* Ação de linha de tabela, só com ícone.
+
+   A linha inteira já escurece com --color-hover-layer no hover; se o botão
+   usasse essa mesma camada, o alvo não apareceria de dentro dela — daí a
+   camada mais forte aqui, que é o que diz "o clique é neste quadrado, não na
+   linha". 40x40 num td de 56px de altura: alvo bem acima dos 24px mínimos da
+   WCAG 2.5.8 e ainda com folga vertical na célula. */
+.btn-icon--row:hover:not(:disabled) {
+  background-color: var(--color-active-layer);
+  color: var(--color-primary-text);
+}
+
+/* Rótulo de botão só de ícone --------------------------------------------
+
+   Um ícone sozinho não se explica: quem nunca viu aquele desenho precisa de
+   uma palavra, e o leitor de tela precisa de um nome. São duas coisas
+   diferentes e cada uma tem seu canal — o nome acessível vai no aria-label
+   (mais específico, diz de qual linha é a ação) e a palavra visível vem
+   daqui, do data-tooltip.
+
+   Não é o `title` nativo de propósito: ele só aparece no hover do mouse,
+   depois de um atraso que ninguém controla, e nunca em quem navega por
+   teclado. Este aparece nos dois, porque :focus-visible entra na regra.
+
+   A dica sai para a esquerda do botão porque a coluna de ações é a última da
+   tabela: para a direita, ela cairia fora de .table-wrap, que tem
+   overflow-x. pointer-events: none impede que ela roube o hover de quem a
+   invocou. */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 50%;
+  right: calc(100% + var(--space-8));
+  transform: translateY(-50%);
+  z-index: var(--z-dropdown);
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface-inverse);
+  color: var(--color-text-on-inverse);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-fast) var(--ease),
+    visibility var(--duration-fast) var(--ease);
+}
+
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* Botão de ação em linha de tabela ---------------------------------------- */
 .btn-link {
   display: inline-flex;

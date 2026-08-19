@@ -2,6 +2,9 @@
  * Lançar NIP: formulário de cadastro de página inteira (POST /api/nips).
  *
  * Contrato com o HTML (data-*):
+ *   [data-consent-modal]    <dialog> de aviso de responsabilidade, aberto
+ *                           sozinho a cada carregamento da página
+ *     [data-consent-accept]   único jeito de fechar — "Eu concordo"
  *   [data-nip-form]         formulário; o submit é interceptado
  *   [data-nip-form-fields]  <fieldset> que envolve os campos, nasce disabled
  *   [data-nip-form-clear]   botão "Limpar"
@@ -150,6 +153,40 @@ function initForm() {
 }
 
 /* =========================================================================
+   Modal de responsabilidade
+   ========================================================================= */
+
+/**
+ * Aberto a cada carregamento da página, sem exceção — não fica gravado em
+ * localStorage nem em cookie, porque o pedido foi "sempre que eu acessar".
+ * showModal() já torna o resto da página inerte (formulário e sidebar)
+ * enquanto está aberto; o único jeito de sair é "Eu concordo". Mesmo
+ * comportamento da tela de resíduos.
+ */
+function initConsentModal() {
+    const modal = document.querySelector("[data-consent-modal]");
+    if (!modal) return;
+
+    // "cancel" é o evento nativo do Esc num <dialog> aberto por showModal().
+    // Bloquear aqui impede que o teclado vire um atalho pra pular o aviso.
+    modal.addEventListener("cancel", (event) => event.preventDefault());
+
+    document.querySelector("[data-consent-accept]")?.addEventListener("click", () => {
+        modal.close();
+        document.body.classList.remove("no-scroll");
+    });
+
+    // close() não é síncrono o bastante para dispensar a linha acima, mas o
+    // listener continua como reforço para qualquer outro caminho de saída.
+    modal.addEventListener("close", () => {
+        document.body.classList.remove("no-scroll");
+    });
+
+    modal.showModal();
+    document.body.classList.add("no-scroll");
+}
+
+/* =========================================================================
    Ligação
    ========================================================================= */
 
@@ -179,6 +216,7 @@ async function loadPage() {
 }
 
 function init() {
+    initConsentModal();
     initCpfMask();
     initClear();
     initForm();

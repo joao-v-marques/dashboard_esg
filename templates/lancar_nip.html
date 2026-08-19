@@ -221,6 +221,38 @@
     </div>
 </div>
 
+<!-- =====================================================================
+     Modal de responsabilidade — aparece a cada acesso a esta página, antes
+     de qualquer outra interação. showModal() já deixa o resto da página
+     inerte sozinho (nenhum campo, botão ou link da sidebar responde
+     enquanto ele está aberto); só "Eu concordo" fecha — sem X, sem clique
+     no fundo, e o Esc é bloqueado em lancar_nip.js, para não virar atalho
+     pra pular o aviso. Mesmo desenho da tela de resíduos.
+     ===================================================================== -->
+<dialog class="modal" data-consent-modal aria-labelledby="titulo-modal-responsabilidade">
+    <div class="modal__head">
+        <div>
+            <h2 class="modal__title" id="titulo-modal-responsabilidade">Aviso de responsabilidade</h2>
+        </div>
+    </div>
+
+    <div class="modal__body">
+        <p>
+            As informações inseridas nesta página são de responsabilidade do
+            colaborador que realiza o lançamento. Antes de cadastrar, é necessário
+            validar e garantir a veracidade dos dados informados, já que essas
+            notificações alimentam diretamente os indicadores de NIP's exibidos no
+            dashboard da cooperativa. Lançamentos incorretos podem comprometer a
+            precisão desse acompanhamento.
+        </p>
+
+        <div class="cluster">
+            <span class="spacer"></span>
+            <button type="button" class="btn btn--primary" data-consent-accept>Eu concordo</button>
+        </div>
+    </div>
+</dialog>
+
 <!-- Shell (topbar, sidebar, menu da conta e usuário logado), comum a todas as
      telas. Vem antes do script da página, sempre. -->
 <script type="module" src="/static/js/pages/shell.js"></script>
