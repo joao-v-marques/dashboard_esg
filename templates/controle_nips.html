@@ -230,7 +230,12 @@
     </div>
 
     <form data-nip-form novalidate>
-        <div class="modal__body stack-24">
+        <!-- Sem stack-24 aqui: .modal__body já é uma coluna flex com gap de
+             32px, e a utilitária somava mais 24 a cada linha de campos — 56px
+             de vão, quase 100px de altura a mais só de espaçamento repetido.
+             Era parte do porquê de este modal estourar a janela. O modal de
+             resíduos nunca teve a classe; agora os dois seguem o mesmo gap. -->
+        <div class="modal__body">
 
             <div class="field-row">
                 <div class="field">
@@ -306,12 +311,18 @@
                 <textarea class="textarea" id="nip-description" name="description" rows="4"></textarea>
             </div>
 
-            <div class="cluster">
-                <span class="spacer"></span>
-                <button type="button" class="btn btn--secondary" data-nip-modal-close>Cancelar</button>
-                <button type="submit" class="btn btn--primary" data-nip-submit>Salvar alterações</button>
-            </div>
+        </div>
 
+        <!-- Fora do .modal__body de propósito: ali dentro as ações rolavam
+             junto com os campos e, num formulário mais alto que a janela,
+             ficavam recortadas pelo modal. Aqui o rodapé é irmão do corpo e
+             não encolhe (.modal__footer tem flex: none), então "Salvar
+             alterações" está sempre à vista. Continua dentro do <form>, que é
+             o que faz o type="submit" valer. -->
+        <div class="modal__footer">
+            <span class="spacer"></span>
+            <button type="button" class="btn btn--secondary" data-nip-modal-close>Cancelar</button>
+            <button type="submit" class="btn btn--primary" data-nip-submit>Salvar alterações</button>
         </div>
     </form>
 </dialog>

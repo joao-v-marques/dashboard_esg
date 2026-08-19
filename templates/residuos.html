@@ -311,12 +311,18 @@
                 <textarea class="textarea" id="record-observations" name="observations"></textarea>
             </div>
 
-            <div class="cluster">
-                <span class="spacer"></span>
-                <button type="button" class="btn btn--secondary" data-record-modal-close>Cancelar</button>
-                <button type="submit" class="btn btn--primary" data-record-submit>Salvar lançamento</button>
-            </div>
+        </div>
 
+        <!-- Fora do .modal__body de propósito: ali dentro as ações rolam junto
+             com os campos e somem quando o formulário fica mais alto que a
+             janela. Este aqui cabia hoje, mas por sorte de ter menos campos que
+             o de NIP — um campo novo, ou uma tela baixa, e o botão de salvar
+             ficaria inalcançável do mesmo jeito. Continua dentro do <form>,
+             que é o que faz o type="submit" valer. -->
+        <div class="modal__footer">
+            <span class="spacer"></span>
+            <button type="button" class="btn btn--secondary" data-record-modal-close>Cancelar</button>
+            <button type="submit" class="btn btn--primary" data-record-submit>Salvar lançamento</button>
         </div>
     </form>
 </dialog>

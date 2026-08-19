@@ -1816,13 +1816,47 @@ button.input-wrap__affix[aria-pressed="true"] {
   margin: calc(var(--space-8) * -1) calc(var(--space-8) * -1) 0 0;
 }
 
-/* Só o corpo rola; cabeçalho fixo mantém à vista de quem é o detalhe aberto. */
+/* O <form> que envolve o corpo precisa participar da coluna flex do modal.
+
+   Sem esta regra ele fica com a altura do conteúdo, sem repassar limite nenhum
+   para baixo: o overflow-y: auto do corpo nunca tem o que respeitar, o corpo
+   cresce além do max-height do modal e o fim do formulário — as ações, quase
+   sempre — some atrás do overflow: hidden de .modal[open]. Sem barra de
+   rolagem e sem como chegar lá com o mouse. Era o que acontecia no modal de
+   editar NIP, mais alto que a janela por ter três linhas de campos e um
+   textarea; o de resíduos escapava só por ser mais curto.
+
+   min-height: 0 porque um item de flex não encolhe abaixo do próprio conteúdo
+   sem isso — é o que autoriza a barra de rolagem a aparecer no corpo. */
+.modal[open] > form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Só o corpo rola; cabeçalho e rodapé ficam fixos — o primeiro mantém à vista
+   de quem é o detalhe aberto, o segundo mantém a ação sempre alcançável. */
 .modal__body {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: var(--space-32);
   padding: var(--space-24);
   overflow-y: auto;
+}
+
+/* Mesmo desenho do .card__footer, e pelo mesmo motivo: a ação principal fica
+   ancorada num degrau visível no fim do diálogo, fora da área que rola. */
+.modal__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+  flex: none;
+  padding: var(--space-16) var(--space-24);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface-sunken);
 }
 
 .modal__section-head {
