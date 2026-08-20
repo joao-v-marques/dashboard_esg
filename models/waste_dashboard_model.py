@@ -39,8 +39,12 @@ class WasteDashboardModel:
             cursor.execute(serie_mensal_query, params)
             serie_mensal = cursor.fetchall()
 
+            # O id e o code vêm junto do nome porque o gráfico de composição
+            # pinta uma cor por TIPO, e não por posição na lista: a ordenação é
+            # por peso (kg DESC) e muda a cada período — sem uma chave estável,
+            # "Reciclável" trocaria de cor quando deixasse de ser o maior.
             composicao_por_tipo_query = """
-                SELECT wt.name AS tipo, wt.is_recyclable, SUM(wr.weight_kg) AS kg
+                SELECT wt.id, wt.code, wt.name AS tipo, wt.is_recyclable, SUM(wr.weight_kg) AS kg
                 FROM waste_records wr
                 JOIN waste_types wt ON wt.id = wr.waste_type_id
                 WHERE wr.record_date BETWEEN %(de)s::date AND %(ate)s::date
@@ -65,10 +69,34 @@ class WasteDashboardModel:
             cursor.execute(por_unidade_query, params)
             por_unidade = cursor.fetchall()
 
+            # Cobertura da coleta: quantos lançamentos, em quantos dias e por
+            # quantas unidades. É o denominador honesto das médias — dividir o
+            # peso pelos dias do calendário afirmaria que houve coleta em todos
+            # eles, o que não é o caso (a coleta é semanal).
+            cobertura_query = """
+                SELECT
+                    COUNT(*) AS lancamentos,
+                    COUNT(DISTINCT wr.record_date) AS dias_com_lancamento,
+                    COUNT(DISTINCT wr.unit_id) AS unidades_com_lancamento,
+                    MIN(wr.record_date) AS primeiro_lancamento,
+                    MAX(wr.record_date) AS ultimo_lancamento
+                FROM waste_records wr
+                WHERE wr.record_date BETWEEN %(de)s::date AND %(ate)s::date;
+            """
+            cursor.execute(cobertura_query, params)
+            cobertura = cursor.fetchone()
+
+            # O total de unidades cadastradas é o "de quantas" do indicador de
+            # cobertura, e não muda com o período — daí não levar os params.
+            cursor.execute("SELECT COUNT(*) AS total FROM units;")
+            total_unidades = cursor.fetchone()
+
             return {
                 "serie_mensal": serie_mensal,
                 "composicao_por_tipo": composicao_por_tipo,
                 "por_unidade": por_unidade,
+                "cobertura": cobertura,
+                "total_unidades": total_unidades,
             }
         except Exception as e:
             raise Exception(str(e))

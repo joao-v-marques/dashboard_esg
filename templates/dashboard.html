@@ -62,7 +62,7 @@
         <div class="sidebar-scrim" data-sidebar-scrim hidden></div>
 
         <main class="app__main" id="conteudo">
-            <div class="container stack-32">
+            <div class="container stack-16">
 
                 <!-- Sem cabeçalho visível de propósito — a tela prioriza os
                      indicadores, sem repetir "Dashboard" que já está no título
@@ -79,6 +79,9 @@
                      lista de setores, mas o role e o rótulo ficam aqui: valem
                      para a faixa mesmo no instante em que ela ainda está vazia.
 
+                     O filtro de período do setor aberto fica nesta mesma
+                     linha, entre as abas e as ações.
+
                      "Exportar" gera um CSV do que está na tela, com os
                      períodos escolhidos em cada setor.
                      ===================================================== -->
@@ -86,6 +89,15 @@
                     <!-- PREENCHIDO VIA JS (js/pages/dashboard.js) -->
                     <div class="tabs" role="tablist" aria-label="Setores de indicadores"
                          data-dashboard-tabs></div>
+
+                    <!-- PREENCHIDO VIA JS (js/pages/dashboard.js)
+                         Um filtro de período por setor, todos aqui dentro e
+                         todos ocultos menos o do setor aberto. Continua sendo
+                         um filtro por setor, não um filtro global — o que
+                         mudou é o lugar: o controle que define o recorte fica
+                         acima de tudo o que ele recorta, e o painel inteiro
+                         passa a caber numa tela sem rolagem. -->
+                    <div class="dash-bar__filters" data-dashboard-filters></div>
 
                     <div class="dash-bar__actions">
                         <button class="btn btn--secondary" type="button" data-export>

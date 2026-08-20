@@ -1,7 +1,7 @@
 /* ==========================================================================
    dashboard.css — arranjo da área de conteúdo do painel de indicadores.
 
-   Só o arranjo. Card, tabela, aba, barra de meta e apontamento são
+   Só o arranjo. Card, tabela, aba, gráfico, barra de meta e apontamento são
    blocos de components.css e não são redefinidos aqui — o que este arquivo
    faz é dizer onde cada um cai dentro de um bloco de setor.
 
@@ -9,30 +9,36 @@
    js/pages/dashboard.js); a estrutura do bloco é sempre a mesma e vem da
    configuração de cada setor (js/pages/dashboard_sectors.js).
 
-   Nenhuma medida abaixo de 1360px muda a promessa do painel: rótulo encolhe,
-   número não quebra.
+   O ALVO DESTE ARQUIVO É UMA TELA SÓ. Em 1920×1080 o painel inteiro de
+   Resíduos — barra, seis indicadores, três gráficos e a tabela — cabe sem
+   rolagem vertical. É isso que explica cada decisão de densidade abaixo: o
+   filtro subiu para a barra em vez de ter cabeçalho próprio, o resumo do setor
+   ocupa uma linha, o vão entre blocos caiu de 24px para 16px e os cards se
+   arranjam em duas linhas de 12 colunas em vez de uma pilha. Abaixo de
+   1360px a promessa deixa de valer e a página volta a rolar — o que não pode
+   deixar de valer nunca é a legibilidade: rótulo encolhe, número não quebra.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   1. Barra do painel — a faixa de abas e as ações na mesma linha.
+   1. Barra do painel — abas, filtro do setor aberto e ações na mesma linha.
 
    O painel sobe para perto da topbar: a barra já é a primeira linha da tela e
-   não precisa dos 32px que o shell dá às demais. Fica a metade — o bastante
-   para o botão não encostar na borda da topbar. Só o topo muda; a folga de
-   baixo continua. A regra vale só aqui porque dashboard.css só é carregado
-   por esta página.
+   não precisa dos 32px que o shell dá às demais. Embaixo, a folga do shell é
+   de 64px — sobra de página em branco que empurraria a última linha de cards
+   para fora da dobra sem mostrar nada.
    -------------------------------------------------------------------------- */
 
-.app__main { padding-top: var(--space-16); }
+.app__main { padding-block: var(--space-16) var(--space-24); }
 
 /* A linha divisória fica na barra, e não em .tabs, por dois motivos: ela
-   atravessa também o trecho ocupado pelo botão, em vez de morrer onde as abas
-   acabam; e o sublinhado da aba ativa (que fica em bottom: -1px) cai
-   exatamente sobre ela. */
+   atravessa também o trecho ocupado pelo filtro e pelo botão, em vez de morrer
+   onde as abas acabam; e o sublinhado da aba ativa (que fica em bottom: -1px)
+   cai exatamente sobre ela. */
 .dash-bar {
   display: flex;
   align-items: flex-end;
-  gap: var(--space-24);
+  gap: var(--space-16);
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -42,8 +48,9 @@
   border-bottom: 0;
 }
 
-/* O botão acompanha a base das abas; a folga embaixo o descola da linha e
-   deixa o centro dele na altura do texto da aba. */
+/* Filtro e botão acompanham a base das abas; a folga embaixo os descola da
+   linha e deixa o centro deles na altura do texto da aba. */
+.dash-bar__filters,
 .dash-bar__actions {
   flex: none;
   display: flex;
@@ -53,33 +60,19 @@
 }
 
 /* --------------------------------------------------------------------------
-   2. Cabeçalho do bloco de setor.
-   Nome e resumo à esquerda, filtro de período do setor encostado à direita,
-   alinhado pela base.
+   2. Filtro de período — vive na barra, um por setor.
+
+   Não existe filtro global no painel: cada setor declara o próprio tipo
+   (intervalo, ano, mês/ano) em dashboard_sectors.js e só recarrega a si mesmo
+   ao mudar. Os três filtros ficam montados aqui e só o do setor aberto é
+   revelado, por [hidden] — trocar de aba troca o filtro no mesmo lugar.
+
+   Os rótulos "De" e "Até" saem da vista (o JS os marca com .visually-hidden),
+   nunca do DOM: o campo continua com nome acessível, e o grupo inteiro se
+   apresenta como "Período de Resíduos". Os campos nunca ficam menores que o
+   necessário para uma data caber.
    -------------------------------------------------------------------------- */
 
-.sector__id {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-24);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-24);
-}
-
-.sector__id-main { min-width: 0; }
-
-.sector__summary {
-  margin-top: var(--space-4);
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-  color: var(--color-text-muted);
-  max-width: 46ch;
-}
-
-/* O filtro do setor. Não existe filtro global: cada bloco declara o seu tipo
-   (intervalo, ano, mês/ano) em dashboard_sectors.js e só recarrega a si
-   mesmo. Os campos nunca ficam menores que o necessário para uma data caber. */
 .sector__filter .field-row {
   gap: var(--space-8);
 }
@@ -88,12 +81,30 @@
   min-width: 132px;
 }
 
+.sector__filter[hidden] { display: none; }
+
 /* --------------------------------------------------------------------------
-   3. Corpo do bloco de setor.
+   3. Bloco de setor.
    -------------------------------------------------------------------------- */
 
-/* Subtítulo interno do bloco (Detalhamento, Progresso das metas,
-   Apontamentos). */
+/* O título do setor é oculto (a aba selecionada já o mostra), então o resumo é
+   a primeira coisa visível do bloco. Uma linha, cortada com reticências: a
+   frase inteira continua no atributo title e no DOM. Duas linhas de texto de
+   apoio custariam, aqui, a última linha de cards. */
+.sector__summary {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: var(--space-16);
+}
+
+/* Subtítulo interno do bloco (Progresso das metas, Apontamentos). O
+   "Detalhamento" saiu: cada card da grade abaixo tem o próprio título, e um
+   rótulo de seção para anunciar títulos que já estão à vista custava uma linha
+   inteira. */
 .sector__subhead {
   font-size: var(--text-xs);
   line-height: var(--leading-xs);
@@ -101,14 +112,51 @@
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
   color: var(--color-text-muted);
-  margin-bottom: var(--space-16);
+  margin-bottom: var(--space-8);
 }
 
-/* Cada tabela do setor vive dentro de um card, com o próprio cabeçalho —
-   um setor pode ter mais de uma (Resíduos detalha por tipo e por unidade). */
-.sector__table + .sector__table { margin-top: var(--space-24); }
+/* --------------------------------------------------------------------------
+   4. Grade do setor — gráficos e tabelas.
 
-/* As metas vêm depois das tabelas, em um nó próprio: ele não é apagado no
+   As mesmas 12 colunas do resto do projeto, com o vão de 16px em vez dos 24px
+   do gutter padrão: com quatro cards na tela, 8px por vão são 16px de altura
+   recuperados, que é metade de uma linha de gráfico.
+
+   O span de cada card vem da configuração do setor, não daqui — quem descreve
+   o gráfico é quem sabe se ele precisa de largura (uma série mensal) ou não
+   (uma rosca). Este arquivo só oferece os degraus.
+   -------------------------------------------------------------------------- */
+
+.sector__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-16);
+  /* Altura da área de desenho de todo gráfico da grade. Fica aqui, e não no
+     componente, porque é decisão de arranjo desta tela: é o número que se
+     mexe para o painel caber na dobra. */
+  --chart-height: 148px;
+}
+
+.sector__cell--4  { grid-column: span 4; }
+.sector__cell--6  { grid-column: span 6; }
+.sector__cell--8  { grid-column: span 8; }
+.sector__cell--12 { grid-column: span 12; }
+
+/* Nos degraus canônicos do projeto: em 1199px as duas larguras viram meia
+   linha (dois cards lado a lado), e em 899px cada card ocupa a linha toda. */
+@media (max-width: 1199px) {
+  .sector__cell--4,
+  .sector__cell--8 { grid-column: span 6; }
+}
+
+@media (max-width: 899px) {
+  .sector__grid > * { grid-column: span 12; }
+
+  /* Sem a disputa por largura, o gráfico pode respirar de novo. */
+  .sector__grid { --chart-height: 200px; }
+}
+
+/* As metas vêm depois da grade, em um nó próprio: ele não é apagado no
    repintar do conteúdo, e nasce sem altura enquanto o setor não tiver meta
    cadastrada — daí não haver margem fixa aqui. */
-.sector__goals:not(:empty) { margin-top: var(--space-32); }
+.sector__goals:not(:empty) { margin-top: var(--space-24); }

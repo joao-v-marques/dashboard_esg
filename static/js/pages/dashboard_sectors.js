@@ -20,6 +20,10 @@
  *   rotuloPeriodo(p)      período por extenso, para nota de tabela e export
  *   buscar(p)             Promise com o dado cru da API
  *   kpis                  descritores; `valor(dados)` resolve o número
+ *   graficos              descritores; `dados(dados, periodo)` resolve categorias,
+ *                         séries ou fatias, o destaque do rodapé e a tabela
+ *                         equivalente. `span` diz quantas das 12 colunas o card
+ *                         ocupa na grade do setor
  *   tabelas               descritores; `linhas(dados)` resolve as células
  *   metas(dados)          barras de progresso — [] enquanto não houver alvo
  *   notas(dados)          apontamentos curtos — [] quando não houver
@@ -44,7 +48,8 @@
  */
 
 import { API } from "../utils/routes.js";
-import { formatarDataISO, formatarInteiro, formatarNumero, formatarPercentual } from "../utils/format_ptbr.js";
+import { formatarDataISO, formatarInteiro, formatarNumero, formatarPercentual, nomeDoMes } from "../utils/format_ptbr.js";
+import { dobrarCauda } from "../utils/dashboard_charts.js";
 
 /* =========================================================================
    Busca
@@ -108,6 +113,46 @@ function intervaloAnterior({ de, ate }) {
    Resíduos
    ========================================================================= */
 
+/**
+ * Rótulos de um mês da série, nos dois tamanhos que o gráfico usa: o curto vai
+ * no eixo, o longo no balão e na tabela equivalente.
+ *
+ * O ano entra no rótulo curto só quando o período atravessa mais de um ano —
+ * dois "jan" lado a lado, sem ano, seriam dois meses diferentes com o mesmo
+ * nome; num período de um ano só, repetir "/26" doze vezes é ruído.
+ */
+function rotulosDoMes(iso, comAno) {
+    const [ano, mes] = String(iso).split("-").map(Number);
+    const nome = nomeDoMes(mes);
+
+    return {
+        curto: nome.slice(0, 3) + (comAno ? "/" + String(ano).slice(2) : ""),
+        longo: nome.charAt(0).toUpperCase() + nome.slice(1) + " de " + ano,
+    };
+}
+
+/** A série atravessa mais de um ano civil? Decide o rótulo curto do eixo. */
+function serieAtravessaAnos(serie) {
+    return new Set(serie.map((mes) => String(mes.mes).slice(0, 4))).size > 1;
+}
+
+/**
+ * Slot de cor de um tipo de resíduo.
+ *
+ * Sai do id do tipo — a ordem em que ele foi cadastrado, que é estável — e
+ * NUNCA da posição na lista, que é o ranking de peso e muda a cada período. Um
+ * tipo não pode trocar de cor por ter deixado de ser o maior do mês: quem
+ * aprendeu que "Orgânico é o lilás" ficaria olhando para outro dado.
+ *
+ * Com os três tipos de hoje o resultado ainda cai certo por semântica —
+ * Reciclável no verde e Não Reciclável no laranja, exatamente os dois tons que
+ * o gráfico de evolução usa para reciclagem e destinação final — porque foi
+ * essa a ordem de cadastro.
+ */
+function slotDoTipo(id) {
+    return "s" + ((Number(id) - 1) % 6 + 1);
+}
+
 const RESIDUOS = {
     id: "residuos",
     nome: "Resíduos",
@@ -133,6 +178,11 @@ const RESIDUOS = {
         return buscarJson(API.wasteDashboard + "?de=" + de + "&ate=" + ate);
     },
 
+    // Seis indicadores, na densidade micro: os três do peso (gerado, reciclado,
+    // destinação final) fecham a conta entre si, a taxa é a leitura deles em
+    // percentual, e os dois últimos dizem sobre QUE coleta esses números falam
+    // — sem eles, "1.200 kg no ano" não distingue um ano inteiro de coleta de
+    // um único mês lançado.
     kpis: [
         {
             id: "gerado",
@@ -144,18 +194,32 @@ const RESIDUOS = {
             // avaliação, não a direção da seta.
             melhorQuando: "menor",
             valor: (dados) => dados.resumo.kg_gerado,
-            nota: () => "Todos os tipos, recicláveis e não recicláveis.",
+            nota: () => "Recicláveis e não recicláveis.",
         },
         {
             id: "reciclagem",
             sigla: "RR",
-            rotulo: "Resíduos para reciclagem",
+            rotulo: "Enviado para reciclagem",
             unidade: "kg",
             decimais: 2,
             tom: "accent",
             melhorQuando: "maior",
             valor: (dados) => dados.resumo.kg_reciclado,
-            nota: () => "Tipos marcados como recicláveis no cadastro.",
+            nota: () => "Tipos recicláveis no cadastro.",
+        },
+        {
+            id: "destinacao",
+            sigla: "DF",
+            rotulo: "Destinação final",
+            unidade: "kg",
+            decimais: 2,
+            tom: "negative",
+            melhorQuando: "menor",
+            // O complemento exato do reciclado. Vale como indicador próprio
+            // porque é este o número que vira custo de destinação e o que a
+            // meta de redução persegue — a taxa sozinha esconde o volume.
+            valor: (dados) => dados.resumo.kg_destinacao_final,
+            nota: () => "O que não volta ao ciclo.",
         },
         {
             id: "taxa",
@@ -168,17 +232,204 @@ const RESIDUOS = {
             // O valor já é percentual: a variação vai em p.p., não em %.
             pontosPercentuais: true,
             valor: (dados) => dados.resumo.pct_reciclado,
-            nota: () => "Reciclado ÷ gerado no período, não a média dos meses.",
+            nota: () => "Reciclado ÷ gerado no período.",
+        },
+        {
+            id: "media-dia",
+            sigla: "MD",
+            rotulo: "Média por dia de coleta",
+            unidade: "kg",
+            decimais: 2,
+            melhorQuando: "menor",
+            // Por dia COM COLETA, não por dia de calendário: a coleta é
+            // semanal, e dividir por 365 afirmaria uma geração diária que não
+            // existe. É o número que permite comparar períodos de tamanhos
+            // diferentes sem que o mais longo pareça sempre o pior.
+            valor: (dados) => dados.resumo.media_por_dia_coletado,
+            nota: (dados) => formatarInteiro(dados.resumo.dias_com_lancamento) + " dias com coleta.",
+        },
+        {
+            id: "cobertura",
+            sigla: "UC",
+            rotulo: "Unidades com coleta",
+            decimais: 0,
+            tom: "warning",
+            melhorQuando: "maior",
+            // Indicador de ABRANGÊNCIA, não de resultado: diz de quantas
+            // unidades os números acima estão falando. Enquanto for menor que o
+            // total, o painel está descrevendo parte da cooperativa, e isso
+            // precisa estar à vista de quem lê.
+            valor: (dados) => dados.resumo.unidades_com_lancamento,
+            nota: (dados) => "De " + formatarInteiro(dados.resumo.total_unidades)
+                + " cadastradas · " + formatarInteiro(dados.resumo.lancamentos) + " lançamentos.",
         },
     ],
 
-    // A quebra por unidade não entra enquanto a coleta for só da Sede: uma
-    // tabela de uma linha só não detalha nada, e sugere uma comparação entre
-    // unidades que ainda não existe. O endpoint continua devolvendo
-    // `por_unidade` — quando as demais unidades começarem a lançar, ela volta
-    // como mais um item desta lista, sem mexer em backend.
+    // O peso (kg) e a taxa (%) são dois gráficos, e não um só com barra e linha
+    // sobrepostas: duas escalas verticais no mesmo desenho se alinham de forma
+    // arbitrária e inventam uma correlação que o dado não tem.
+    graficos: [
+        {
+            id: "residuos-evolucao",
+            tipo: "colunas-empilhadas",
+            span: 8,
+            titulo: "Evolução mensal",
+            descricao: "Peso de resíduo gerado mês a mês, separado entre o que foi para reciclagem e o que foi para destinação final.",
+            unidade: "kg",
+            decimais: 2,
+            nota: (dados, periodo) => "kg · " + RESIDUOS.rotuloPeriodo(periodo),
+            dados: (dados) => {
+                const serie = dados.serie_mensal;
+                const comAno = serieAtravessaAnos(serie);
+                const pico = dados.destaques.pico_mensal;
+
+                return {
+                    categorias: serie.map((mes) => rotulosDoMes(mes.mes, comAno)),
+                    // A reciclagem fica embaixo na pilha: é a parte que se quer
+                    // ver crescer, e a base da coluna é o único lugar da pilha
+                    // com uma linha de referência fixa para comparar mês a mês.
+                    series: [
+                        {
+                            rotulo: "Reciclagem",
+                            slot: "recycle",
+                            valores: serie.map((mes) => mes.kg_reciclado),
+                            legenda: formatarNumero(dados.resumo.kg_reciclado, 2) + " kg",
+                        },
+                        {
+                            rotulo: "Destinação final",
+                            slot: "landfill",
+                            valores: serie.map((mes) => mes.kg_destinacao_final),
+                            legenda: formatarNumero(dados.resumo.kg_destinacao_final, 2) + " kg",
+                        },
+                    ],
+                    rodape: pico
+                        ? "Mês de maior geração: " + rotulosDoMes(pico.mes, true).longo
+                            + ", com " + formatarNumero(pico.kg_gerado, 2) + " kg."
+                        : null,
+                    tabela: {
+                        colunas: ["Mês", "Reciclagem (kg)", "Destinação final (kg)", "Total (kg)"],
+                        linhas: serie.map((mes) => [
+                            rotulosDoMes(mes.mes, true).longo,
+                            formatarNumero(mes.kg_reciclado, 2),
+                            formatarNumero(mes.kg_destinacao_final, 2),
+                            formatarNumero(mes.kg_gerado, 2),
+                        ]),
+                    },
+                };
+            },
+        },
+        {
+            id: "residuos-composicao",
+            tipo: "composicao",
+            span: 4,
+            titulo: "Composição por tipo",
+            descricao: "Participação de cada tipo de resíduo no peso total gerado no período.",
+            unidade: "kg",
+            decimais: 2,
+            nota: () => "kg no período",
+            dados: (dados) => {
+                // A cauda dobra em "Outros" a partir do quarto tipo: numa rosca
+                // qualquer par de fatias pode se encostar, e a paleta sustenta
+                // três cores distinguíveis nesse teste, não seis. O quarto tipo
+                // em diante continua discriminado na tabela ao lado.
+                const fatias = dobrarCauda(dados.composicao_por_tipo.map((linha) => ({
+                    rotulo: linha.tipo,
+                    valor: linha.kg,
+                    slot: slotDoTipo(linha.id),
+                })));
+
+                const total = fatias.reduce((soma, fatia) => soma + fatia.valor, 0);
+                const percentual = (valor) => (total ? valor / total * 100 : 0);
+
+                fatias.forEach((fatia) => {
+                    fatia.legenda = formatarPercentual(percentual(fatia.valor)) + "%";
+                });
+
+                const maior = fatias.reduce(
+                    (melhor, fatia) => (melhor && melhor.valor >= fatia.valor ? melhor : fatia),
+                    null,
+                );
+
+                return {
+                    fatias,
+                    rodape: maior && maior.valor > 0
+                        ? "Maior parcela: " + maior.rotulo + ", com "
+                            + formatarPercentual(percentual(maior.valor)) + "% do gerado."
+                        : null,
+                    tabela: {
+                        colunas: ["Tipo", "Gerado (kg)", "% do gerado"],
+                        linhas: fatias.map((fatia) => [
+                            fatia.rotulo,
+                            formatarNumero(fatia.valor, 2),
+                            formatarPercentual(percentual(fatia.valor)),
+                        ]),
+                    },
+                };
+            },
+        },
+        {
+            id: "residuos-taxa",
+            tipo: "linha",
+            span: 4,
+            titulo: "Taxa de reciclagem por mês",
+            descricao: "Percentual do resíduo gerado em cada mês que foi para reciclagem, com a taxa do período inteiro marcada como referência.",
+            unidade: "%",
+            decimais: 2,
+            // Escala fixa de 0 a 100: uma taxa tem os dois extremos definidos, e
+            // deixar o eixo se ajustar ao período faria uma variação de 3 p.p.
+            // num mês fraco parecer o mesmo salto que 30 p.p. em outro.
+            escala: { max: 100, passo: 25 },
+            nota: () => "% do gerado no mês",
+            dados: (dados) => {
+                const serie = dados.serie_mensal;
+                const comAno = serieAtravessaAnos(serie);
+                const melhor = dados.destaques.melhor_mes_reciclagem;
+                const media = dados.resumo.pct_reciclado;
+
+                return {
+                    categorias: serie.map((mes) => ({
+                        ...rotulosDoMes(mes.mes, comAno),
+                        // O peso do mês entra no balão junto da taxa: 100% de
+                        // reciclagem em cima de 4 kg e em cima de 400 kg são a
+                        // mesma altura no gráfico e coisas muito diferentes.
+                        apoio: [{ rotulo: "Gerado", valor: formatarNumero(mes.kg_gerado, 2) + " kg" }],
+                    })),
+                    series: [{
+                        rotulo: "Taxa de reciclagem",
+                        slot: "s1",
+                        valores: serie.map((mes) => mes.pct_reciclado),
+                    }],
+                    referencia: media === null || media === undefined
+                        ? null
+                        : { valor: media, rotulo: "média " + formatarPercentual(media) + "%" },
+                    rodape: melhor
+                        ? "Melhor mês: " + rotulosDoMes(melhor.mes, true).longo
+                            + ", com " + formatarPercentual(melhor.pct_reciclado) + "% reciclado."
+                        : null,
+                    tabela: {
+                        colunas: ["Mês", "Taxa de reciclagem (%)", "Gerado (kg)"],
+                        linhas: serie.map((mes) => [
+                            rotulosDoMes(mes.mes, true).longo,
+                            formatarPercentual(mes.pct_reciclado),
+                            formatarNumero(mes.kg_gerado, 2),
+                        ]),
+                    },
+                };
+            },
+        },
+    ],
+
+    // A quebra por unidade não entra como tabela enquanto a coleta for só da
+    // Sede: uma tabela de uma linha só não detalha nada, e sugere uma comparação
+    // entre unidades que ainda não existe. O que o painel diz hoje sobre isso é
+    // o cartão "Unidades com coleta", que é honesto sem fingir comparação. O
+    // endpoint continua devolvendo `por_unidade` — quando as demais unidades
+    // começarem a lançar, ela volta como mais um item desta lista, sem mexer em
+    // backend.
     tabelas: [
         {
+            span: 8,
+            densa: true,
             titulo: "Composição por tipo de resíduo",
             descricao: "Resíduos gerados no período por tipo, com a destinação e a participação de cada um no total.",
             nota: (dados, periodo) => "kg · " + RESIDUOS.rotuloPeriodo(periodo),

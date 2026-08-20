@@ -3,20 +3,29 @@
  *
  * Este arquivo não sabe o que é resíduo nem cooperado. Ele lê a lista de
  * setores (js/pages/dashboard_sectors.js), monta cada bloco com os
- * componentes genéricos (js/utils/dashboard_widgets.js) e cuida de duas
- * coisas que são do painel, não de um setor:
+ * componentes genéricos (js/utils/dashboard_widgets.js e
+ * js/utils/dashboard_charts.js) e cuida de três coisas que são do painel, não
+ * de um setor:
  *
  *   1. a faixa de abas — um setor por vez, o nome e a quantidade de
  *      indicadores em cada aba;
- *   2. o ciclo de vida de cada setor (carregando / pronto / erro), que é
+ *   2. a barra do painel, onde vive o filtro do setor à vista — um filtro por
+ *      setor, mas só o do setor aberto aparece;
+ *   3. o ciclo de vida de cada setor (carregando / pronto / erro), que é
  *      independente — um setor fora do ar não derruba os vizinhos.
  *
- * Não existe filtro global: cada setor tem o seu, declarado na configuração,
- * e mexer nele recarrega só aquele bloco.
+ * O FILTRO FICA NA BARRA, e não num cabeçalho dentro do bloco. São duas
+ * razões: o painel inteiro cabe em uma tela sem rolagem, e o controle que
+ * define o recorte fica acima de tudo o que ele recorta — dentro do bloco, ele
+ * apareceria depois de indicadores que já estão desenhados com o período dele.
+ * Continua sendo um filtro POR SETOR: não existe filtro global, e mexer nele
+ * recarrega só aquele bloco.
  *
  * Contrato com o HTML (data-*):
  *   [data-dashboard-tabs]      faixa de abas; o role="tablist" e o rótulo já
  *                              vêm do HTML, aqui só entram os botões
+ *   [data-dashboard-filters]   lugar dos filtros de período na barra; um por
+ *                              setor, todos ocultos menos o do setor aberto
  *   [data-dashboard-body]      onde os painéis de setor são desenhados
  *   [data-export]              botão "Exportar"
  */
@@ -24,6 +33,7 @@
 import { PAGES } from "../utils/routes.js";
 import { SETORES } from "./dashboard_sectors.js";
 import { baixarCsv, montarCsv, nomeDoArquivo } from "../utils/dashboard_export.js";
+import { criarGrafico, redesenharGraficos } from "../utils/dashboard_charts.js";
 import {
     criarApontamentos,
     criarBarraMeta,
@@ -45,7 +55,7 @@ import {
  *   status    "carregando" | "pronto" | "erro"
  *   kpis      indicadores já resolvidos com o dado do período
  *   kpisAnteriores  os mesmos, do período anterior, para a variação
- *   tabelas, metas, notas   idem, já resolvidos
+ *   graficos, tabelas, metas, notas   idem, já resolvidos
  */
 const estados = new Map();
 
@@ -54,6 +64,15 @@ const nos = new Map();
 
 let setorAtivo = SETORES[0]?.id ?? null;
 let indoParaLogin = false;
+
+/**
+ * A partir de cinco indicadores os cartões passam para a densidade micro: com
+ * seis dividindo a linha, o tamanho compacto deixaria cada um com um sexto da
+ * largura e três linhas de rótulo. Abaixo disso, o compacto continua.
+ */
+function densidadeDosCartoes(setor) {
+    return setor.kpis.length >= 5 ? "micro" : "compacta";
+}
 
 /* =========================================================================
    Resolução da configuração → dado pronto para desenhar
@@ -76,11 +95,27 @@ function resolverKpis(setor, dados) {
 
 function resolverTabelas(setor, dados, periodo) {
     return setor.tabelas.map((descritor) => ({
+        span: descritor.span,
+        densa: descritor.densa,
         titulo: descritor.titulo,
         descricao: descritor.descricao,
         nota: typeof descritor.nota === "function" ? descritor.nota(dados, periodo) : descritor.nota,
         colunas: descritor.colunas,
         linhas: descritor.linhas(dados),
+    }));
+}
+
+/**
+ * O descritor de gráfico entrega o desenho inteiro em `dados(...)`: categorias,
+ * séries ou fatias, o destaque do rodapé e a tabela equivalente. O que sobra no
+ * descritor (tipo, título, escala, unidade) passa direto, e é por isso que o
+ * espalhamento vem antes — nada resolvido pode ser sobrescrito pela descrição.
+ */
+function resolverGraficos(setor, dados, periodo) {
+    return (setor.graficos ?? []).map((descritor) => ({
+        ...descritor,
+        nota: typeof descritor.nota === "function" ? descritor.nota(dados, periodo) : descritor.nota,
+        ...descritor.dados(dados, periodo),
     }));
 }
 
@@ -134,6 +169,7 @@ async function carregar(setor) {
 
         estado.dados = dados;
         estado.kpis = resolverKpis(setor, dados);
+        estado.graficos = resolverGraficos(setor, dados, periodo);
         estado.tabelas = resolverTabelas(setor, dados, periodo);
         estado.metas = setor.metas(dados);
         estado.notas = setor.notas(dados);
@@ -177,9 +213,37 @@ function trocarPeriodo(setor, novoPeriodo) {
 }
 
 /**
- * Conteúdo do bloco: indicadores, detalhamento, metas e apontamentos.
- * É a única parte repintada quando o dado chega — o cabeçalho e o filtro
- * ficam de pé, para o foco não se perder ao mexer em uma data.
+ * A grade de 12 colunas do setor: gráficos primeiro, na ordem da configuração,
+ * e as tabelas em seguida. Cada card diz quantas colunas ocupa (`span`), e é
+ * essa soma que faz o painel caber em duas linhas em vez de uma pilha.
+ *
+ * Sem subtítulo "Detalhamento" por cima: cada card já tem o próprio título, e
+ * um rótulo de seção para dizer o que os títulos abaixo já dizem custaria uma
+ * linha inteira num painel que precisa caber numa tela.
+ */
+function montarGradeDoSetor(estado) {
+    const grade = elemento("div", "sector__grid");
+
+    estado.graficos.forEach((grafico) => {
+        const card = criarGrafico(grafico);
+        card.classList.add("sector__cell--" + (grafico.span ?? 12));
+        grade.appendChild(card);
+    });
+
+    estado.tabelas.forEach((tabela) => {
+        const card = criarTabelaDetalhada(tabela);
+        card.classList.add("sector__cell--" + (tabela.span ?? 12));
+        grade.appendChild(card);
+    });
+
+    return grade.childElementCount ? grade : null;
+}
+
+/**
+ * Conteúdo do bloco: indicadores, gráficos, detalhamento e apontamentos.
+ * É a única parte repintada quando o dado chega — o resumo do setor fica de
+ * pé, e o filtro, que agora vive na barra do painel, nunca é tocado: o foco
+ * não se perde ao mexer em uma data.
  */
 function pintarConteudo(setor) {
     const referencias = nos.get(setor.id);
@@ -189,18 +253,14 @@ function pintarConteudo(setor) {
     const partes = [];
 
     if (estado.status === "carregando") {
-        partes.push(criarEsqueleto(setor.kpis.length));
+        partes.push(criarEsqueleto(setor.kpis.length, densidadeDosCartoes(setor)));
     } else if (estado.status === "erro") {
         partes.push(criarFalha(setor.erro.titulo, setor.erro.texto));
     } else {
-        partes.push(criarGradeIndicadores(estado.kpis, estado.kpisAnteriores));
+        partes.push(criarGradeIndicadores(estado.kpis, estado.kpisAnteriores, densidadeDosCartoes(setor)));
 
-        if (estado.tabelas.length) {
-            const bloco = elemento("div");
-            bloco.appendChild(subhead("Detalhamento"));
-            estado.tabelas.forEach((tabela) => bloco.appendChild(criarTabelaDetalhada(tabela)));
-            partes.push(bloco);
-        }
+        const grade = montarGradeDoSetor(estado);
+        if (grade) partes.push(grade);
 
         if (estado.notas.length) {
             const bloco = elemento("div");
@@ -210,7 +270,7 @@ function pintarConteudo(setor) {
         }
     }
 
-    // As metas ficam depois das tabelas, no próprio nó — fora de .sector__content
+    // As metas ficam depois da grade, no próprio nó — fora de .sector__content
     // para não serem apagadas junto no próximo repintar.
     const metas = estado.status === "pronto" ? estado.metas : [];
 
@@ -226,33 +286,26 @@ function pintarConteudo(setor) {
     referencias.conteudo.replaceChildren(...partes);
 }
 
-/**
- * Cabeçalho do bloco: nome e resumo à esquerda, filtro de período do setor
- * encostado à direita.
- */
-function construirIdentificacao(setor) {
-    const identificacao = elemento("div", "sector__id");
-
-    const titulo = elemento("h2", "card__title", setor.nome);
-    titulo.id = "titulo-" + setor.id;
-
-    const principal = elemento("div", "sector__id-main");
-    principal.appendChild(titulo);
-    principal.appendChild(elemento("p", "sector__summary", setor.resumo));
-
-    identificacao.appendChild(principal);
-    identificacao.appendChild(criarFiltro(setor, estados.get(setor.id).periodo, (novo) => trocarPeriodo(setor, novo)));
-
-    return identificacao;
-}
-
 function construirBloco(setor) {
     const bloco = elemento("section", "sector");
     bloco.setAttribute("aria-labelledby", "titulo-" + setor.id);
 
-    bloco.appendChild(construirIdentificacao(setor));
+    // O título é oculto: a aba selecionada já mostra o nome do setor em
+    // destaque, e repeti-lo logo abaixo gastaria uma linha para dizer o que
+    // está escrito dois centímetros acima. Oculto, e não ausente — toda seção
+    // precisa de um título para quem navega por leitor de tela.
+    const titulo = elemento("h2", "visually-hidden", setor.nome);
+    titulo.id = "titulo-" + setor.id;
+    bloco.appendChild(titulo);
 
-    const conteudo = elemento("div", "sector__content stack-32");
+    // O resumo fica em uma linha só. O texto inteiro continua acessível pelo
+    // title para quem passar o ponteiro — encurtar a frase na configuração
+    // seria perder a explicação nas telas largas, onde ela cabe inteira.
+    const resumo = elemento("p", "sector__summary", setor.resumo);
+    resumo.title = setor.resumo;
+    bloco.appendChild(resumo);
+
+    const conteudo = elemento("div", "sector__content stack-16");
     bloco.appendChild(conteudo);
 
     const metas = elemento("div", "sector__goals");
@@ -264,7 +317,7 @@ function construirBloco(setor) {
 }
 
 /* =========================================================================
-   Faixa de abas
+   Barra do painel: abas e filtros
    ========================================================================= */
 
 function idDaAba(setor) {
@@ -275,12 +328,28 @@ function idDoPainel(setor) {
     return "painel-" + setor.id;
 }
 
+/** Filtro de cada setor, na barra. Todos são montados; só um fica visível. */
+function montarFiltros(caixa) {
+    caixa.replaceChildren(...SETORES.map((setor) => {
+        const filtro = criarFiltro(
+            setor,
+            estados.get(setor.id).periodo,
+            (novo) => trocarPeriodo(setor, novo),
+            { compacto: true },
+        );
+
+        filtro.dataset.filterFor = setor.id;
+        return filtro;
+    }));
+}
+
 function selecionarAba(id, { moverFoco = false } = {}) {
     setorAtivo = id;
 
     SETORES.forEach((setor) => {
         const aba = document.getElementById(idDaAba(setor));
         const painel = document.getElementById(idDoPainel(setor));
+        const filtro = document.querySelector(`[data-filter-for="${setor.id}"]`);
         const ativa = setor.id === id;
 
         if (aba) {
@@ -292,7 +361,13 @@ function selecionarAba(id, { moverFoco = false } = {}) {
         }
 
         if (painel) painel.hidden = !ativa;
+        if (filtro) filtro.hidden = !ativa;
     });
+
+    // Gráfico em painel oculto tem largura zero e sai sem desenho: agora que o
+    // painel apareceu, é aqui que ele ganha a medida que faltava.
+    const painelAtivo = document.getElementById("painel-" + id);
+    if (painelAtivo) redesenharGraficos(painelAtivo);
 }
 
 function aoTeclarNaFaixa(evento) {
@@ -358,6 +433,7 @@ function exportar() {
 
 function init() {
     const faixa = document.querySelector("[data-dashboard-tabs]");
+    const caixaDeFiltros = document.querySelector("[data-dashboard-filters]");
     const corpo = document.querySelector("[data-dashboard-body]");
     if (!faixa || !corpo || !SETORES.length) return;
 
@@ -368,6 +444,7 @@ function init() {
             dados: null,
             kpis: [],
             kpisAnteriores: [],
+            graficos: [],
             tabelas: [],
             metas: [],
             notas: [],
@@ -375,6 +452,7 @@ function init() {
     });
 
     montarAbas(faixa);
+    if (caixaDeFiltros) montarFiltros(caixaDeFiltros);
     montarPaineis(corpo);
 
     SETORES.forEach((setor) => pintarConteudo(setor));

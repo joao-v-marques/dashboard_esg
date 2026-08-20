@@ -49,6 +49,24 @@
   --palette-blue-200:  #a4d8de;  /* azul claro oficial */
   --palette-lilac-300: #b1a0c7;  /* faixa 2 — informada pelo cliente */
 
+  /* Séries de gráfico (camada 1) ------------------------------------------
+     Seis famílias em ordem fixa, derivadas das cores da marca. A ordem é o
+     mecanismo de segurança para daltonismo: os pares que se encostam num
+     gráfico são sempre vizinhos nesta lista, e foi essa vizinhança que passou
+     na verificação. Nunca reordene para "ficar mais bonito" — reordenar é
+     refazer a verificação.
+
+     Medidas na paleta inteira (surface branca): banda de luminosidade e piso
+     de croma OK nos seis; pior par sob protanopia/deuteranopia ΔE 8,4 (alvo
+     ≥ 8); pior par em visão normal ΔE 22,1 (piso 15); contraste com o branco
+     entre 3,63:1 e 6,22:1 — acima do 3:1 exigido para marca gráfica. */
+  --palette-series-1: #00875a;  /* verde da marca, um passo mais claro que o green-600 — 4,55:1 */
+  --palette-series-2: #c25a12;  /* laranja da marca escurecido até passar em contraste — 4,41:1 */
+  --palette-series-3: #6f5cb0;  /* lilás da marca escurecido (o lilac-300 lê como cinza) — 5,48:1 */
+  --palette-series-4: #8a8b1e;  /* oliva, vizinho do lime-600 — 3,63:1 */
+  --palette-series-5: #0b7fb0;  /* azul, escurecido a partir do blue-200 — 4,49:1 */
+  --palette-series-6: #ad2f66;  /* magenta, derivado do rosa da marca — 6,22:1 */
+
   /* Neutros (papel funcional: texto, bordas, divisores, superfícies) -------- */
   --palette-white:      #ffffff;
   --palette-neutral-50: #f8f7f4;
@@ -165,6 +183,42 @@
   --color-band-4-text: var(--palette-neutral-900);
   --color-band-5-bg:   var(--palette-green-600);    /* 81% a 100% */
   --color-band-5-text: var(--palette-white);
+
+  /* Gráficos ---------------------------------------------------------------
+     Os slots categóricos são identidade (qual série), atribuídos em ordem fixa
+     e nunca reciclados: a partir do sétimo, a cauda vira "Outros" no tom
+     neutro em vez de ganhar uma cor nova que ninguém consegue distinguir das
+     seis primeiras.
+
+     Reciclagem e destinação final têm slot fixo próprio porque são as duas
+     séries que se empilham na mesma barra em todo o painel — amarrá-las aos
+     slots 1 e 2 impede que uma troca de ordem em outro gráfico as repinte. */
+  --color-series-1: var(--palette-series-1);
+  --color-series-2: var(--palette-series-2);
+  --color-series-3: var(--palette-series-3);
+  --color-series-4: var(--palette-series-4);
+  --color-series-5: var(--palette-series-5);
+  --color-series-6: var(--palette-series-6);
+  /* "Outros" — a cauda dobrada, e não uma sétima identidade. É neutro de
+     propósito: fora da banda de luminosidade e abaixo do piso de croma que
+     valem para os slots coloridos, justamente porque ninguém precisa memorizar
+     esta cor. Ainda assim foi medido contra os três primeiros slots no teste
+     de todos-contra-todos, que é o que vale numa rosca (lá a ordem é por peso,
+     então qualquer par pode se encostar): pior par ΔE 8,4 sob protanopia e
+     21,7 em visão normal. O neutro-400, que seria a escolha óbvia, reprovava —
+     colidia com o verde do slot 1 sob daltonismo. */
+  --color-series-other: var(--palette-neutral-700);
+
+  --color-series-recycle:  var(--palette-series-1);
+  --color-series-landfill: var(--palette-series-2);
+
+  /* Cromo do gráfico: sempre um passo abaixo do dado. Malha e eixo em fio de
+     1px sólido (nunca tracejado — tracejado lê como projeção ou limite), e a
+     "superfície" é a cor do card, usada para abrir o vão de 2px que separa os
+     segmentos empilhados sem desenhar contorno em volta deles. */
+  --color-chart-grid:    var(--color-border);
+  --color-chart-axis:    var(--palette-neutral-300);
+  --color-chart-surface: var(--color-surface);
 
   /* Controles -------------------------------------------------------------- */
   --color-field-bg:          var(--palette-white);

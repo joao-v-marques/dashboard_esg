@@ -70,8 +70,13 @@ function setaVariacao() {
      pontosPercentuais  o valor já é % (variação em p.p., não em %)
    ========================================================================= */
 
-export function criarCartaoIndicador(kpi, valorAnterior) {
-    const card = elemento("article", "stat stat--compact");
+export function criarCartaoIndicador(kpi, valorAnterior, densidade = "compacta") {
+    // Duas densidades para o mesmo cartão: "compacta" nos setores com dois ou
+    // três indicadores, "micro" quando são seis na mesma linha e cada um tem
+    // um sexto da largura. Só o tamanho muda — faixa lateral, variantes de cor
+    // e ordem dos elementos são as mesmas, para os dois não lerem como
+    // componentes diferentes ao trocar de aba.
+    const card = elemento("article", "stat stat--" + (densidade === "micro" ? "micro" : "compact"));
     if (kpi.tom) card.classList.add("stat--" + kpi.tom);
 
     const header = elemento("div", "stat__header");
@@ -117,18 +122,19 @@ export function criarCartaoIndicador(kpi, valorAnterior) {
 function modificadorDaGrade(quantidade) {
     if (quantidade === 2) return "stat-grid--2";
     if (quantidade === 4) return "stat-grid--4";
+    if (quantidade === 6) return "stat-grid--6";
     return null;
 }
 
 /** Grade de cartões de indicador. */
-export function criarGradeIndicadores(kpis, kpisAnteriores = []) {
+export function criarGradeIndicadores(kpis, kpisAnteriores = [], densidade = "compacta") {
     const grade = elemento("div", "stat-grid");
 
     const modificador = modificadorDaGrade(kpis.length);
     if (modificador) grade.classList.add(modificador);
 
     const anteriorPorId = new Map(kpisAnteriores.map((kpi) => [kpi.id, kpi.valor]));
-    kpis.forEach((kpi) => grade.appendChild(criarCartaoIndicador(kpi, anteriorPorId.get(kpi.id))));
+    kpis.forEach((kpi) => grade.appendChild(criarCartaoIndicador(kpi, anteriorPorId.get(kpi.id), densidade)));
 
     return grade;
 }
@@ -166,8 +172,8 @@ function criarCelula(coluna, celula) {
     return elemento("td", null, celula ?? SEM_DADO);
 }
 
-export function criarTabelaDetalhada({ titulo, nota, descricao, colunas, linhas }) {
-    const bloco = elemento("section", "card sector__table");
+export function criarTabelaDetalhada({ titulo, nota, descricao, colunas, linhas, densa = false }) {
+    const bloco = elemento("section", "card sector__table" + (densa ? " card--dense" : ""));
     const corpo = elemento("div", "card__body");
 
     const cabecalho = elemento("div", "table-head");
@@ -176,7 +182,7 @@ export function criarTabelaDetalhada({ titulo, nota, descricao, colunas, linhas 
     corpo.appendChild(cabecalho);
 
     const wrap = elemento("div", "table-wrap");
-    const tabela = elemento("table", "table table--fluid");
+    const tabela = elemento("table", "table table--fluid" + (densa ? " table--dense" : ""));
 
     if (descricao) tabela.appendChild(elemento("caption", "visually-hidden", descricao));
 
@@ -298,9 +304,17 @@ function anosDisponiveis() {
     return Array.from({ length: 10 }, (_, indice) => atual - indice);
 }
 
-function criarCampo(idCampo, rotulo, controle) {
+/**
+ * Campo do filtro.
+ *
+ * No modo compacto o rótulo continua existindo e continua ligado ao controle —
+ * ele só sai da vista (.visually-hidden). Some o texto, nunca o nome
+ * acessível: um <input type="date"> sem rótulo é lido como "editar texto" por
+ * leitor de tela, e ninguém descobre se aquele campo é o "De" ou o "Até".
+ */
+function criarCampo(idCampo, rotulo, controle, compacto = false) {
     const campo = elemento("div", "field");
-    const label = elemento("label", "field__label", rotulo);
+    const label = elemento("label", "field__label" + (compacto ? " visually-hidden" : ""), rotulo);
     label.htmlFor = idCampo;
     controle.id = idCampo;
     campo.appendChild(label);
@@ -321,7 +335,7 @@ function criarSelect(opcoes, selecionado) {
     return select;
 }
 
-function criarFiltroIntervalo(prefixo, estado, aoMudar) {
+function criarFiltroIntervalo(prefixo, estado, aoMudar, compacto) {
     const linha = elemento("div", "field-row");
 
     const de = elemento("input", "input");
@@ -350,13 +364,13 @@ function criarFiltroIntervalo(prefixo, estado, aoMudar) {
     de.addEventListener("change", mudou);
     ate.addEventListener("change", mudou);
 
-    linha.appendChild(criarCampo(prefixo + "-de", "De", de));
-    linha.appendChild(criarCampo(prefixo + "-ate", "Até", ate));
+    linha.appendChild(criarCampo(prefixo + "-de", "De", de, compacto));
+    linha.appendChild(criarCampo(prefixo + "-ate", "Até", ate, compacto));
 
     return linha;
 }
 
-function criarFiltroAno(prefixo, estado, aoMudar, comMes) {
+function criarFiltroAno(prefixo, estado, aoMudar, comMes, compacto) {
     const linha = elemento("div", "field-row");
     let mesSelect = null;
 
@@ -367,14 +381,14 @@ function criarFiltroAno(prefixo, estado, aoMudar, comMes) {
         }));
 
         mesSelect = criarSelect(opcoes, estado.mes);
-        linha.appendChild(criarCampo(prefixo + "-mes", "Mês", mesSelect));
+        linha.appendChild(criarCampo(prefixo + "-mes", "Mês", mesSelect, compacto));
     }
 
     const anoSelect = criarSelect(
         anosDisponiveis().map((ano) => ({ valor: ano, texto: String(ano) })),
         estado.ano,
     );
-    linha.appendChild(criarCampo(prefixo + "-ano", "Ano", anoSelect));
+    linha.appendChild(criarCampo(prefixo + "-ano", "Ano", anoSelect, compacto));
 
     const mudou = () => {
         const novo = { ano: Number(anoSelect.value) };
@@ -388,14 +402,29 @@ function criarFiltroAno(prefixo, estado, aoMudar, comMes) {
     return linha;
 }
 
-export function criarFiltro(setor, estado, aoMudar) {
-    const bloco = elemento("div", "sector__filter");
+/**
+ * @param {object} opcoes
+ * @param {boolean} opcoes.compacto  filtro que vive na barra do painel, ao lado
+ *   das abas, e não num cabeçalho próprio: os rótulos saem da vista e o grupo
+ *   passa a se apresentar por inteiro ("Período de Resíduos"), que é o que faz
+ *   sentido quando os dois campos estão encostados no botão de exportar.
+ */
+export function criarFiltro(setor, estado, aoMudar, { compacto = false } = {}) {
+    const bloco = elemento("div", "sector__filter" + (compacto ? " sector__filter--bar" : ""));
     const prefixo = "filtro-" + setor.id;
 
+    if (compacto) {
+        // O grupo carrega o nome que os rótulos deixaram de mostrar, e diz de
+        // qual setor é o filtro — na barra, os três setores compartilham o
+        // mesmo lugar.
+        bloco.setAttribute("role", "group");
+        bloco.setAttribute("aria-label", "Período de " + setor.nome);
+    }
+
     if (setor.filtro.tipo === "intervalo") {
-        bloco.appendChild(criarFiltroIntervalo(prefixo, estado, aoMudar));
+        bloco.appendChild(criarFiltroIntervalo(prefixo, estado, aoMudar, compacto));
     } else {
-        bloco.appendChild(criarFiltroAno(prefixo, estado, aoMudar, setor.filtro.tipo === "mes-ano"));
+        bloco.appendChild(criarFiltroAno(prefixo, estado, aoMudar, setor.filtro.tipo === "mes-ano", compacto));
     }
 
     return bloco;
@@ -410,7 +439,7 @@ export function criarFiltro(setor, estado, aoMudar) {
    página não saltar quando o dado chega.
    ========================================================================= */
 
-export function criarEsqueleto(quantidadeDeCartoes) {
+export function criarEsqueleto(quantidadeDeCartoes, densidade = "compacta") {
     const grade = elemento("div", "stat-grid");
 
     // Mesmo modificador dos cartões: o esqueleto precisa ocupar exatamente a
@@ -419,8 +448,12 @@ export function criarEsqueleto(quantidadeDeCartoes) {
     const modificador = modificadorDaGrade(quantidadeDeCartoes);
     if (modificador) grade.classList.add(modificador);
 
+    // O esqueleto usa a altura da MESMA densidade dos cartões que vão chegar,
+    // senão a página salta no instante em que o dado entra.
+    const alturaDoEsqueleto = densidade === "micro" ? "skeleton--stat-micro" : "skeleton--stat-compact";
+
     for (let indice = 0; indice < quantidadeDeCartoes; indice += 1) {
-        grade.appendChild(elemento("span", "skeleton skeleton--stat-compact"));
+        grade.appendChild(elemento("span", "skeleton " + alturaDoEsqueleto));
     }
 
     return grade;

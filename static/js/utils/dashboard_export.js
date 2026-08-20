@@ -54,7 +54,7 @@ function celulaComoTexto(coluna, celula) {
  *
  * @param {Array} blocos  [{ setor, estado }] na ordem em que aparecem na tela,
  *                        onde `estado` é o registro do orquestrador:
- *                        { status, dados, periodo, kpis, tabelas }.
+ *                        { status, dados, periodo, kpis, graficos, tabelas }.
  */
 export function montarCsv(blocos) {
     const linhas = [];
@@ -80,6 +80,19 @@ export function montarCsv(blocos) {
         linhas.push(linha(["Indicador", "Valor", "Unidade"]));
         estado.kpis.forEach((kpi) => {
             linhas.push(linha([kpi.rotulo, formatarNumero(kpi.valor, kpi.decimais ?? 0), kpi.unidade || ""]));
+        });
+
+        // Os gráficos entram como tabela: um CSV não tem desenho, e a série
+        // mensal é justamente o que se quer levar para a planilha. Sai a
+        // tabela equivalente que o próprio gráfico já carrega no DOM — o
+        // mesmo recorte, os mesmos números, formatados uma vez só.
+        (estado.graficos ?? []).forEach((grafico) => {
+            if (!grafico.tabela) return;
+
+            linhas.push("");
+            linhas.push(linha([grafico.titulo]));
+            linhas.push(linha(grafico.tabela.colunas));
+            grafico.tabela.linhas.forEach((celulas) => linhas.push(linha(celulas)));
         });
 
         estado.tabelas.forEach((tabela) => {

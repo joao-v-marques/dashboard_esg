@@ -818,6 +818,14 @@ button.input-wrap__affix[aria-pressed="true"] {
   padding: var(--space-24);
 }
 
+/* Card denso — para painéis com vários cards na mesma tela, onde os 24px de
+   cada lado somam mais que o conteúdo ganha. Só o preenchimento muda: borda,
+   raio e elevação continuam os do card comum, para os dois não lerem como
+   superfícies diferentes lado a lado. */
+.card--dense > .card__body {
+  padding: var(--space-16);
+}
+
 .card__footer {
   display: flex;
   align-items: center;
@@ -2236,6 +2244,307 @@ button.input-wrap__affix[aria-pressed="true"] {
 .table--fluid th.table__num {
   width: 1%;
   white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   Card de indicador — variante micro
+
+   Para o painel denso: seis indicadores na mesma linha, onde o .stat--compact
+   já ocuparia altura demais. Encolhe um degrau o selo, o valor e o rótulo, e
+   fecha os vãos internos — a faixa lateral de assunto e as variantes de cor
+   continuam idênticas, para os três tamanhos conviverem entre telas sem
+   parecerem componentes diferentes.
+   -------------------------------------------------------------------------- */
+
+.stat--micro {
+  padding: var(--space-16);
+  gap: var(--space-4);
+}
+
+.stat--micro .stat__seal {
+  width: 24px;
+  height: 24px;
+}
+
+.stat--micro .stat__value {
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+}
+
+.stat--micro .stat__unit {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  margin-left: var(--space-4);
+}
+
+.stat--micro .stat__label {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+}
+
+.stat--micro .stat__note {
+  padding-top: var(--space-4);
+}
+
+/* Seis indicadores por linha (span 2 de 12). Abaixo de 1360px a linha de seis
+   deixaria o rótulo em quatro linhas, então ela quebra em três, depois em
+   duas, e por fim em uma — os mesmos degraus que a grade de quatro já usa. */
+.stat-grid--6 > .stat,
+.stat-grid--6 > .skeleton { grid-column: span 2; }
+
+@media (max-width: 1359px) {
+  .stat-grid--6 > .stat,
+  .stat-grid--6 > .skeleton { grid-column: span 4; }
+}
+
+@media (max-width: 899px) {
+  .stat-grid--6 > .stat,
+  .stat-grid--6 > .skeleton { grid-column: span 6; }
+}
+
+@media (max-width: 599px) {
+  .stat-grid--6 > .stat,
+  .stat-grid--6 > .skeleton { grid-column: span 12; }
+}
+
+.skeleton--stat-micro { height: 118px; border-radius: var(--radius-card); }
+
+/* --------------------------------------------------------------------------
+   Tabela densa
+
+   Mesma tabela, altura de linha menor. Existe para o painel, onde a tabela
+   divide a tela com gráficos e precisa caber sem empurrar o resto para fora
+   da dobra. Só a altura e o respiro mudam; tipografia, bordas e alinhamento
+   numérico continuam os da .table, para as duas não parecerem tabelas de
+   aplicações diferentes.
+   -------------------------------------------------------------------------- */
+
+.table--dense tbody td {
+  height: var(--control-height);
+  padding-block: var(--space-4);
+}
+
+.table--dense thead th {
+  height: 32px;
+}
+
+/* --------------------------------------------------------------------------
+   GRÁFICOS
+
+   Desenhados em SVG inline pelo próprio projeto (js/utils/dashboard_charts.js)
+   — sem biblioteca, sem CDN, como o resto da aplicação.
+
+   A cor das séries NÃO é atribuída no JS: lá se escolhe a classe do slot
+   (.chart-mark--s1 até --s6) e a cor vem daqui, dos tokens. É o que mantém a
+   promessa de nenhum hexadecimal fora de tokens.css valendo também para
+   gráfico, e o que faz o tema escuro alcançá-los sem tocar em JavaScript.
+
+   Regras de desenho que este bloco sustenta:
+     - malha e eixo em fio de 1px SÓLIDO, um passo abaixo do dado (tracejado
+       lê como projeção ou meta, e aqui é só grade);
+     - o que separa dois segmentos empilhados é um vão de 2px na cor da
+       superfície, nunca um contorno em volta da marca;
+     - texto nunca veste a cor da série — rótulo, valor e legenda usam os
+       tokens de texto, e a identidade vem da marca colorida ao lado.
+   -------------------------------------------------------------------------- */
+
+.chart__plot {
+  position: relative;
+  /* A altura é da área de desenho; o card cresce com o cabeçalho, a legenda e
+     o rodapé por cima dela. Quem arranja a tela ajusta --chart-height, e é o
+     único jeito de mudar a altura de um gráfico. */
+  height: var(--chart-height, 180px);
+}
+
+.chart__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Malha e eixo. */
+.chart-grid { stroke: var(--color-chart-grid); stroke-width: 1; }
+.chart-axis { stroke: var(--color-chart-axis); stroke-width: 1; }
+
+/* Linha de referência (a média do período). Continua sólida: o que a
+   distingue da malha é a espessura e a cor, não um tracejado. */
+.chart-rule { stroke: var(--color-border-strong); stroke-width: 1; }
+
+/* Texto dentro do SVG: mesma escala tipográfica do resto da interface, e
+   tabular porque são números empilhados em coluna (as marcas do eixo). */
+.chart-tick {
+  fill: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-label {
+  fill: var(--color-text-strong);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.chart-label--muted { fill: var(--color-text-muted); }
+
+/* Slots categóricos — ordem fixa, atribuídos em sequência, nunca reciclados. */
+.chart-mark--s1 { fill: var(--color-series-1); }
+.chart-mark--s2 { fill: var(--color-series-2); }
+.chart-mark--s3 { fill: var(--color-series-3); }
+.chart-mark--s4 { fill: var(--color-series-4); }
+.chart-mark--s5 { fill: var(--color-series-5); }
+.chart-mark--s6 { fill: var(--color-series-6); }
+.chart-mark--other { fill: var(--color-series-other); }
+
+.chart-mark--recycle { fill: var(--color-series-recycle); }
+.chart-mark--landfill { fill: var(--color-series-landfill); }
+
+/* Linha de série: 2px, junta e ponta arredondadas. */
+.chart-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-line--s1 { stroke: var(--color-series-1); }
+.chart-line--s2 { stroke: var(--color-series-2); }
+.chart-line--s3 { stroke: var(--color-series-3); }
+.chart-line--s4 { stroke: var(--color-series-4); }
+.chart-line--s5 { stroke: var(--color-series-5); }
+.chart-line--s6 { stroke: var(--color-series-6); }
+
+/* Ponto da linha. O anel de 2px na cor da superfície é o que o mantém legível
+   quando cruza a própria linha ou um vizinho — de novo, vão, não contorno. */
+.chart-dot {
+  stroke: var(--color-chart-surface);
+  stroke-width: 2;
+}
+
+/* Área de acerto do ponteiro e do teclado: transparente, larga, por cima de
+   tudo. O alvo é sempre maior que a marca — um ponto de 8px exigiria mira. */
+.chart-hit {
+  fill: transparent;
+  cursor: default;
+}
+
+/* Banda que acende a coluna inteira sob o ponteiro. */
+.chart-band {
+  fill: var(--color-hover-layer);
+  opacity: 0;
+}
+
+.chart-band.is-active { opacity: 1; }
+
+/* Balão de valor. Nunca é o único caminho para o número: cada gráfico mantém
+   no DOM a tabela equivalente, lida por leitor de tela e usada na exportação. */
+.chart__tip {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  max-width: 240px;
+  padding: var(--space-8);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text);
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+}
+
+.chart__tip[hidden] { display: none; }
+
+.chart__tip-title {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-strong);
+  margin-bottom: var(--space-4);
+}
+
+.chart__tip-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart__tip-row strong {
+  margin-left: auto;
+  padding-left: var(--space-8);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-strong);
+}
+
+/* Legenda — presente sempre que houver duas séries ou mais. Com uma série só
+   ela não aparece: o título do card já diz o que está plotado, e um quadrinho
+   sozinho repetiria a mesma informação ocupando uma linha. */
+.chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-16);
+  margin-top: var(--space-8);
+  list-style: none;
+}
+
+.chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart__legend-item strong {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-strong);
+}
+
+.chart__swatch {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 2px;
+}
+
+.chart__swatch--s1 { background-color: var(--color-series-1); }
+.chart__swatch--s2 { background-color: var(--color-series-2); }
+.chart__swatch--s3 { background-color: var(--color-series-3); }
+.chart__swatch--s4 { background-color: var(--color-series-4); }
+.chart__swatch--s5 { background-color: var(--color-series-5); }
+.chart__swatch--s6 { background-color: var(--color-series-6); }
+.chart__swatch--other { background-color: var(--color-series-other); }
+.chart__swatch--recycle { background-color: var(--color-series-recycle); }
+.chart__swatch--landfill { background-color: var(--color-series-landfill); }
+
+/* Rodapé do gráfico: um destaque só, calculado do mesmo dado que está
+   plotado (o mês de pico, a melhor taxa). Um por card — vira ruído a partir
+   do segundo. */
+.chart__foot {
+  margin-top: var(--space-8);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-muted);
+}
+
+/* Sem dado no período. Ocupa a mesma altura do desenho, para o card não
+   encolher e a linha de cards não desalinhar quando um deles fica vazio. */
+.chart__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--chart-height, 180px);
+  padding: var(--space-16);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  text-align: center;
 }
 
 /* ==========================================================================
