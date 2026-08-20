@@ -19,6 +19,7 @@ class CooperadosDashboardService:
                 "ano": year,
                 "cooperados_por_faixa": CooperadosDashboardService._faixas(bands_raw),
                 "capacitados_cooperativismo": CooperadosDashboardService._capacitados_cooperativismo(annual_report_raw),
+                "horas_treinamento_por_cooperado": CooperadosDashboardService._horas_treinamento(annual_report_raw),
                 "indice_satisfacao": CooperadosDashboardService._indice_satisfacao(surveys_raw, year),
                 "manifestacoes_registradas": CooperadosDashboardService._manifestacoes_registradas(occurrences_raw, year),
             }
@@ -67,6 +68,41 @@ class CooperadosDashboardService:
             "total": total_members,
             "percentual": round(trained / total_members * 100, 2) if total_members else 0,
         }
+
+    @staticmethod
+    def _horas_treinamento(annual_report_raw):
+        # Sai do mesmo /annual-report que alimenta o card de capacitados: o
+        # indicador não custa nenhuma chamada a mais ao certificados_cooperados.
+        #
+        # A lista é dos cooperados ativos, e traz todos eles — quem não lançou
+        # curso no ano aparece zerado, que é a informação que interessa aqui.
+        # A carga vai em minutos, como o curso é lançado lá; converter para
+        # horas é do front, para o número exibido e o exportado nascerem da
+        # mesma conta.
+        #
+        # totalMinutes é lido com .get() de propósito: ele só existe a partir da
+        # versão do certificados_cooperados que o devolve no relatório anual.
+        # Com a versão anterior no ar o campo vem None, a coluna mostra travessão
+        # e o resto da aba — capacitados, satisfação, manifestações e faixas —
+        # continua de pé. Derrubar quatro indicadores que funcionam por causa de
+        # um quinto que ainda não tem fonte seria o pior dos dois erros, e zero
+        # também não serve: diria "ninguém se treinou", que é outra afirmação.
+        cooperados = [
+            {
+                "cooperado": member["name"],
+                "cursos": member["totalCourses"],
+                "minutos": member.get("totalMinutes"),
+            }
+            for member in annual_report_raw["members"]
+        ]
+
+        # Maior carga primeiro: a leitura do painel é quem se formou mais e quem
+        # ficou para trás. O desempate por nome mantém a ordem estável entre dois
+        # cooperados com a mesma carga horária — e é também a ordem inteira
+        # enquanto a carga não existir, porque aí todos valem o mesmo.
+        cooperados.sort(key=lambda cooperado: (-(cooperado["minutos"] or 0), cooperado["cooperado"]))
+
+        return cooperados
 
     @staticmethod
     def _indice_satisfacao(surveys_raw, year):
