@@ -197,3 +197,106 @@ CREATE TABLE nips (
     CONSTRAINT fk_nip_inserted_by FOREIGN KEY (inserted_by) REFERENCES users(id),
     CONSTRAINT fk_nip_updated_by FOREIGN KEY (updated_by) REFERENCES users(id)
 );
+
+-- Tabela de objetos acompanhamento processual
+CREATE TABLE subject_matters (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Tabela de TRÂMITE, estágio do procedimento
+CREATE TABLE proceeding_stages (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Tabela de status do processo jurídico
+CREATE TABLE lawsuit_status (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Tabela com os textos de probabilidade de perca (Remota ou Provável)
+CREATE TABLE loss_probabilities (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Tabela de processos jurídicos, para acompanhamento processual
+CREATE TABLE lawsuits (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    lawsuit_date DATE NOT NULL,
+    case_number VARCHAR(35) NOT NULL UNIQUE,
+    plaintiff VARCHAR(255) NOT NULL,     -- Autor do processo
+    defendant VARCHAR(255) NOT NULL,     -- Réu do processo
+    claim_value NUMERIC(15, 2) NOT NULL,
+    subject_matter_id INT NOT NULL,          -- FK tabela subject_matters
+    proceeding_stage_id INT NOT NULL,        -- FK tabela proceeding_stages
+    status_id INT NOT NULL,                  -- FK tabela lawsuit_status
+    loss_probability_id INT NOT NULL,        -- FK tabela loss_probabilities
+
+    inserted_by INT NOT NULL,                -- FK tabela users
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ,
+    updated_by INT,                          -- FK users
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    -- FOREIGN KEYS
+    CONSTRAINT fk_lawsuit_subject_matter FOREIGN KEY (subject_matter_id) REFERENCES subject_matters(id),
+    CONSTRAINT fk_lawsuit_proceeding_stage FOREIGN KEY (proceeding_stage_id) REFERENCES proceeding_stages(id),
+    CONSTRAINT fk_lawsuit_status FOREIGN KEY (status_id) REFERENCES lawsuit_status(id),
+    CONSTRAINT fk_lawsuit_loss_probability FOREIGN KEY (loss_probability_id) REFERENCES loss_probabilities(id)
+);
+
+CREATE INDEX idx_lawsuits_status ON lawsuits(status_id);
+CREATE INDEX idx_lawsuits_subject_matter ON lawsuits(subject_matter_id);
+CREATE INDEX idx_lawsuits_proceeding_stage ON lawsuits(proceeding_stage_id);
+CREATE INDEX idx_lawsuits_loss_probability ON lawsuits(loss_probability_id);
+
+-- Tabela de Órgãos Julgadores do processo
+CREATE TABLE judging_bodies (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Tabela de controle processual recursal (Recursos vinculados ao processo de origem)
+CREATE TABLE lawsuit_appeals (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    lawsuit_id INT NOT NULL, -- FK tabela lawsuits
+
+    appeal_date DATE NOT NULL,
+    appeal_number VARCHAR(35) NOT NULL,
+    appellant VARCHAR(255) NOT NULL,        -- Recorrente
+    appellee VARCHAR(255) NOT NULL,         -- Recorrido
+    claim_value NUMERIC(15, 2) NOT NULL,
+    judging_body_id INT NOT NULL,           -- FK tabela judging_bodies
+    status_id INT NOT NULL,                 -- FK tabela lawsuit_status
+    loss_probability_id INT NOT NULL,       -- FK tabela loss_probabilities
+    appeal_sequence INT NOT NULL,
+
+    inserted_by INT NOT NULL,                 -- FK users
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ,
+    updated_by INT,                           -- FK users
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    -- FOREIGN KEYS
+    CONSTRAINT fk_appeal_lawsuit FOREIGN KEY (lawsuit_id) REFERENCES lawsuits(id),
+    CONSTRAINT fk_appeal_judging_body FOREIGN KEY (judging_body_id) REFERENCES judging_bodies(id),
+    CONSTRAINT fk_appeal_status FOREIGN KEY (status_id) REFERENCES lawsuit_status(id),
+    CONSTRAINT fk_appeal_loss_probability FOREIGN KEY (loss_probability_id) REFERENCES loss_probabilities(id),
+
+    CONSTRAINT uq_appeal_lawsuit_sequence UNIQUE (lawsuit_id, appeal_sequence)
+);
+
+CREATE INDEX idx_appeals_lawsuit ON lawsuit_appeals(lawsuit_id);
+CREATE INDEX idx_appeals_status ON lawsuit_appeals(status_id);
+CREATE INDEX idx_appeals_judging_body ON lawsuit_appeals(judging_body_id);
+CREATE INDEX idx_appeals_loss_probability ON lawsuit_appeals(loss_probability_id);
