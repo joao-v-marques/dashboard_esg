@@ -182,6 +182,7 @@ CREATE TABLE nips (
     beneficiary_name VARCHAR(150) NOT NULL,
     beneficiary_cpf CHAR(11) NOT NULL,
     description TEXT,
+    response_description TEXT,
 
     status_id INT NOT NULL,    -- FK nip_status
     nature_id INT NOT NULL,    -- FK nip_nature

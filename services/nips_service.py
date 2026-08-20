@@ -22,6 +22,7 @@ class NipService:
                 beneficiary_name=data['beneficiary_name'],
                 beneficiary_cpf=data['beneficiary_cpf'],
                 description=data['description'],
+                response_description=data['response_description'],
                 status_id=data['status_id'],
                 nature_id=data['nature_id'],
                 inserted_by=data['inserted_by']
@@ -54,6 +55,7 @@ class NipService:
                 beneficiary_name=data['beneficiary_name'],
                 beneficiary_cpf=data['beneficiary_cpf'],
                 description=data['description'],
+                response_description=data['response_description'],
                 status_id=data['status_id'],
                 nature_id=data['nature_id'],
             )

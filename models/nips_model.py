@@ -5,7 +5,7 @@ class Nip:
     # get_by_id, do mesmo jeito que unit_name e inserted_by_name em
     # WasteRecord. Por isso são opcionais — o UPDATE usa RETURNING *, que
     # devolve só as colunas da própria tabela, e o objeto continua válido.
-    def __init__(self, notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, nip_number, inserted_by=None, created_at=None, updated_at=None, updated_by=None, id=None, status_name=None, nature_name=None, inserted_by_name=None, updated_by_name=None):
+    def __init__(self, notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, nip_number, response_description, inserted_by=None, created_at=None, updated_at=None, updated_by=None, id=None, status_name=None, nature_name=None, inserted_by_name=None, updated_by_name=None):
         self.id = id
         self.nip_number = nip_number
         self.notification_date = notification_date
@@ -14,6 +14,7 @@ class Nip:
         self.beneficiary_name = beneficiary_name
         self.beneficiary_cpf = beneficiary_cpf
         self.description = description
+        self.response_description = response_description
         self.status_id = status_id
         self.status_name = status_name
         self.nature_id = nature_id
@@ -35,6 +36,7 @@ class Nip:
             "beneficiary_name": self.beneficiary_name,
             "beneficiary_cpf": self.beneficiary_cpf,
             "description": self.description,
+            "response_description": self.response_description,
             "status_id": self.status_id,
             "status_name": self.status_name,
             "nature_id": self.nature_id,
@@ -60,7 +62,7 @@ class NipModel:
             # ser editada pela primeira vez, e um INNER esconderia da listagem
             # justamente toda NIP que nunca foi alterada.
             sql_query = """
-                SELECT n.id, n.nip_number, n.notification_date, n.demand_code, n.protocol_code,
+                SELECT n.id, n.nip_number, n.notification_date, n.demand_code, n.protocol_code, n.response_description,
                        n.beneficiary_name, n.beneficiary_cpf, n.description,
                        n.status_id, s.name AS status_name,
                        n.nature_id, nt.name AS nature_name,
@@ -134,11 +136,11 @@ class NipModel:
             conn, cursor = get_db_connection()
 
             sql_query = """
-                INSERT INTO nips (nip_number, notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, inserted_by)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO nips (nip_number, notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, inserted_by, response_description)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """
-            values = (nip.nip_number, nip.notification_date, nip.demand_code, nip.protocol_code, nip.beneficiary_name, nip.beneficiary_cpf, nip.description, nip.status_id, nip.nature_id, nip.inserted_by)
+            values = (nip.nip_number, nip.notification_date, nip.demand_code, nip.protocol_code, nip.beneficiary_name, nip.beneficiary_cpf, nip.description, nip.status_id, nip.nature_id, nip.inserted_by, nip.response_description)
 
             cursor.execute(sql_query, values)
             conn.commit()
@@ -172,6 +174,7 @@ class NipModel:
                     beneficiary_name = %s,
                     beneficiary_cpf = %s,
                     description = %s,
+                    response_description = %s,
                     status_id = %s,
                     nature_id = %s,
                     updated_at = NOW(),
@@ -187,6 +190,7 @@ class NipModel:
                 nip.beneficiary_name,
                 nip.beneficiary_cpf,
                 nip.description,
+                nip.response_description,
                 nip.status_id,
                 nip.nature_id,
                 current_user_id,

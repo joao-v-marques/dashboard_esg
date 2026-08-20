@@ -13,7 +13,7 @@
  * Contrato com o HTML — os ids abaixo existem nas duas telas:
  *   nip-number, nip-notification-date, nip-demand-code, nip-protocol-code,
  *   nip-beneficiary-name, nip-beneficiary-cpf, nip-nature, nip-status,
- *   nip-description
+ *   nip-description, nip-response-description
  *   [data-error-for="<id>"]  mensagem de erro do campo de mesmo id
  *   [data-cpf-input]         campo de CPF que recebe a máscara
  *   [data-nip-number-input]  campo do número da NIP que recebe a máscara
@@ -227,6 +227,7 @@ export function readFormPayload() {
         beneficiary_name: document.getElementById("nip-beneficiary-name").value.trim(),
         beneficiary_cpf: cpfDigits(document.getElementById("nip-beneficiary-cpf").value),
         description: document.getElementById("nip-description").value.trim(),
+        response_description: document.getElementById("nip-response-description").value.trim(),
         status_id: Number(document.getElementById("nip-status").value),
         nature_id: Number(document.getElementById("nip-nature").value),
     };
@@ -247,6 +248,7 @@ export function fillForm(nip) {
     document.getElementById("nip-nature").value = String(nip.nature_id);
     document.getElementById("nip-status").value = String(nip.status_id);
     document.getElementById("nip-description").value = nip.description ?? "";
+    document.getElementById("nip-response-description").value = nip.response_description ?? "";
 
     clearFormErrors();
 }

@@ -230,19 +230,20 @@
                                 </div>
                             </div>
 
-                            <!-- Detalhes ---------------------------------
-                                 A descrição também entra numa seção: com as três
-                                 de cima marcadas por um traço, um campo solto no
-                                 fim seria lido como sobra da "Classificação". -->
+                            <!-- Detalhes -->
                             <div class="fieldset" role="group" aria-labelledby="secao-detalhes">
                                 <p class="fieldset__legend" id="secao-detalhes">Detalhes</p>
                                 <div class="fieldset__body">
                                     <div class="field">
-                                        <label class="field__label" for="nip-description">
-                                            Descrição <span class="field__optional">(opcional)</span>
+                                        <label class="field__label" for="nip-description">Descrição <span class="field__optional">(opcional)</span>
                                         </label>
-                                        <textarea class="textarea" id="nip-description" name="description"
-                                                  rows="4" placeholder="Resumo da demanda registrada pelo beneficiário."></textarea>
+                                        <textarea class="textarea" id="nip-description" name="description" rows="4" placeholder="Resumo da demanda registrada pelo beneficiário."></textarea>
+                                    </div>
+
+                                    <div class="field">
+                                        <label class="field__label" for="nip-response-description">Resposta (Ofício) <span class="field__optional">(opcional)</span>
+                                        </label>
+                                        <textarea class="textarea" id="nip-response-description" name="response_description" rows="4" placeholder="Resposta da NIP contida no Ofício."></textarea>
                                     </div>
                                 </div>
                             </div>
