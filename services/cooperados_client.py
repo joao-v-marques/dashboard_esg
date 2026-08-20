@@ -13,6 +13,7 @@ ar ou lento:
   2. Toda falha de rede/HTTP vira UpstreamError, nunca uma exceção não tratada.
      Quem chama (cooperados_dashboard_service.py) decide o que fazer; o
      controller nunca deixa isso virar um 500 genérico sem explicação.
+  3. Config lida em tempo de uso, nunca em constante de módulo (ver _config()).
 
 Cache de token em variável de módulo: o processo do Flask é o único consumidor,
 então não precisa de storage externo. _lock existe porque o Waitress serve com
@@ -28,14 +29,6 @@ import jwt as pyjwt
 import requests
 
 from utils.exceptions import UpstreamError
-
-_raw_base_url = os.getenv("COOPERADOS_API_BASE_URL")  # ex.: http://localhost:8080/certificados-cooperados
-# Sem barra no final: montar path como f"{BASE_URL}/api/..." com uma barra
-# sobrando dá URL duplamente barrada, que o Spring Security do outro app não
-# reconhece como rota pública e redireciona pro login em vez de autenticar.
-BASE_URL = _raw_base_url.rstrip("/") if _raw_base_url else _raw_base_url
-USERNAME = os.getenv("COOPERADOS_API_USERNAME")
-PASSWORD = os.getenv("COOPERADOS_API_PASSWORD")
 
 # (timeout de conexão, timeout de leitura), em segundos.
 REQUEST_TIMEOUT = (3, 5)
@@ -53,24 +46,44 @@ _cached_token = None
 _cached_exp = 0.0
 
 
-def _require_config():
-    if not BASE_URL or not USERNAME or not PASSWORD:
+def _config():
+    """
+    Credenciais e endereço do certificados_cooperados, lidos a cada uso.
+
+    Ler em tempo de uso (e não em constante de módulo) é o que mantém isso
+    imune à ordem de import: quem importa este módulo antes do load_dotenv()
+    congelaria os três valores em None e toda chamada viraria 502 — o que só
+    aparece fora do app.run(debug=True), porque o reloader do Werkzeug relança
+    a aplicação num processo filho que já herda o .env no os.environ.
+    """
+
+    raw_base_url = os.getenv("COOPERADOS_API_BASE_URL")  # ex.: http://localhost:8080/certificados-cooperados
+    # Sem barra no final: montar path como f"{base_url}/api/..." com uma barra
+    # sobrando dá URL duplamente barrada, que o Spring Security do outro app não
+    # reconhece como rota pública e redireciona pro login em vez de autenticar.
+    base_url = raw_base_url.rstrip("/") if raw_base_url else raw_base_url
+    username = os.getenv("COOPERADOS_API_USERNAME")
+    password = os.getenv("COOPERADOS_API_PASSWORD")
+
+    if not base_url or not username or not password:
         raise UpstreamError(
             "Integração com o certificados_cooperados não configurada "
             "(COOPERADOS_API_BASE_URL / COOPERADOS_API_USERNAME / COOPERADOS_API_PASSWORD)"
         )
+
+    return base_url, username, password
 
 
 def _login():
     """Autentica o usuário técnico e atualiza o cache. Chamado só dentro do _lock."""
     global _cached_token, _cached_exp
 
-    _require_config()
+    base_url, username, password = _config()
 
     try:
         response = requests.post(
-            f"{BASE_URL}/api/v1/auth/login",
-            json={"username": USERNAME, "password": PASSWORD},
+            f"{base_url}/api/v1/auth/login",
+            json={"username": username, "password": password},
             timeout=REQUEST_TIMEOUT,
         )
         response.raise_for_status()
@@ -134,9 +147,11 @@ def _parse_json(response, context):
 
 
 def _request(path, token, params):
+    base_url, _, _ = _config()
+
     try:
         return requests.get(
-            f"{BASE_URL}{path}",
+            f"{base_url}{path}",
             headers={"Authorization": f"Bearer {token}"},
             params=params,
             timeout=REQUEST_TIMEOUT,
