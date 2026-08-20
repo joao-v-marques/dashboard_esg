@@ -10,6 +10,7 @@ from routes.waste_records_controller import bp_waste_records
 from routes.waste_types_controller import bp_waste_types
 from routes.waste_dashboard_controller import bp_waste_dashboard
 from routes.cooperados_dashboard_controller import bp_cooperados_dashboard
+from routes.nip_dashboard_controller import bp_nip_dashboard
 from routes.nips_controller import bp_nips
 from routes.nip_nature_controller import bp_nip_natures
 from routes.nip_status_controller import bp_nip_status
@@ -31,6 +32,7 @@ def config_bps(app):
     app.register_blueprint(bp_waste_types, url_prefix=PREFIX)
     app.register_blueprint(bp_waste_dashboard, url_prefix=PREFIX)
     app.register_blueprint(bp_cooperados_dashboard, url_prefix=PREFIX)
+    app.register_blueprint(bp_nip_dashboard, url_prefix=PREFIX)
     app.register_blueprint(bp_nips, url_prefix=PREFIX)
     app.register_blueprint(bp_nip_natures, url_prefix=PREFIX)
     app.register_blueprint(bp_nip_status, url_prefix=PREFIX)
