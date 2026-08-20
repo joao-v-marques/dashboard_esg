@@ -1105,6 +1105,26 @@ button.input-wrap__affix[aria-pressed="true"] {
   color: var(--color-text-muted);
 }
 
+/* Versão sólida dos tons acima — mesma semântica, cor cheia no lugar do
+   pastel. Para status que precisam ser achados de relance numa tabela longa,
+   onde o pastel some contra o branco da linha (ver o status de NIP em
+   js/pages/controle_nips.js). Usar com parcimônia: se tudo grita, nada
+   se destaca — o sólido negativo em especial vale mais quanto mais raro for. */
+.badge--success-solid {
+  background-color: var(--color-success-solid-bg);
+  color: var(--color-success-solid-text);
+}
+
+.badge--warning-solid {
+  background-color: var(--color-warning-solid-bg);
+  color: var(--color-warning-solid-text);
+}
+
+.badge--danger-solid {
+  background-color: var(--color-danger-solid-bg);
+  color: var(--color-danger-solid-text);
+}
+
 /* --------------------------------------------------------------------------
    PÍLULA DE FAIXA
    Faixas de pontuação de cooperados (dashboard de Cooperados). Cores fixas

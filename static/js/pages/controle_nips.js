@@ -183,21 +183,48 @@ function buildNatureCell(nip) {
 }
 
 /**
+ * Tom do badge para um status específico, quando o prefixo não basta.
+ *
+ * "Aguardando Abertura de Processo" não é mais uma espera: a mediação falhou e
+ * a ANS vai abrir processo administrativo sancionador. Sair na mesma cor de
+ * "Aguardando Classificação" escondia, no meio da tabela, justamente a linha que
+ * precisa de ação — por isso ele é o único vermelho da tela.
+ *
+ * A chave é o nome porque `name` é UNIQUE em nip_status e os ids são GENERATED
+ * ALWAYS AS IDENTITY: dependem da ordem do seed e não sobrevivem a uma recarga
+ * da base. Mesmo motivo do STATUS_RESOLVIDAS em services/nip_dashboard_service.py.
+ *
+ * Isto é cor, e não regra de negócio: quais status contam como resolvida
+ * continua sendo assunto único daquele arquivo, e não se decide por aqui.
+ */
+const STATUS_TONE_BY_NAME = {
+    "aguardando abertura de processo": "badge--danger-solid",
+};
+
+/**
  * Status como badge.
  *
  * Os status cadastrados se dividem em "Finalizada ..." e "Aguardando ...":
- * finalizada é verde (nada mais a fazer), aguardando é azul de "em análise".
- * Qualquer status novo que não caia nesses dois prefixos fica neutro em vez de
- * escolher uma cor errada.
+ * finalizada é verde (nada mais a fazer), aguardando é laranja (a NIP está
+ * aberta e corre prazo). As cores são sólidas, e não pastel: a tabela é longa
+ * e o status precisa ser achado de relance, sem procurar linha por linha.
+ *
+ * A ordem da decisão importa — o nome exato ganha do prefixo, senão
+ * "Aguardando Abertura de Processo" cairia no laranja de toda espera. Qualquer
+ * status novo que não caia nos dois prefixos fica neutro em vez de escolher uma
+ * cor errada.
  */
 function buildStatusCell(nip) {
     const td = document.createElement("td");
     td.dataset.label = "Status";
 
     const name = String(nip.status_name ?? "");
+    const key = name.trim().toLowerCase();
+
     let tone = "badge--neutral";
-    if (name.toLowerCase().startsWith("finalizada")) tone = "badge--success";
-    else if (name.toLowerCase().startsWith("aguardando")) tone = "badge--info";
+    if (STATUS_TONE_BY_NAME[key]) tone = STATUS_TONE_BY_NAME[key];
+    else if (key.startsWith("finalizada")) tone = "badge--success-solid";
+    else if (key.startsWith("aguardando")) tone = "badge--warning-solid";
 
     const badge = document.createElement("span");
     badge.className = `badge ${tone}`;

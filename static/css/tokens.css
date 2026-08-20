@@ -131,6 +131,26 @@
   --color-danger-bg:       var(--palette-pink-200);
   --color-danger-text:     var(--palette-red-800);
 
+  /* Estado / feedback em versão sólida ---------------------------------------
+     Os pares acima são pastel, para uso em faixas e caixas de aviso, onde a cor
+     acompanha um texto que já se lê sozinho. Estes são a versão cheia, para
+     quando a cor é que precisa ser vista antes do texto — um badge de status
+     perdido no meio de uma tabela longa. Mesma escala, mesma semântica, só
+     mais alto.
+
+     O texto de cada par não é escolha de gosto: branco sobre o laranja dá
+     2,76:1 e reprova, por isso ali o texto é escuro. Contrastes medidos:
+     sólido negativo 6,54:1, sólido de atenção 6,31:1, sólido de sucesso
+     7,47:1 — todos acima do 5,9:1 que os badges pastel já sustentam. */
+  --color-success-solid-bg:   var(--palette-green-700);
+  --color-success-solid-text: var(--palette-white);
+
+  --color-warning-solid-bg:   var(--palette-orange-500);
+  --color-warning-solid-text: var(--palette-neutral-900);
+
+  --color-danger-solid-bg:    var(--palette-red-600);
+  --color-danger-solid-text:  var(--palette-white);
+
   /* Faixas de pontuação de cooperados (certificados_cooperados) ------------
      Mesmas cores e mesmo par bg/text de lá — PointsBandPolicy define a régua,
      aqui é só onde a cor vive. Não são pastel: identidade visual pedida pelo
