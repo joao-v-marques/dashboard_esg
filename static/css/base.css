@@ -16,6 +16,18 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+
+  /* Barra de rolagem sempre reservada.
+
+     Sem isto, uma tela curta (uma aba do painel sem tabela, um setor no
+     cartão de erro) fica sem barra e o conteúdo inteiro salta ~15px na
+     horizontal ao trocar de aba — as colunas dos cartões deixam de coincidir
+     entre uma aba e outra, e a página parece desalinhada sem nada estar.
+
+     É `overflow-y: scroll`, e não `scrollbar-gutter: stable`: como o `html`
+     daqui rola pela viewport (overflow visible), o Chrome não o trata como
+     contentor de rolagem e ignora a canaleta estável — medido, não suposto. */
+  overflow-y: scroll;
 }
 
 body,

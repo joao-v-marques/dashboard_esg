@@ -44,7 +44,7 @@
  */
 
 import { API } from "../utils/routes.js";
-import { formatarDataISO, formatarInteiro, formatarPercentual } from "../utils/format_ptbr.js";
+import { formatarDataISO, formatarInteiro, formatarNumero, formatarPercentual } from "../utils/format_ptbr.js";
 
 /* =========================================================================
    Busca
@@ -299,6 +299,46 @@ const COOPERADOS = {
                 faixa.de + "% a " + faixa.ate + "%",
                 { valor: faixa.quantidade },
                 { valor: faixa.percentual },
+            ]),
+        },
+        {
+            titulo: "Horas de treinamento por cooperado",
+            descricao: "Carga horária de treinamento de cada cooperado ativo no ano-base, com a quantidade de cursos concluídos.",
+            // O total no rodapé sai da mesma lista da tabela, e não de um campo
+            // pronto da API: somar aqui é o que garante que ele bata com as
+            // linhas que estão logo acima.
+            nota: (dados, periodo) => {
+                const lista = dados.horas_treinamento_por_cooperado;
+                const rotulo = COOPERADOS.rotuloPeriodo(periodo);
+
+                // A carga só chega da versão do certificados_cooperados que
+                // devolve totalMinutes no relatório anual. Sem ela a coluna fica
+                // em travessão e o rodapé diz o porquê — somar zero anunciaria
+                // "nenhuma hora de treinamento no ano", que é outra afirmação.
+                if (lista.some((cooperado) => cooperado.minutos === null)) {
+                    return rotulo + " · carga horária indisponível: o sistema de certificados ainda não a informa";
+                }
+
+                const minutos = lista.reduce((soma, cooperado) => soma + cooperado.minutos, 0);
+
+                return rotulo + " · " + formatarNumero(minutos / 60, 2) + " h no total";
+            },
+            colunas: [
+                { titulo: "Cooperado", tipo: "texto" },
+                { titulo: "Cursos", tipo: "numero", decimais: 0 },
+                { titulo: "Horas de treinamento", tipo: "numero", decimais: 2 },
+            ],
+            // A API manda minutos, como o curso é lançado no
+            // certificados_cooperados. A conversão para hora decimal (1h30 vira
+            // 1,50) é feita aqui, e não em h:mm como no painel daquele sistema:
+            // esta coluna é numérica, alinha com as demais e sai do CSV como
+            // número que o Excel soma — "1:30" sairia como texto.
+            linhas: (dados) => dados.horas_treinamento_por_cooperado.map((cooperado) => [
+                cooperado.cooperado,
+                { valor: cooperado.cursos },
+                // null vira travessão em formatarNumero; null / 60 viraria 0, que
+                // é exatamente o número que não se pode afirmar aqui.
+                { valor: cooperado.minutos === null ? null : cooperado.minutos / 60 },
             ]),
         },
     ],
