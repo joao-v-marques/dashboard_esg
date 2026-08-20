@@ -117,7 +117,27 @@
                             <div class="fieldset" role="group" aria-labelledby="secao-identificacao">
                                 <p class="fieldset__legend" id="secao-identificacao">Identificação</p>
                                 <div class="fieldset__body">
+                                    <!-- Duas linhas de dois campos, e não uma de
+                                         quatro: .field-row divide a largura em
+                                         partes iguais e não quebra em telas
+                                         estreitas, então o quarto campo espremeria
+                                         os outros três — inclusive o de data, que
+                                         tem largura mínima própria do navegador. -->
                                     <div class="field-row">
+                                        <!-- Primeiro campo da tela por ser o código que
+                                             identifica a NIP: é por ele que a notificação
+                                             é procurada no papel e no controle. -->
+                                        <div class="field">
+                                            <label class="field__label" for="nip-number">Número da NIP</label>
+                                            <input class="input tabular" type="text" id="nip-number" name="nip_number"
+                                                   inputmode="numeric" maxlength="11" placeholder="000000/2026"
+                                                   autocomplete="off" required data-nip-number-input
+                                                   aria-describedby="erro-nip-number dica-nip-number">
+                                            <p class="field__hint" id="dica-nip-number">Padrão 000000/2026. Único por NIP.</p>
+                                            <p class="field__error" id="erro-nip-number"
+                                               data-error-for="nip-number" hidden></p>
+                                        </div>
+
                                         <div class="field">
                                             <label class="field__label" for="nip-notification-date">Data da notificação</label>
                                             <input class="input" type="date" id="nip-notification-date"
@@ -126,7 +146,9 @@
                                             <p class="field__error" id="erro-nip-notification-date"
                                                data-error-for="nip-notification-date" hidden></p>
                                         </div>
+                                    </div>
 
+                                    <div class="field-row">
                                         <div class="field">
                                             <label class="field__label" for="nip-demand-code">Código da demanda</label>
                                             <input class="input" type="text" id="nip-demand-code" name="demand_code"

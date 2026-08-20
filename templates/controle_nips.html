@@ -117,7 +117,7 @@
                             <div class="toolbar__search">
                                 <label class="field__label" for="filtro-busca">Buscar</label>
                                 <input class="input" type="search" id="filtro-busca"
-                                       placeholder="Beneficiário, CPF, demanda, protocolo..."
+                                       placeholder="Nº da NIP, beneficiário, CPF, demanda..."
                                        data-filter-search>
                             </div>
 
@@ -156,11 +156,18 @@
                             </div>
                         </div>
 
-                        <div class="table-wrap">
-                            <table class="table table--cards">
+                        <div class="table-wrap nips-table-wrap">
+                            <!-- nips-table: a repartição das nove colunas mora em
+                                 nips.css. Sem ela o navegador dá a cada coluna a
+                                 largura do seu conteúdo, e o badge de status —
+                                 nomes como "Aguardando Classificação da Demanda
+                                 NIP - RN388" — empurra a coluna de ações para
+                                 fora do card. -->
+                            <table class="table table--cards nips-table">
                                 <caption class="visually-hidden">NIP's por natureza, status e período de notificação.</caption>
                                 <thead>
                                 <tr>
+                                    <th scope="col">Nº da NIP</th>
                                     <th scope="col">Notificação</th>
                                     <th scope="col">Demanda</th>
                                     <th scope="col">Protocolo</th>
@@ -175,7 +182,7 @@
                                 <!-- Linhas escritas por js/pages/controle_nips.js. A linha
                                      de "nenhum resultado" abaixo é fixa e só alterna hidden. -->
                                 <tr class="records-empty-row" data-nips-empty-row hidden>
-                                    <td colspan="8" data-nips-empty-message>Carregando...</td>
+                                    <td colspan="9" data-nips-empty-message>Carregando...</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -237,7 +244,19 @@
              resíduos nunca teve a classe; agora os dois seguem o mesmo gap. -->
         <div class="modal__body">
 
+            <!-- Duas linhas de dois, como em lancar_nip.html: com o número da NIP
+                 somando um quarto campo, uma linha só espremeria todos eles — e
+                 aqui a largura é a do modal, não a da página. -->
             <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="nip-number">Número da NIP</label>
+                    <input class="input tabular" type="text" id="nip-number" name="nip_number"
+                           inputmode="numeric" maxlength="11" placeholder="000000/2026"
+                           autocomplete="off" required data-nip-number-input
+                           aria-describedby="erro-nip-number">
+                    <p class="field__error" id="erro-nip-number" data-error-for="nip-number" hidden></p>
+                </div>
+
                 <div class="field">
                     <label class="field__label" for="nip-notification-date">Data da notificação</label>
                     <input class="input" type="date" id="nip-notification-date" name="notification_date" required
@@ -245,7 +264,9 @@
                     <p class="field__error" id="erro-nip-notification-date"
                        data-error-for="nip-notification-date" hidden></p>
                 </div>
+            </div>
 
+            <div class="field-row">
                 <div class="field">
                     <label class="field__label" for="nip-demand-code">Código da demanda</label>
                     <input class="input" type="text" id="nip-demand-code" name="demand_code"

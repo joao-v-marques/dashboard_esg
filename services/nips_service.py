@@ -15,6 +15,7 @@ class NipService:
             # COLOCAR VALIDAÇÕES AQUI DEPOIS
 
             nip = Nip(
+                nip_number=data['nip_number'],
                 notification_date=data['notification_date'],
                 demand_code=data['demand_code'],
                 protocol_code=data['protocol_code'],
@@ -46,6 +47,7 @@ class NipService:
 
             new_nip = Nip(
                 id=data['id'],
+                nip_number=data['nip_number'],
                 notification_date=data['notification_date'],
                 demand_code=data['demand_code'],
                 protocol_code=data['protocol_code'],

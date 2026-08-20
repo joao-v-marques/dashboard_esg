@@ -5,8 +5,9 @@ class Nip:
     # get_by_id, do mesmo jeito que unit_name e inserted_by_name em
     # WasteRecord. Por isso são opcionais — o UPDATE usa RETURNING *, que
     # devolve só as colunas da própria tabela, e o objeto continua válido.
-    def __init__(self, notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, inserted_by=None, created_at=None, updated_at=None, updated_by=None, id=None, status_name=None, nature_name=None, inserted_by_name=None, updated_by_name=None):
+    def __init__(self, notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, nip_number, inserted_by=None, created_at=None, updated_at=None, updated_by=None, id=None, status_name=None, nature_name=None, inserted_by_name=None, updated_by_name=None):
         self.id = id
+        self.nip_number = nip_number
         self.notification_date = notification_date
         self.demand_code = demand_code
         self.protocol_code = protocol_code
@@ -27,6 +28,7 @@ class Nip:
     def to_dict(self):
         return {
             "id": self.id,
+            "nip_number": self.nip_number,
             "notification_date": self.notification_date,
             "demand_code": self.demand_code,
             "protocol_code": self.protocol_code,
@@ -58,7 +60,7 @@ class NipModel:
             # ser editada pela primeira vez, e um INNER esconderia da listagem
             # justamente toda NIP que nunca foi alterada.
             sql_query = """
-                SELECT n.id, n.notification_date, n.demand_code, n.protocol_code,
+                SELECT n.id, n.nip_number, n.notification_date, n.demand_code, n.protocol_code,
                        n.beneficiary_name, n.beneficiary_cpf, n.description,
                        n.status_id, s.name AS status_name,
                        n.nature_id, nt.name AS nature_name,
@@ -132,11 +134,11 @@ class NipModel:
             conn, cursor = get_db_connection()
 
             sql_query = """
-                INSERT INTO nips (notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, inserted_by)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO nips (nip_number, notification_date, demand_code, protocol_code, beneficiary_name, beneficiary_cpf, description, status_id, nature_id, inserted_by)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """
-            values = (nip.notification_date, nip.demand_code, nip.protocol_code, nip.beneficiary_name, nip.beneficiary_cpf, nip.description, nip.status_id, nip.nature_id, nip.inserted_by)
+            values = (nip.nip_number, nip.notification_date, nip.demand_code, nip.protocol_code, nip.beneficiary_name, nip.beneficiary_cpf, nip.description, nip.status_id, nip.nature_id, nip.inserted_by)
 
             cursor.execute(sql_query, values)
             conn.commit()
@@ -163,6 +165,7 @@ class NipModel:
             sql_query = """
                 UPDATE nips
                 SET
+                    nip_number = %s,
                     notification_date = %s,
                     demand_code = %s,
                     protocol_code = %s,
@@ -177,6 +180,7 @@ class NipModel:
                 RETURNING *
             """
             values = (
+                nip.nip_number,
                 nip.notification_date,
                 nip.demand_code,
                 nip.protocol_code,

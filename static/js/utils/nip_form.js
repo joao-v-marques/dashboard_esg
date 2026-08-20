@@ -11,11 +11,12 @@
  * envio e o que acontece depois dele em cada uma. Este módulo não faz fetch.
  *
  * Contrato com o HTML — os ids abaixo existem nas duas telas:
- *   nip-notification-date, nip-demand-code, nip-protocol-code,
+ *   nip-number, nip-notification-date, nip-demand-code, nip-protocol-code,
  *   nip-beneficiary-name, nip-beneficiary-cpf, nip-nature, nip-status,
  *   nip-description
  *   [data-error-for="<id>"]  mensagem de erro do campo de mesmo id
  *   [data-cpf-input]         campo de CPF que recebe a máscara
+ *   [data-nip-number-input]  campo do número da NIP que recebe a máscara
  */
 
 /* =========================================================================
@@ -49,6 +50,45 @@ export function initCpfMask(root = document) {
     root.querySelectorAll("[data-cpf-input]").forEach((input) => {
         input.addEventListener("input", () => {
             input.value = formatCpf(input.value);
+        });
+    });
+}
+
+/* =========================================================================
+   Número da NIP
+
+   Código de identificação da notificação, no padrão "000000/2026": seis
+   dígitos de sequência, barra, ano com quatro dígitos. É digitado por quem
+   lança — vem da ANS, não é gerado pela aplicação — e é UNIQUE na tabela.
+
+   Como no CPF, a barra é enfeite de digitação: o usuário digita só os dez
+   dígitos e a máscara põe a pontuação. Diferente do CPF, porém, o valor vai
+   formatado para a API, porque é assim que a coluna guarda (VARCHAR(15)) e
+   assim que a NIP é lida e conferida no papel.
+   ========================================================================= */
+
+export const nipNumberDigits = (value) => String(value ?? "").replace(/\D/g, "").slice(0, 10);
+
+/** Padrão aceito pela validação e escrito pela máscara. */
+export const NIP_NUMBER_PATTERN = /^\d{6}\/\d{4}$/;
+
+/** 10 dígitos viram "000000/2026". Menos que isso é formatado do jeito que dá. */
+export function formatNipNumber(value) {
+    const digits = nipNumberDigits(value);
+
+    return digits.replace(/^(\d{6})(\d)/, "$1/$2");
+}
+
+/**
+ * Liga a máscara no campo do número da NIP.
+ *
+ * Mesmo desenho do CPF, e pelo mesmo motivo: o cursor vai para o fim porque é
+ * onde a digitação de um código sequencial acontece.
+ */
+export function initNipNumberMask(root = document) {
+    root.querySelectorAll("[data-nip-number-input]").forEach((input) => {
+        input.addEventListener("input", () => {
+            input.value = formatNipNumber(input.value);
         });
     });
 }
@@ -99,6 +139,7 @@ export const formatDate = (value) => new Date(value).toLocaleDateString("pt-BR",
    ========================================================================= */
 
 const FIELDS = [
+    { id: "nip-number", empty: "Informe o número da NIP." },
     { id: "nip-notification-date", empty: "Informe a data da notificação." },
     { id: "nip-demand-code", empty: "Informe o código da demanda." },
     { id: "nip-protocol-code", empty: "Informe o protocolo." },
@@ -136,9 +177,14 @@ export function clearFormErrors() {
  * Devolve a lista de problemas, na ordem dos campos na tela — quem chama
  * aponta o foco para o primeiro. Lista vazia significa formulário válido.
  *
- * Além do "não pode ficar em branco" de todo campo, o CPF precisa dos 11
- * dígitos: a coluna é CHAR(11) e um CPF curto só falharia lá no banco, com
- * mensagem que não ajuda ninguém.
+ * Além do "não pode ficar em branco" de todo campo, dois têm formato próprio:
+ * o CPF precisa dos 11 dígitos (a coluna é CHAR(11), e um CPF curto só
+ * falharia lá no banco, com mensagem que não ajuda ninguém) e o número da NIP
+ * precisa do padrão completo "000000/2026" — pela máscara ele nunca sai
+ * malformado, mas sai pela metade se a pessoa parar de digitar no meio.
+ *
+ * O que esta validação não cobre é a unicidade do número: só o banco sabe se
+ * ele já existe, e a resposta de erro do POST/PUT é que dá esse recado.
  */
 export function validateForm() {
     const problems = [];
@@ -152,6 +198,10 @@ export function validateForm() {
 
         if (id === "nip-beneficiary-cpf" && cpfDigits(input.value).length !== 11) {
             problems.push({ id, message: "O CPF precisa ter 11 dígitos." });
+        }
+
+        if (id === "nip-number" && !NIP_NUMBER_PATTERN.test(input.value.trim())) {
+            problems.push({ id, message: "O número da NIP deve seguir o padrão 000000/2026." });
         }
     });
 
@@ -170,6 +220,7 @@ export function validateForm() {
  */
 export function readFormPayload() {
     return {
+        nip_number: document.getElementById("nip-number").value.trim(),
         notification_date: document.getElementById("nip-notification-date").value,
         demand_code: document.getElementById("nip-demand-code").value.trim(),
         protocol_code: document.getElementById("nip-protocol-code").value.trim(),
@@ -183,6 +234,11 @@ export function readFormPayload() {
 
 /** Escreve uma NIP existente nos campos, para edição. */
 export function fillForm(nip) {
+    // Sem passar por formatNipNumber: o valor gravado já está no padrão (foi a
+    // máscara que o escreveu), e reformatar um registro fora do padrão — se um
+    // dia houver — o mutilaria em silêncio em vez de deixar a validação
+    // apontar o problema na hora de salvar.
+    document.getElementById("nip-number").value = nip.nip_number ?? "";
     document.getElementById("nip-notification-date").value = toIsoDate(nip.notification_date);
     document.getElementById("nip-demand-code").value = nip.demand_code ?? "";
     document.getElementById("nip-protocol-code").value = nip.protocol_code ?? "";

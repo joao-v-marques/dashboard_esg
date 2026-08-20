@@ -12,10 +12,11 @@
  *   [data-form-nature] / [data-form-status]   selects preenchidos pela API
  *   [data-control-link]     link para "Controle de NIP's"
  *   [data-cpf-input]        campo de CPF (máscara ligada em utils/nip_form.js)
+ *   [data-nip-number-input] campo do número da NIP (máscara no mesmo módulo)
  *
  * Os campos e o botão nascem desabilitados e só liberam quando
  * /api/nip-natures e /api/nip-status respondem: um formulário editável com
- * seletor vazio convida a pessoa a preencher os oito campos para descobrir no
+ * seletor vazio convida a pessoa a preencher os nove campos para descobrir no
  * fim que não dá para escolher a natureza.
  *
  * Depois de cadastrar, a tela continua aqui com o formulário limpo, em vez de
@@ -28,6 +29,7 @@ import { API, PAGES } from "../utils/routes.js";
 import { notifySuccess, notifyError } from "../utils/notyf.js";
 import {
     initCpfMask,
+    initNipNumberMask,
     populateSelect,
     clearFormErrors,
     setFieldError,
@@ -87,7 +89,7 @@ function resetForm() {
 function initClear() {
     document.querySelector("[data-nip-form-clear]")?.addEventListener("click", () => {
         resetForm();
-        document.getElementById("nip-notification-date")?.focus();
+        document.getElementById("nip-number")?.focus();
     });
 }
 
@@ -131,7 +133,7 @@ function initForm() {
             if (response.status === 201) {
                 notifySuccess("NIP cadastrada com sucesso.");
                 resetForm();
-                document.getElementById("nip-notification-date")?.focus();
+                document.getElementById("nip-number")?.focus();
                 return;
             }
 
@@ -218,6 +220,7 @@ async function loadPage() {
 function init() {
     initConsentModal();
     initCpfMask();
+    initNipNumberMask();
     initClear();
     initForm();
     loadPage();

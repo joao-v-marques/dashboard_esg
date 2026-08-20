@@ -18,6 +18,124 @@
   gap: var(--space-4);
 }
 
+/* Tabela do Controle de NIP's --------------------------------------------- *
+ *
+ * Com a coluna de "Nº da NIP" a tabela chegou a nove colunas, e a largura
+ * automática deixou de servir: cada coluna pedia o tamanho do próprio conteúdo,
+ * a soma passava da largura do card e a coluna de ações — a última — ficava
+ * fora do enquadramento, atrás de um scroll horizontal.
+ *
+ * Quem mais custava largura era o status. Os nomes cadastrados são frases
+ * ("Aguardando Classificação da Demanda NIP - RN388", "Finalizada por
+ * Inexistência de Indício de Infração"), e uma frase dessas dentro de uma
+ * pílula é um problema em qualquer largura: a pílula acompanha o texto, então
+ * ou ela pede 300px de coluna, ou quebra em três linhas e o texto fica
+ * espremido dentro de um bloco de cor sem forma.
+ *
+ * A saída não foi de CSS: a célula passou a mostrar a situação ("Finalizada",
+ * "Aguardando") dentro da pílula e o motivo como texto secundário abaixo — ver
+ * splitStatusName() em js/pages/controle_nips.js. A pílula fica com uma palavra
+ * curta, de uma linha só, e o motivo quebra como texto normal. Nada é
+ * escondido, e a cor forte continua fazendo o trabalho de ser achada de
+ * relance.
+ *
+ * Com isso resolvido, a repartição da largura é o que sobra: table-layout fixed
+ * e porcentagens que somam 100%, em vez de deixar o conteúdo negociar. Nenhuma
+ * coluna empurra a seguinte para fora, e o botão de editar está sempre à vista.
+ * ------------------------------------------------------------------------- */
+
+/* Situação em cima, motivo embaixo — mesmo desenho do par nome+CPF do
+   beneficiário. align-items: flex-start porque a pílula precisa ter a largura
+   do próprio texto: esticada até a borda da coluna, ela deixaria de ser uma
+   pílula e viraria uma faixa de cor. */
+.status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+/* Só a natureza ainda pode precisar de duas linhas ("Não Assistencial") — a de
+   status agora carrega uma palavra só. Sem isto, o `white-space: nowrap` de
+   .badge faria a pílula de natureza vazar por cima da coluna vizinha, já que a
+   largura das colunas é fixa. O ::before é o ponto colorido: num badge de duas
+   linhas ele ficaria centralizado na altura toda, longe da primeira palavra,
+   então é ancorado no topo. Fora desta tabela nada disso muda. */
+.nips-table .badge {
+  height: auto;
+  min-height: 24px;
+  padding-block: var(--space-4);
+  white-space: normal;
+}
+
+.nips-table .badge::before {
+  flex: none;
+  align-self: flex-start;
+  margin-top: var(--space-4);
+}
+
+/* Só a partir de 768px: abaixo disso .table--cards transforma a tabela em lista
+   de cards (display: block em tabela, linha e célula), e aí largura de coluna e
+   table-layout não significam mais nada — pior, uma largura em % aplicada a um
+   <td> que virou flex quebraria o card. O min-width também fica aqui pelo mesmo
+   motivo: em card o valor que vale é o `min-width: 0` de .table--cards. */
+@media (min-width: 768px) {
+  .nips-table {
+    table-layout: fixed;
+    /* Acima dos 960px de .table: são nove colunas, e no piso antigo a de ações
+       ficava mais estreita que os 40px do próprio botão. */
+    min-width: 1024px;
+  }
+
+  /* Código de demanda e protocolo são texto livre e podem vir sem espaço; sem
+     isso uma sequência longa vazaria da coluna que agora tem largura fixa. */
+  .nips-table tbody td {
+    overflow-wrap: break-word;
+  }
+
+  /* Nº da NIP e data são curtos e de tamanho conhecido: não quebram no meio,
+     que é o que tornaria "000000/2026" ilegível. */
+  .nips-table th:nth-child(1),
+  .nips-table td:nth-child(1),
+  .nips-table th:nth-child(2),
+  .nips-table td:nth-child(2) {
+    white-space: nowrap;
+  }
+
+  /* A soma dá 100%. Status e beneficiário ficam com as maiores fatias por
+     serem os campos de texto longo; ações leva o bastante para o botão de 40px
+     mais o padding da célula. As demais foram medidas pelo cabeçalho, não pelo
+     dado: "LANÇADO POR" e "NOTIFICAÇÃO" em caixa alta são mais largos que o
+     nome e a data que carregam, e uma coluna estreita demais quebraria o
+     título em duas linhas antes de apertar o conteúdo. */
+  .nips-table th:nth-child(1) { width: 12%; }  /* Nº da NIP    */
+  .nips-table th:nth-child(2) { width: 10%; }  /* Notificação  */
+  .nips-table th:nth-child(3) { width: 12%; }  /* Demanda      */
+  .nips-table th:nth-child(4) { width: 12%; }  /* Protocolo    */
+  .nips-table th:nth-child(5) { width: 14%; }  /* Beneficiário */
+  .nips-table th:nth-child(6) { width: 10%; }  /* Natureza     */
+  .nips-table th:nth-child(7) { width: 12%; }  /* Status       */
+  .nips-table th:nth-child(8) { width: 10%; }  /* Lançado por  */
+  .nips-table th:nth-child(9) { width:  8%; }  /* Ações        */
+}
+
+/* A faixa em que a tabela não cabe e o scroll estava desligado ---------------
+ *
+ * components.css desliga o overflow-x de .table-wrap a partir de 1240px ("a
+ * tabela cabe inteira", devolvendo ao <thead> o sticky abaixo da topbar). Essa
+ * medida foi feita com as tabelas de seis a oito colunas do projeto; com nove,
+ * o card só acomoda a tabela a partir de ~1360px de janela — descontados os
+ * 248px da sidebar, os 32px de padding de cada lado e a barra de rolagem
+ * vertical.
+ *
+ * Entre um valor e outro a tabela não cabe E não rola: a linha vazaria para
+ * fora do card sem nada para arrastar, que é pior que o scroll. Nessa faixa o
+ * wrapper volta a ser container de scroll, como já é abaixo de 1240px.
+ * ------------------------------------------------------------------------- */
+@media (min-width: 1240px) and (max-width: 1359px) {
+  .nips-table-wrap { overflow-x: auto; }
+}
+
 /* Mesma regra de residuos.css. Vive nos dois arquivos porque cada tela carrega
    só o seu CSS; se uma terceira tela precisar, ela sobe para components.css. */
 .records-empty-row td {

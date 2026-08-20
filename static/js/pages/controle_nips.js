@@ -35,6 +35,7 @@ import { syncFilterClear } from "../utils/filters.js";
 import { buildEditButton } from "../utils/table_actions.js";
 import {
     initCpfMask,
+    initNipNumberMask,
     populateSelect,
     formatCpf,
     toIsoDate,
@@ -202,17 +203,71 @@ const STATUS_TONE_BY_NAME = {
 };
 
 /**
- * Status como badge.
+ * As duas situações em que todo status cadastrado começa.
+ *
+ * São o que a pílula colorida mostra. O resto do nome é o motivo, e vai como
+ * texto secundário — ver splitStatusName() logo abaixo.
+ */
+const STATUS_SITUATIONS = ["Finalizada", "Aguardando"];
+
+/**
+ * Quebra o nome do status em situação e motivo.
+ *
+ * Os nomes cadastrados são frases inteiras ("Aguardando Classificação da
+ * Demanda NIP - RN388", "Finalizada por Inexistência de Indício de Infração").
+ * Uma frase dessas dentro de uma pílula, na largura de uma coluna de tabela,
+ * quebra em três linhas e fica espremida — a pílula acompanha o texto, então
+ * ela cresce junto e vira um bloco de cor sem forma.
+ *
+ * Todas elas, porém, têm a mesma estrutura: a situação ("Finalizada" ou
+ * "Aguardando") e o motivo. Separando as duas, a pílula fica com uma palavra
+ * curta — sempre de uma linha, sempre do mesmo tamanho — e o motivo desce como
+ * texto normal, que quebra em linhas sem parecer apertado. Nada é escondido.
+ *
+ * O separador entre uma parte e outra varia no cadastro: " - " em "Finalizada -
+ * NIP Resolvida (RVE)", " por " em "Finalizada por Duplicidade", e nada em
+ * "Aguardando Abertura de Processo". Ele sai fora para o motivo não começar com
+ * um traço solto nem com uma preposição sem sujeito.
+ *
+ * Um status que não comece por nenhuma das duas situações vai inteiro para a
+ * pílula, sem motivo: é melhor uma pílula larga e correta do que um recorte
+ * inventado em cima de um nome que este código não conhece.
+ */
+function splitStatusName(name) {
+    const text = String(name ?? "").trim();
+    if (!text) return { situation: "—", reason: "" };
+
+    const situation = STATUS_SITUATIONS.find(
+        (word) => text.toLowerCase().startsWith(word.toLowerCase()),
+    );
+
+    if (!situation) return { situation: text, reason: "" };
+
+    // O \b depois de "por" importa: sem ele um status que começasse com
+    // "Portabilidade" perderia as três primeiras letras.
+    const reason = text
+        .slice(situation.length)
+        .replace(/^\s*(?:[-–—]|por\b)\s*/i, "")
+        .trim();
+
+    return { situation, reason };
+}
+
+/**
+ * Status: pílula com a situação, motivo em texto secundário abaixo.
  *
  * Os status cadastrados se dividem em "Finalizada ..." e "Aguardando ...":
  * finalizada é verde (nada mais a fazer), aguardando é laranja (a NIP está
  * aberta e corre prazo). As cores são sólidas, e não pastel: a tabela é longa
- * e o status precisa ser achado de relance, sem procurar linha por linha.
+ * e o status precisa ser achado de relance, sem procurar linha por linha. É
+ * justamente por isso que só a situação fica dentro da cor — é ela que se lê
+ * de relance; o motivo é o que se lê depois de achar a linha.
  *
  * A ordem da decisão importa — o nome exato ganha do prefixo, senão
  * "Aguardando Abertura de Processo" cairia no laranja de toda espera. Qualquer
  * status novo que não caia nos dois prefixos fica neutro em vez de escolher uma
- * cor errada.
+ * cor errada. O tom continua sendo decidido pelo nome inteiro, e não pela
+ * situação recortada: é o nome inteiro que distingue as duas esperas.
  */
 function buildStatusCell(nip) {
     const td = document.createElement("td");
@@ -226,12 +281,27 @@ function buildStatusCell(nip) {
     else if (key.startsWith("finalizada")) tone = "badge--success-solid";
     else if (key.startsWith("aguardando")) tone = "badge--warning-solid";
 
+    const { situation, reason } = splitStatusName(name);
+
+    const wrap = document.createElement("span");
+    wrap.className = "status-cell";
+    // O nome inteiro, sem o recorte, para quem quiser conferir o status exato
+    // como ele está cadastrado.
+    wrap.title = name;
+
     const badge = document.createElement("span");
     badge.className = `badge ${tone}`;
-    badge.textContent = nip.status_name ?? "—";
-    badge.title = nip.status_name ?? "";
+    badge.textContent = situation;
+    wrap.appendChild(badge);
 
-    td.appendChild(badge);
+    if (reason) {
+        const detail = document.createElement("span");
+        detail.className = "table__secondary";
+        detail.textContent = reason;
+        wrap.appendChild(detail);
+    }
+
+    td.appendChild(wrap);
     return td;
 }
 
@@ -242,10 +312,12 @@ function buildActionsCell(nip) {
 
     // O aria-label descreve a linha, não a coluna: numa lista de vinte NIP's,
     // vinte botões chamados só "Editar" não dizem qual é qual para quem navega
-    // por teclado ou leitor de tela. O protocolo é único por NIP, então é ele
-    // que identifica a linha.
+    // por teclado ou leitor de tela. O número da NIP é o código de identificação
+    // único da notificação, então é ele que nomeia a linha — o protocolo também
+    // é único, mas é um código interno de atendimento, e não como a NIP é
+    // chamada por quem a acompanha.
     td.appendChild(buildEditButton({
-        label: `Editar NIP do protocolo ${nip.protocol_code} — ${nip.beneficiary_name}`,
+        label: `Editar NIP ${nip.nip_number ?? nip.protocol_code} — ${nip.beneficiary_name}`,
         // Closure sobre a NIP da própria linha: os dados para preencher o
         // formulário já estão em mãos, sem precisar buscar de novo por id.
         onClick: () => startEditingNip(nip),
@@ -263,11 +335,22 @@ function buildNipRow(nip) {
     // tanto "12345678900" quanto "123.456.789-00" — só o formatado está no
     // texto da linha. Ver rowSearchText().
     tr.dataset.cpfDigits = String(nip.beneficiary_cpf ?? "");
+    // O nome completo do status entra num atributo pelo mesmo motivo do CPF: a
+    // celula mostra a situacao e o motivo em dois elementos, e o textContent da
+    // linha cola os dois sem o separador ("Finalizada" + "Duplicidade"), o que
+    // faria a busca por "Finalizada por Duplicidade" nao achar nada.
+    tr.dataset.statusName = String(nip.status_name ?? "");
 
+    // O número da NIP abre a linha e leva o destaque que era da data: é o código
+    // que identifica a notificação, e é por ele que a linha é procurada.
+    tr.appendChild(buildCell({
+        label: "Nº da NIP",
+        text: nip.nip_number ?? "—",
+        innerClass: "table__primary tabular",
+    }));
     tr.appendChild(buildCell({
         label: "Notificação",
         text: formatDate(nip.notification_date),
-        innerClass: "table__primary",
     }));
     tr.appendChild(buildCell({ label: "Demanda", text: nip.demand_code }));
     tr.appendChild(buildCell({ label: "Protocolo", text: nip.protocol_code }));
@@ -305,8 +388,8 @@ function renderTable() {
    não pede endpoint novo.
    ========================================================================= */
 
-/** Texto da linha + o CPF só com dígitos, para o CPF ser buscável dos dois jeitos. */
-const rowSearchText = (row) => `${row.textContent} ${row.dataset.cpfDigits}`.toLowerCase();
+/** Texto da linha + o CPF só com dígitos e o nome completo do status. */
+const rowSearchText = (row) => `${row.textContent} ${row.dataset.cpfDigits} ${row.dataset.statusName}`.toLowerCase();
 
 // Um lugar só dizendo quais campos filtram esta tela: applyFilters() lê os
 // valores, initFilters() escuta as mudanças e syncFilterClear() conta quantos
@@ -532,6 +615,7 @@ async function loadPage() {
 
 function init() {
     initCpfMask();
+    initNipNumberMask();
     initModal();
     initFilters();
     initForm();

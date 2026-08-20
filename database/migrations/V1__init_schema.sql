@@ -175,6 +175,7 @@ VALUES
 CREATE TABLE nips (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 
+    nip_number VARCHAR(15) NOT NULL UNIQUE,
     notification_date DATE NOT NULL,
     demand_code VARCHAR(50) NOT NULL,
     protocol_code VARCHAR(50) NOT NULL UNIQUE,
