@@ -1,13 +1,114 @@
 /* ==========================================================================
-   dashboard.css — estilos exclusivos da tela de dashboard.
+   dashboard.css — arranjo da área de conteúdo do painel de indicadores.
 
-   Está propositalmente vazio de regras. Tudo o que a tela usa hoje —
-   cabeçalho de página, card e estado vazio — vem de components.css, e o
-   empilhamento sai dos utilitários de base.css (.container, .stack-32).
-   Repetir aqui o que o componente já resolve é o começo das cinco variações
-   do mesmo bloco.
+   Só o arranjo. Card, tabela, aba, barra de meta e apontamento são
+   blocos de components.css e não são redefinidos aqui — o que este arquivo
+   faz é dizer onde cada um cai dentro de um bloco de setor.
 
-   O arquivo existe porque a cascata do projeto prevê um CSS por página e o
-   template o carrega. É aqui que entra o arranjo específico quando os
-   indicadores chegarem — a grade deles, e só ela.
+   A tela é uma faixa de abas com um setor por vez (ver
+   js/pages/dashboard.js); a estrutura do bloco é sempre a mesma e vem da
+   configuração de cada setor (js/pages/dashboard_sectors.js).
+
+   Nenhuma medida abaixo de 1360px muda a promessa do painel: rótulo encolhe,
+   número não quebra.
    ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Barra do painel — a faixa de abas e as ações na mesma linha.
+
+   O painel sobe para perto da topbar: a barra já é a primeira linha da tela e
+   não precisa dos 32px que o shell dá às demais. Fica a metade — o bastante
+   para o botão não encostar na borda da topbar. Só o topo muda; a folga de
+   baixo continua. A regra vale só aqui porque dashboard.css só é carregado
+   por esta página.
+   -------------------------------------------------------------------------- */
+
+.app__main { padding-top: var(--space-16); }
+
+/* A linha divisória fica na barra, e não em .tabs, por dois motivos: ela
+   atravessa também o trecho ocupado pelo botão, em vez de morrer onde as abas
+   acabam; e o sublinhado da aba ativa (que fica em bottom: -1px) cai
+   exatamente sobre ela. */
+.dash-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-24);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dash-bar .tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-bottom: 0;
+}
+
+/* O botão acompanha a base das abas; a folga embaixo o descola da linha e
+   deixa o centro dele na altura do texto da aba. */
+.dash-bar__actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  padding-bottom: var(--space-8);
+}
+
+/* --------------------------------------------------------------------------
+   2. Cabeçalho do bloco de setor.
+   Nome e resumo à esquerda, filtro de período do setor encostado à direita,
+   alinhado pela base.
+   -------------------------------------------------------------------------- */
+
+.sector__id {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-24);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-24);
+}
+
+.sector__id-main { min-width: 0; }
+
+.sector__summary {
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+  max-width: 46ch;
+}
+
+/* O filtro do setor. Não existe filtro global: cada bloco declara o seu tipo
+   (intervalo, ano, mês/ano) em dashboard_sectors.js e só recarrega a si
+   mesmo. Os campos nunca ficam menores que o necessário para uma data caber. */
+.sector__filter .field-row {
+  gap: var(--space-8);
+}
+
+.sector__filter .field-row > * {
+  min-width: 132px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Corpo do bloco de setor.
+   -------------------------------------------------------------------------- */
+
+/* Subtítulo interno do bloco (Detalhamento, Progresso das metas,
+   Apontamentos). */
+.sector__subhead {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-16);
+}
+
+/* Cada tabela do setor vive dentro de um card, com o próprio cabeçalho —
+   um setor pode ter mais de uma (Resíduos detalha por tipo e por unidade). */
+.sector__table + .sector__table { margin-top: var(--space-24); }
+
+/* As metas vêm depois das tabelas, em um nó próprio: ele não é apagado no
+   repintar do conteúdo, e nasce sem altura enquanto o setor não tiver meta
+   cadastrada — daí não haver margem fixa aqui. */
+.sector__goals:not(:empty) { margin-top: var(--space-32); }

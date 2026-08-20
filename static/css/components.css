@@ -985,6 +985,71 @@ button.input-wrap__affix[aria-pressed="true"] {
    uma linha de 16px e desalinharia a base dos cards vizinhos que a têm. */
 .stat__delta:empty { display: none; }
 
+/* Selo circular com a sigla do indicador — alternativa ao .stat__icon para
+   painéis com muitos indicadores, onde um ícone genérico diz menos que as
+   duas ou três letras que a diretoria já usa para chamar o número (TR, RG,
+   IS...). Mesmo tamanho e mesmo lugar do selo de ícone, então os dois podem
+   conviver entre cards vizinhos sem desalinhar o cabeçalho. */
+.stat__seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface-sunken);
+  color: var(--color-primary-text);
+  font-size: var(--text-xs);
+  line-height: 1;
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.stat--accent .stat__seal   { color: var(--color-accent-text); }
+.stat--info .stat__seal     { color: var(--color-info-text); }
+.stat--warning .stat__seal  { color: var(--color-warning-text); }
+.stat--negative .stat__seal { color: var(--color-negative-text); }
+
+/* Rodapé do card: a meta do indicador ou uma observação curta que explica o
+   número. Fica colado na base para que cards de alturas diferentes ainda
+   terminem na mesma linha. */
+.stat__note {
+  margin-top: auto;
+  padding-top: var(--space-8);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-muted);
+}
+
+.stat__note:empty { display: none; }
+
+/* O valor e a unidade nunca quebram em duas linhas: é a regra do painel
+   inteiro — o rótulo encolhe, o número não. */
+.stat__value {
+  white-space: nowrap;
+}
+
+/* A grade nasce com três cards por linha (span 4 de 12). Setores com quatro
+   indicadores pedem span 3; quem renderiza conta os cards e aplica o
+   modificador, em vez de cada setor inventar a própria grade. */
+.stat-grid--4 > .stat,
+.stat-grid--4 > .skeleton { grid-column: span 3; }
+
+@media (max-width: 1359px) {
+  .stat-grid--4 > .stat,
+  .stat-grid--4 > .skeleton { grid-column: span 6; }
+}
+
+/* Dois indicadores dividem a linha ao meio (span 6). No span 4 do padrão eles
+   ficariam encolhidos à esquerda, com um terço da linha vazio à direita — e
+   essa faixa em branco parece bloco que não terminou de carregar, não decisão
+   de layout. A partir de 1199px a regra base já leva todo mundo a span 6, e daí
+   para baixo não há nada a acrescentar. */
+.stat-grid--2 > .stat,
+.stat-grid--2 > .skeleton { grid-column: span 6; }
+
 /* --------------------------------------------------------------------------
    BADGES DE STATUS
    Todos com fundo pastel e texto escuro — contraste verificado ≥ 5.9:1.
@@ -1061,6 +1126,26 @@ button.input-wrap__affix[aria-pressed="true"] {
 .band--3 { background-color: var(--color-band-3-bg); color: var(--color-band-3-text); }
 .band--4 { background-color: var(--color-band-4-bg); color: var(--color-band-4-text); }
 .band--5 { background-color: var(--color-band-5-bg); color: var(--color-band-5-text); }
+
+/* Pílula neutra de rótulo — a primeira coluna das tabelas do painel (tipo,
+   unidade, escopo, faixa...). É a versão genérica de .band: mesma forma, mas
+   a cor é semântica e opcional, em vez de fixa por faixa de pontuação. */
+.pill {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px var(--space-8);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text-strong);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.pill--success  { background-color: var(--color-success-bg);  color: var(--color-success-text); }
+.pill--warning  { background-color: var(--color-warning-bg);  color: var(--color-warning-text); }
+.pill--negative { background-color: var(--color-negative-bg); color: var(--color-negative-text); }
+.pill--info     { background-color: var(--color-info-bg);     color: var(--color-info-text); }
 
 /* Contagem discreta ao lado de um título. */
 .count-pill {
@@ -1933,6 +2018,204 @@ button.input-wrap__affix[aria-pressed="true"] {
   }
 
   .modal__section-head .btn { width: 100%; }
+}
+
+/* --------------------------------------------------------------------------
+   ABAS
+   Faixa horizontal que troca o conteúdo abaixo dela sem sair da página. A aba
+   ativa é marcada por sublinhado — não por fundo — porque a faixa fica sobre a
+   mesma superfície do conteúdo e um fundo colorido competiria com os cards.
+
+   Marcação esperada: role="tablist" na faixa, role="tab" + aria-selected em
+   cada botão, role="tabpanel" no conteúdo. O JS move o foco com as setas; o
+   CSS aqui só reage ao aria-selected.
+   -------------------------------------------------------------------------- */
+
+.tabs {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-24);
+  /* Quebra em vez de rolar: o sublinhado da aba ativa fica 1px abaixo da
+     linha da faixa, e um container de rolagem cortaria justamente esse pixel
+     (ou abriria uma barra vertical para caber nele). Com seis setores a faixa
+     cabe inteira em uma linha bem antes dos 1360px de referência. */
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) 0 var(--space-16);
+  flex: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  position: relative;
+  transition: color var(--duration-fast) var(--ease);
+}
+
+/* O sublinhado é um pseudo-elemento, e não um border-bottom, para cobrir a
+   linha divisória da faixa sem deslocar o texto em 1px ao ativar. */
+.tabs__tab::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background-color: transparent;
+}
+
+.tabs__tab:hover { color: var(--color-text-strong); }
+
+.tabs__tab[aria-selected="true"] {
+  color: var(--color-text-heading);
+  font-weight: var(--weight-semibold);
+}
+
+.tabs__tab[aria-selected="true"]::after {
+  background-color: var(--color-primary);
+}
+
+/* O contador de indicadores da aba: discreto quando a aba está dormindo,
+   na cor da marca quando ela é a atual. */
+.tabs__tab[aria-selected="true"] .count-pill {
+  background-color: var(--color-primary-subtle);
+}
+
+/* --------------------------------------------------------------------------
+   PROGRESSO DE META
+   Barra horizontal com nome da meta, "atual / alvo" e preenchimento
+   proporcional. A cor diz a situação, não o assunto: no alvo, perto dele, ou
+   fora. Quem renderiza calcula a razão e escolhe o modificador — o CSS não
+   decide régua nenhuma.
+   -------------------------------------------------------------------------- */
+
+.goal + .goal { margin-top: var(--space-16); }
+
+.goal__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-16);
+  margin-bottom: var(--space-8);
+}
+
+.goal__name {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-strong);
+  /* O nome é o que encolhe quando falta espaço; o par de números ao lado
+     nunca quebra (ver .goal__values). */
+  min-width: 0;
+}
+
+.goal__values {
+  flex: none;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.goal__values strong { color: var(--color-text-strong); }
+
+.goal__track {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface-sunken);
+  overflow: hidden;
+}
+
+.goal__fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary);
+  transition: width var(--duration-base) var(--ease);
+}
+
+.goal--near .goal__fill { background-color: var(--color-warning); }
+.goal--off .goal__fill  { background-color: var(--color-negative); }
+
+/* --------------------------------------------------------------------------
+   APONTAMENTOS
+   Lista curta com marcador, usada para justificar um desvio logo abaixo dos
+   números que o mostram.
+   -------------------------------------------------------------------------- */
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+}
+
+.notes__item {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.notes__item::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-top: 7px;   /* centraliza o ponto na primeira linha de 20px */
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent);
+}
+
+/* --------------------------------------------------------------------------
+   CABEÇALHO DE TABELA (título à esquerda, nota de unidade/período à direita)
+   -------------------------------------------------------------------------- */
+
+.table-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-16);
+  margin-bottom: var(--space-16);
+}
+
+.table-head__title {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-strong);
+  min-width: 0;
+}
+
+.table-head__note {
+  flex: none;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-muted);
+  text-align: right;
+}
+
+/* Tabela que se acomoda à largura disponível em vez de forçar 960px e uma
+   barra de rolagem horizontal. É o que o painel usa: em 1360px ou mais nada
+   estoura o container — o texto das primeiras colunas quebra, e as colunas
+   numéricas ficam com a largura do seu conteúdo e nunca quebram.
+
+   Efeito colateral bem-vindo: sem rolagem horizontal, .table-wrap deixa de
+   ser container de scroll e o `position: sticky` do cabeçalho volta a valer. */
+.table--fluid {
+  min-width: 0;
+  table-layout: auto;
+}
+
+.table--fluid td.table__num,
+.table--fluid th.table__num {
+  width: 1%;
+  white-space: nowrap;
 }
 
 /* ==========================================================================

@@ -44,6 +44,7 @@ export const API = {
     units: `${BASE_PATH}/api/units`,
     wasteDashboard: `${BASE_PATH}/api/residuos/dashboard`,
     cooperadosDashboard: `${BASE_PATH}/api/cooperados/dashboard`,
+    juridicoDashboard: `${BASE_PATH}/api/juridico/dashboard`,
     nips: `${BASE_PATH}/api/nips`,
     nipNatures: `${BASE_PATH}/api/nip-natures`,
     nipStatus: `${BASE_PATH}/api/nip-status`,
