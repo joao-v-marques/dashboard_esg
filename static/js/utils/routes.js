@@ -20,6 +20,7 @@ export const PAGES = {
     wasteRecords: `${BASE_PATH}/residuos`,
     nipCreate: `${BASE_PATH}/nips/lancar`,
     nipControl: `${BASE_PATH}/nips/controle`,
+    lawsuitCreate: `${BASE_PATH}/processos/cadastrar`,
 };
 
 /**
@@ -48,6 +49,11 @@ export const API = {
     nips: `${BASE_PATH}/api/nips`,
     nipNatures: `${BASE_PATH}/api/nip-natures`,
     nipStatus: `${BASE_PATH}/api/nip-status`,
+    lawsuits: `${BASE_PATH}/api/lawsuits`,
+    subjectMatters: `${BASE_PATH}/api/subject-matters`,
+    proceedingStages: `${BASE_PATH}/api/proceeding-stages`,
+    lawsuitStatus: `${BASE_PATH}/api/lawsuit-status`,
+    lossProbabilities: `${BASE_PATH}/api/loss-probabilities`,
 };
 
 /**

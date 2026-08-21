@@ -136,6 +136,30 @@ const NAV_ITEMS = [
             },
         ],
     },
+    {
+        id: "lawsuits",
+        label: "Processos Jurídicos",
+        icon: `
+            <svg class="nav__icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M6 2.5h5.5L15 6v11a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5Z"
+                      stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M11.5 2.5V6H15" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M7.5 10h5M7.5 13h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>`,
+        children: [
+            {
+                href: PAGES.lawsuitCreate,
+                label: "Cadastrar Processo",
+                icon: `
+            <svg class="nav__icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M5.5 3.5h5l4 4V16a.5.5 0 0 1-.5.5H5.5A.5.5 0 0 1 5 16V4a.5.5 0 0 1 .5-.5Z"
+                      stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M10 10v3.5M8.25 11.75h3.5" stroke="currentColor" stroke-width="1.5"
+                      stroke-linecap="round"/>
+            </svg>`,
+            },
+        ],
+    },
     // TODO: os demais itens entram aqui conforme as telas forem criadas.
 ];
 

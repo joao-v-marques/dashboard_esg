@@ -3,6 +3,7 @@ from routes.render_pages.render_login import bp_render_login
 from routes.render_pages.render_dashboard import bp_render_dashboard
 from routes.render_pages.render_residuos import bp_render_residuos
 from routes.render_pages.render_nips import bp_render_nips
+from routes.render_pages.render_lawsuits import bp_render_lawsuits
 
 from routes.auth_controller import bp_auth
 from routes.unit_controller import bp_unit
@@ -19,6 +20,7 @@ from routes.proceeding_stages_controller import bp_proceeding_stages
 from routes.lawsuit_status_controller import bp_lawsuit_status
 from routes.loss_probabilities_controller import bp_loss_probabilities
 from routes.judging_bodies_controller import bp_judging_bodies
+from routes.lawsuits_controller import bp_lawsuits
 
 PREFIX = "/dashboard-esg"
 
@@ -31,6 +33,7 @@ def config_bps(app):
     app.register_blueprint(bp_render_dashboard, url_prefix=PREFIX)
     app.register_blueprint(bp_render_residuos, url_prefix=PREFIX)
     app.register_blueprint(bp_render_nips, url_prefix=PREFIX)
+    app.register_blueprint(bp_render_lawsuits, url_prefix=PREFIX)
     app.register_blueprint(bp_auth, url_prefix=PREFIX)
     app.register_blueprint(bp_unit, url_prefix=PREFIX)
     app.register_blueprint(bp_waste_records, url_prefix=PREFIX)
@@ -46,3 +49,4 @@ def config_bps(app):
     app.register_blueprint(bp_lawsuit_status, url_prefix=PREFIX)
     app.register_blueprint(bp_loss_probabilities, url_prefix=PREFIX)
     app.register_blueprint(bp_judging_bodies, url_prefix=PREFIX)
+    app.register_blueprint(bp_lawsuits, url_prefix=PREFIX)
