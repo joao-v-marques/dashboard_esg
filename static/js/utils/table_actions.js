@@ -25,6 +25,16 @@ const EDIT_ICON = `
         <path d="m11.9 4.98 2.12 2.12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
     </svg>`;
 
+// Balança da justiça — distingue "gerar recurso" de "editar" (o ícone acima)
+// na mesma coluna de ações, caso uma tabela algum dia precise dos dois.
+const APPEAL_ICON = `
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+        <path d="M10 3v14M6 17h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M10 5 4 6.5M10 5l6 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M4 6.5 1.5 11a2.75 2.75 0 0 0 5 0L4 6.5ZM16 6.5 13.5 11a2.75 2.75 0 0 0 5 0L16 6.5Z"
+              stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>`;
+
 /**
  * Botão de editar de uma linha.
  *
@@ -37,6 +47,25 @@ export function buildEditButton({ label, tooltip = "Editar", onClick }) {
     button.type = "button";
     button.className = "btn-icon btn-icon--row";
     button.innerHTML = EDIT_ICON;
+    button.setAttribute("aria-label", label);
+    button.dataset.tooltip = tooltip;
+    button.addEventListener("click", onClick);
+
+    return button;
+}
+
+/**
+ * Botão de gerar recurso de uma linha (tabela de processos).
+ *
+ * Mesmo molde de buildEditButton — só o ícone e a palavra padrão do tooltip
+ * mudam, já que a ação não é editar a linha, é abrir o modal de um recurso
+ * novo vinculado a ela.
+ */
+export function buildAppealButton({ label, tooltip = "Gerar Recurso", onClick }) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn-icon btn-icon--row";
+    button.innerHTML = APPEAL_ICON;
     button.setAttribute("aria-label", label);
     button.dataset.tooltip = tooltip;
     button.addEventListener("click", onClick);

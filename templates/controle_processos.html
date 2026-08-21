@@ -1,0 +1,300 @@
+<!doctype html>
+<!--
+  Consultar Processos.
+
+  Lista todos os processos judiciais cadastrados. Nesta etapa a tela é só
+  leitura — sem filtro, sem editar processo — e serve de ponto de partida para
+  gerar um recurso: cada linha tem um botão "Gerar Recurso" que abre um modal
+  vinculado àquele processo (o lawsuit_id vem da própria linha, não é campo do
+  formulário). Edição de processo e listagem de recursos ficam para depois.
+
+  Como nas demais telas, o HTML é puro e o shell (topbar, sidebar) nasce vazio
+  em [data-topbar]/[data-sidebar], preenchido por js/pages/shell.js.
+
+  Três estados (carregando / conteúdo / erro), mesmo desenho de
+  controle_nips.html.
+-->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Consultar Processos · Acompanhamento ESG</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+    <!-- A ordem abaixo é a cascata do projeto e não muda: tokens definem os
+         valores, base reseta e cria os utilitários, components traz os blocos
+         reutilizáveis e o CSS da página só arranja esses blocos na tela. -->
+    <link rel="stylesheet" href="/static/css/tokens.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/notyf.css">
+    <link rel="stylesheet" href="/static/css/lawsuits.css">
+</head>
+
+<body>
+<!-- Primeiro tabstop de toda página do app. Fica no HTML, e não no shell em JS,
+     justamente para ser o primeiro tabstop desde o primeiro instante. -->
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+<div class="app" data-app>
+
+    <!-- PREENCHIDO VIA JS (js/pages/shell.js) -->
+    <header class="topbar" data-topbar></header>
+
+    <div class="app__body">
+
+        <!-- PREENCHIDO VIA JS (js/pages/shell.js) -->
+        <aside class="sidebar on-inverse" id="sidebar" data-sidebar></aside>
+
+        <!-- Fundo escuro do menu em overlay (mobile) -->
+        <div class="sidebar-scrim" data-sidebar-scrim hidden></div>
+
+        <main class="app__main" id="conteudo">
+            <div class="container stack-32">
+
+                <!-- =====================================================
+                     1. Cabeçalho da página
+                     ===================================================== -->
+                <header class="page-head">
+                    <div class="page-head__text">
+                        <h1 class="page-head__title">Consultar Processos</h1>
+                        <p class="page-head__subtitle">
+                            Processos judiciais cadastrados. Use "Gerar Recurso"
+                            numa linha para registrar um recurso vinculado
+                            àquele processo.
+                        </p>
+                    </div>
+
+                    <div class="page-head__actions">
+                        <!-- href escrito por js/pages/controle_processos.js a partir de
+                             PAGES.lawsuitCreate, para o prefixo continuar em um lugar só. -->
+                        <a class="btn btn--primary" data-new-lawsuit-link href="#">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.5"
+                                      stroke-linecap="round"/>
+                            </svg>
+                            Cadastrar Processo
+                        </a>
+                    </div>
+                </header>
+
+                <!-- =====================================================
+                     2. Processos
+
+                     Três estados, mutuamente exclusivos via hidden — mesmo
+                     desenho de controle_nips.html. Dentro do estado "com
+                     dado", a ausência de resultado é uma linha própria dentro
+                     da tabela, não um estado à parte.
+                     ===================================================== -->
+                <section aria-labelledby="titulo-processos">
+                    <h2 class="visually-hidden" id="titulo-processos">Processos cadastrados</h2>
+
+                    <!-- Carregando — é o estado inicial, o único visível no HTML. -->
+                    <div class="card" data-lawsuits-loading>
+                        <div class="card__body stack-16">
+                            <span class="skeleton skeleton--row"></span>
+                            <span class="skeleton skeleton--row"></span>
+                            <span class="skeleton skeleton--row"></span>
+                            <span class="skeleton skeleton--row"></span>
+                        </div>
+                    </div>
+
+                    <!-- Com dado — tabela, sem toolbar de filtros nesta etapa. Nasce oculto. -->
+                    <div class="card" data-lawsuits-content hidden>
+                        <div class="table-wrap">
+                            <table class="table table--cards lawsuits-table">
+                                <caption class="visually-hidden">Processos judiciais cadastrados.</caption>
+                                <thead>
+                                <tr>
+                                    <th scope="col">Nº do processo</th>
+                                    <th scope="col">Partes</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Valor da causa</th>
+                                    <th scope="col" class="table__actions">Ações</th>
+                                </tr>
+                                </thead>
+                                <tbody data-lawsuits-body>
+                                <!-- Linhas escritas por js/pages/controle_processos.js. A linha
+                                     de "nenhum resultado" abaixo é fixa e só alterna hidden. -->
+                                <tr class="records-empty-row" data-lawsuits-empty-row hidden>
+                                    <td colspan="5" data-lawsuits-empty-message>Carregando...</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Falha. Reaproveita a superfície de recado centralizado que o
+                         projeto já usa em home.html e controle_nips.html. -->
+                    <div class="card" data-lawsuits-error hidden>
+                        <div class="empty">
+                            <div class="empty__seal seal" aria-hidden="true">
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                            </div>
+                            <p class="empty__title">Não foi possível carregar os processos</p>
+                            <p class="empty__text">
+                                Verifique a conexão e atualize a página. Se continuar, avise a
+                                equipe responsável pelo sistema.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- =====================================================================
+     Modal de recurso
+
+     Duas partes: os recursos já registrados para o processo da linha que
+     abriu o modal (lista só leitura, carregada por loadAppealsForLawsuit()
+     em controle_processos.js) e, embaixo, o formulário para gerar mais um.
+     O lawsuit_id não é campo do formulário — vem de startCreatingAppeal().
+
+     Enviar o formulário não fecha o modal: a lista é recarregada e os campos
+     limpam no lugar, para dar para gerar vários recursos do mesmo processo
+     sem reabrir o modal a cada um — mesmo raciocínio de "Lançar NIP" ficar na
+     própria tela depois de cadastrar.
+
+     A lista fica dentro do mesmo .modal__body do formulário, e não como um
+     bloco irmão antes do <form>: .modal[open] > form é quem vira a coluna
+     flex que deixa só o corpo rolar e o rodapé fixo (ver o comentário dessa
+     regra em components.css) — um .modal__body fora do <form> ficaria de
+     fora desse contrato e disputaria altura com ele, em vez de rolar junto.
+     ===================================================================== -->
+<dialog class="modal" data-appeal-modal aria-labelledby="titulo-modal-recurso">
+    <div class="modal__head">
+        <div>
+            <h2 class="modal__title" id="titulo-modal-recurso">Recursos do processo</h2>
+            <p class="modal__subtitle" data-appeal-modal-subtitle>Recursos vinculados ao processo selecionado.</p>
+        </div>
+        <button type="button" class="btn-icon modal__close" data-appeal-modal-close aria-label="Fechar">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+        </button>
+    </div>
+
+    <form data-appeal-form novalidate>
+        <div class="modal__body">
+
+            <!-- Recursos já registrados — só leitura. Três estados via hidden,
+                 trocados por loadAppealsForLawsuit() em controle_processos.js:
+                 carregando, lista com item(ns) e "nenhum recurso ainda". -->
+            <div class="appeal-list-section">
+                <p class="fieldset__legend">Recursos já registrados</p>
+
+                <p class="field__hint" data-appeal-list-loading>Carregando...</p>
+
+                <ul class="appeal-list" data-appeal-list hidden></ul>
+
+                <p class="field__hint" data-appeal-list-empty hidden>
+                    Nenhum recurso registrado ainda para este processo.
+                </p>
+            </div>
+
+            <hr class="appeal-list-separator">
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="appeal-number">Número do recurso</label>
+                    <input class="input" type="text" id="appeal-number" name="appeal_number"
+                           maxlength="35" autocomplete="off" required
+                           aria-describedby="erro-appeal-number">
+                    <p class="field__error" id="erro-appeal-number" data-error-for="appeal-number" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="appeal-date">Data do recurso</label>
+                    <input class="input" type="date" id="appeal-date" name="appeal_date" required
+                           aria-describedby="erro-appeal-date">
+                    <p class="field__error" id="erro-appeal-date" data-error-for="appeal-date" hidden></p>
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="appeal-appellant">Recorrente</label>
+                    <input class="input" type="text" id="appeal-appellant" name="appellant"
+                           maxlength="255" autocomplete="off" required
+                           aria-describedby="erro-appeal-appellant">
+                    <p class="field__error" id="erro-appeal-appellant" data-error-for="appeal-appellant" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="appeal-appellee">Recorrido</label>
+                    <input class="input" type="text" id="appeal-appellee" name="appellee"
+                           maxlength="255" autocomplete="off" required
+                           aria-describedby="erro-appeal-appellee">
+                    <p class="field__error" id="erro-appeal-appellee" data-error-for="appeal-appellee" hidden></p>
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="appeal-judging-body">Órgão julgador</label>
+                    <select class="select" id="appeal-judging-body" name="judging_body_id" required
+                            data-form-judging-body aria-describedby="erro-appeal-judging-body">
+                        <option value="">Selecione</option>
+                    </select>
+                    <p class="field__error" id="erro-appeal-judging-body" data-error-for="appeal-judging-body" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="appeal-claim-value">Valor da causa (R$)</label>
+                    <input class="input tabular" type="text" id="appeal-claim-value" name="claim_value"
+                           inputmode="decimal" placeholder="0,00" autocomplete="off" required
+                           data-currency-input aria-describedby="erro-appeal-claim-value">
+                    <p class="field__error" id="erro-appeal-claim-value" data-error-for="appeal-claim-value" hidden></p>
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="appeal-status">Status</label>
+                    <select class="select" id="appeal-status" name="status_id" required
+                            data-form-status aria-describedby="erro-appeal-status">
+                        <option value="">Selecione</option>
+                    </select>
+                    <p class="field__error" id="erro-appeal-status" data-error-for="appeal-status" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="appeal-loss-probability">Probabilidade de perda</label>
+                    <select class="select" id="appeal-loss-probability" name="loss_probability_id" required
+                            data-form-loss-probability aria-describedby="erro-appeal-loss-probability">
+                        <option value="">Selecione</option>
+                    </select>
+                    <p class="field__error" id="erro-appeal-loss-probability" data-error-for="appeal-loss-probability" hidden></p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Fora do .modal__body de propósito, mesmo motivo do modal de NIP's:
+             o rodapé não encolhe (.modal__footer tem flex: none), então
+             "Gerar recurso" está sempre à vista. Continua dentro do <form>. -->
+        <div class="modal__footer">
+            <span class="spacer"></span>
+            <button type="button" class="btn btn--secondary" data-appeal-modal-close>Cancelar</button>
+            <button type="submit" class="btn btn--primary" data-appeal-submit>Gerar recurso</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Shell (topbar, sidebar, menu da conta e usuário logado), comum a todas as
+     telas. Vem antes do script da página, sempre. -->
+<script type="module" src="/static/js/pages/shell.js"></script>
+<script type="module" src="/static/js/pages/controle_processos.js"></script>
+</body>
+</html>
