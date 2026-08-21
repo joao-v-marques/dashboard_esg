@@ -5,6 +5,12 @@
  *
  * Contrato com o HTML (data-*):
  *   [data-new-lawsuit-link]   link para "Cadastrar Processo"; o href é escrito aqui
+ *   [data-filter-search]      busca livre (nº do processo, autor, réu, objeto, vara)
+ *   [data-filter-subject-matter] / [data-filter-proceeding-stage] /
+ *   [data-filter-status] / [data-filter-loss-probability]   selects de filtro
+ *   [data-filter-date-from] / [data-filter-date-to]         período do processo
+ *   [data-filter-value-min] / [data-filter-value-max]       faixa do valor da causa
+ *   [data-filter-clear]       limpa os campos acima
  *   [data-lawsuits-loading]   esqueleto; estado inicial
  *   [data-lawsuits-content]   card com a tabela; nasce hidden
  *   [data-lawsuits-error]     recado de falha; nasce hidden
@@ -40,11 +46,12 @@
  * controle_nips.js.
  *
  * status_id e loss_probability_id existem nos dois formulários (recurso e
- * edição de processo, mesmas tabelas de apoio) — por isso os selects de cada
- * um usam atributos data-* prefixados por formulário (data-appeal-status /
- * data-lawsuit-status), em vez do data-form-* genérico de outras telas: um
- * atributo só faria populateSelect() (que usa querySelector, e pega só o
- * primeiro elemento) preencher o select errado.
+ * edição de processo, mesmas tabelas de apoio) — e agora também na barra de
+ * filtros, três ocorrências do mesmo select na mesma página. Por isso cada um
+ * usa atributo data-* prefixado pelo seu dono (data-appeal-status /
+ * data-lawsuit-status / data-filter-status), em vez do data-form-* genérico de
+ * outras telas: um atributo só faria populateSelect() (que usa querySelector, e
+ * pega só o primeiro elemento) preencher o select errado.
  */
 
 import { API, PAGES } from "../utils/routes.js";
@@ -59,8 +66,10 @@ import {
     readFormPayload as readLawsuitFormPayload,
     clearFormErrors as clearLawsuitFormErrors,
     setFieldError as setLawsuitFieldError,
+    claimValueNumber,
 } from "../utils/lawsuit_form.js";
 import { formatarMoeda } from "../utils/format_ptbr.js";
+import { syncFilterClear } from "../utils/filters.js";
 import {
     clearFormErrors,
     setFieldError,
@@ -143,6 +152,13 @@ async function loadReferenceData() {
     const status = await statusResponse.json();
     const lossProbabilities = await lossProbabilitiesResponse.json();
 
+    // Barra de filtros. As mesmas listas dos modais, com o placeholder que
+    // significa "não filtrar por este campo" em vez de "escolha um".
+    populateSelect(document.querySelector("[data-filter-subject-matter]"), subjectMatters, "Todos");
+    populateSelect(document.querySelector("[data-filter-proceeding-stage]"), proceedingStages, "Todos");
+    populateSelect(document.querySelector("[data-filter-status]"), status, "Todos");
+    populateSelect(document.querySelector("[data-filter-loss-probability]"), lossProbabilities, "Todas");
+
     // Modal de recurso.
     populateSelect(document.querySelector("[data-appeal-judging-body]"), judgingBodies, "Selecione");
     populateSelect(document.querySelector("[data-appeal-status]"), status, "Selecione");
@@ -197,6 +213,34 @@ function buildCell({ label, text, cellClass, innerClass }) {
     return td;
 }
 
+/**
+ * Número do processo em cima, objeto/assunto embaixo.
+ *
+ * O objeto é um dos filtros da barra, e filtrar por um dado que não aparece em
+ * coluna nenhuma esconde linhas por um critério que ninguém consegue conferir
+ * no resultado. Como linha secundária ele não custa coluna nova (a tabela já
+ * tem min-width: 960px) e ainda entra no textContent que a busca livre varre.
+ */
+function buildCaseCell(lawsuit) {
+    const td = document.createElement("td");
+    td.dataset.label = "Nº do processo";
+
+    const wrap = document.createElement("span");
+    wrap.className = "case-cell";
+
+    const caseNumber = document.createElement("span");
+    caseNumber.className = "table__primary tabular";
+    caseNumber.textContent = formatCaseNumber(lawsuit.case_number);
+
+    const subjectMatter = document.createElement("span");
+    subjectMatter.className = "table__secondary";
+    subjectMatter.textContent = lawsuit.subject_matter_name ?? "—";
+
+    wrap.append(caseNumber, subjectMatter);
+    td.appendChild(wrap);
+    return td;
+}
+
 /** Autor em cima, réu embaixo — mesmo truque de .beneficiary-cell em nips.css. */
 function buildPartiesCell(lawsuit) {
     const td = document.createElement("td");
@@ -218,22 +262,35 @@ function buildPartiesCell(lawsuit) {
 }
 
 /**
- * Status como badge neutro.
+ * Status como badge neutro, com a probabilidade de perda embaixo.
  *
  * Sem cor por situação: diferente de nip_status (controle_nips.js), a tabela
  * lawsuit_status ainda não tem valores reais cadastrados — não há como saber
  * hoje quais nomes significam "aguardando" ou "finalizado". Colorir por
  * prefixo entra quando os status reais existirem.
+ *
+ * A probabilidade acompanha o status pelo mesmo motivo do objeto em
+ * buildCaseCell: é filtro da barra e precisa ser conferível na linha. Situação
+ * e risco também são lidos juntos — "conclusos para julgamento" diz pouco sem
+ * "perda provável" ao lado.
  */
 function buildStatusCell(lawsuit) {
     const td = document.createElement("td");
     td.dataset.label = "Status";
 
+    const wrap = document.createElement("span");
+    wrap.className = "status-cell";
+
     const badge = document.createElement("span");
     badge.className = "badge badge--neutral";
     badge.textContent = lawsuit.status_name ?? "—";
 
-    td.appendChild(badge);
+    const lossProbability = document.createElement("span");
+    lossProbability.className = "table__secondary";
+    lossProbability.textContent = `Perda: ${lawsuit.loss_probability_name ?? "—"}`;
+
+    wrap.append(badge, lossProbability);
+    td.appendChild(wrap);
     return td;
 }
 
@@ -262,13 +319,31 @@ function buildActionsCell(lawsuit) {
 
 function buildLawsuitRow(lawsuit) {
     const tr = document.createElement("tr");
-    tr.dataset.lawsuitDate = toIsoDate(lawsuit.lawsuit_date);
 
-    tr.appendChild(buildCell({
-        label: "Nº do processo",
-        text: formatCaseNumber(lawsuit.case_number),
-        innerClass: "table__primary tabular",
-    }));
+    // O que a barra de filtros compara. Fica no <tr>, e não relido da API, para
+    // applyFilters() decidir linha a linha sem procurar o processo na lista —
+    // mesmo desenho de buildNipRow em controle_nips.js.
+    tr.dataset.lawsuitDate = toIsoDate(lawsuit.lawsuit_date);
+    tr.dataset.subjectMatterId = String(lawsuit.subject_matter_id);
+    tr.dataset.proceedingStageId = String(lawsuit.proceeding_stage_id);
+    tr.dataset.statusId = String(lawsuit.status_id);
+    tr.dataset.lossProbabilityId = String(lawsuit.loss_probability_id);
+
+    // O valor da causa aparece na célula formatado ("R$ 1.234,56"); a
+    // comparação de faixa precisa do número cru.
+    tr.dataset.claimValue = String(Number(lawsuit.claim_value));
+
+    // O número do processo é renderizado mascarado. Os dígitos crus entram num
+    // atributo à parte para a busca achar tanto "0001234-56.2024.8.26.0100"
+    // quanto "0001234562024826010" — mesmo motivo do CPF em controle_nips.js.
+    tr.dataset.caseNumberDigits = String(lawsuit.case_number ?? "");
+
+    // A vara é a única dimensão filtrável que não vira texto em nenhuma célula
+    // (os nomes são longos demais para a coluna): sem isto, a busca livre não a
+    // alcançaria. Ver rowSearchText().
+    tr.dataset.proceedingStageName = String(lawsuit.proceeding_stage_name ?? "");
+
+    tr.appendChild(buildCaseCell(lawsuit));
     tr.appendChild(buildPartiesCell(lawsuit));
     tr.appendChild(buildStatusCell(lawsuit));
     tr.appendChild(buildCell({
@@ -294,14 +369,140 @@ function renderTable() {
     if (emptyRow) body.insertBefore(fragment, emptyRow);
     else body.appendChild(fragment);
 
+    // A empty-row é assunto de applyFilters(): quem decide se ela aparece não é
+    // o tamanho da lista, é quantas linhas sobraram do recorte. Terminar aqui
+    // também é o que faz um filtro aplicado continuar valendo depois de salvar
+    // uma edição e recarregar a tabela.
+    applyFilters();
+}
+
+/* =========================================================================
+   Filtros
+
+   Sem nova busca ao servidor: a tabela inteira já está no DOM, e cada linha
+   soma ou some pelo atributo hidden — é o que .table tbody tr[hidden] em
+   components.css já prevê. Sem paginação, filtrar no cliente é instantâneo e
+   não pede endpoint novo.
+
+   O estado do filtro é o próprio DOM: o value de cada controle. Guardá-lo
+   também num objeto criaria duas verdades para sincronizar.
+   ========================================================================= */
+
+/**
+ * Texto da linha + o que ela não mostra: o número do processo sem máscara e o
+ * nome da vara (que não vira coluna).
+ */
+const rowSearchText = (row) =>
+    `${row.textContent} ${row.dataset.caseNumberDigits} ${row.dataset.proceedingStageName}`.toLowerCase();
+
+// Um lugar só dizendo quais campos filtram esta tela: applyFilters() lê os
+// valores, initFilters() escuta as mudanças e syncFilterClear() conta quantos
+// estão valendo. Uma lista por função faria as três divergirem no dia em que
+// um filtro novo entrar.
+const FILTER_SELECTORS = [
+    "[data-filter-search]",
+    "[data-filter-subject-matter]",
+    "[data-filter-proceeding-stage]",
+    "[data-filter-status]",
+    "[data-filter-loss-probability]",
+    "[data-filter-date-from]",
+    "[data-filter-date-to]",
+    "[data-filter-value-min]",
+    "[data-filter-value-max]",
+];
+
+const filterInputs = () => FILTER_SELECTORS.map((selector) => document.querySelector(selector));
+
+/**
+ * Valor de um campo da faixa, em número, ou null quando o campo está vazio.
+ *
+ * O null não é preciosismo: claimValueNumber("") devolve 0, e um "valor máx"
+ * vazio lido como zero esconderia a tabela inteira.
+ */
+function readCurrencyFilter(selector) {
+    const value = document.querySelector(selector)?.value ?? "";
+    return value.trim() === "" ? null : claimValueNumber(value);
+}
+
+function applyFilters() {
+    const body = document.querySelector("[data-lawsuits-body]");
+    const emptyRow = document.querySelector("[data-lawsuits-empty-row]");
+    if (!body) return;
+
+    const rawSearch = (document.querySelector("[data-filter-search]")?.value ?? "").trim().toLowerCase();
+    const subjectMatterId = document.querySelector("[data-filter-subject-matter]")?.value ?? "";
+    const proceedingStageId = document.querySelector("[data-filter-proceeding-stage]")?.value ?? "";
+    const statusId = document.querySelector("[data-filter-status]")?.value ?? "";
+    const lossProbabilityId = document.querySelector("[data-filter-loss-probability]")?.value ?? "";
+    const fromDate = document.querySelector("[data-filter-date-from]")?.value ?? "";
+    const toDate = document.querySelector("[data-filter-date-to]")?.value ?? "";
+    const minValue = readCurrencyFilter("[data-filter-value-min]");
+    const maxValue = readCurrencyFilter("[data-filter-value-max]");
+
+    // Digitar o número do processo pontuado tem de achar a linha mesmo
+    // comparando com os dígitos crus, então a pontuação sai da busca quando o
+    // termo é só número.
+    const search = /^[\d.\-\s]+$/.test(rawSearch) ? rawSearch.replace(/[.\-\s]/g, "") : rawSearch;
+
+    let visibleCount = 0;
+
+    body.querySelectorAll("tr[data-lawsuit-date]").forEach((row) => {
+        const claimValue = Number(row.dataset.claimValue);
+
+        const matchesSubjectMatter = !subjectMatterId || row.dataset.subjectMatterId === subjectMatterId;
+        const matchesProceedingStage = !proceedingStageId || row.dataset.proceedingStageId === proceedingStageId;
+        const matchesStatus = !statusId || row.dataset.statusId === statusId;
+        const matchesLossProbability = !lossProbabilityId || row.dataset.lossProbabilityId === lossProbabilityId;
+        const matchesFrom = !fromDate || row.dataset.lawsuitDate >= fromDate;
+        const matchesTo = !toDate || row.dataset.lawsuitDate <= toDate;
+        const matchesMinValue = minValue === null || claimValue >= minValue;
+        const matchesMaxValue = maxValue === null || claimValue <= maxValue;
+        // Leitura de texto já renderizado, não escrita — não é o mesmo risco
+        // do innerHTML.
+        const matchesSearch = !search || rowSearchText(row).includes(search);
+
+        const visible = matchesSubjectMatter && matchesProceedingStage && matchesStatus
+            && matchesLossProbability && matchesFrom && matchesTo
+            && matchesMinValue && matchesMaxValue && matchesSearch;
+
+        row.hidden = !visible;
+        if (visible) visibleCount += 1;
+    });
+
     if (emptyRow) {
-        emptyRow.hidden = allLawsuits.length !== 0;
+        emptyRow.hidden = visibleCount !== 0;
 
         const message = document.querySelector("[data-lawsuits-empty-message]");
         if (message) {
-            message.textContent = 'Nenhum processo foi cadastrado ainda. Use o botão "Cadastrar Processo" para começar.';
+            message.textContent = allLawsuits.length === 0
+                ? 'Nenhum processo foi cadastrado ainda. Use o botão "Cadastrar Processo" para começar.'
+                : "Nenhum processo encontrado para os filtros selecionados.";
         }
     }
+
+    syncFilterClear(filterInputs());
+}
+
+function initFilters() {
+    const inputs = filterInputs();
+
+    inputs.forEach((input) => {
+        if (!input) return;
+        const event = input.tagName === "SELECT" || input.type === "date" ? "change" : "input";
+        input.addEventListener(event, applyFilters);
+    });
+
+    document.querySelector("[data-filter-clear]")?.addEventListener("click", () => {
+        inputs.forEach((input) => {
+            if (input) input.value = "";
+        });
+        applyFilters();
+
+        // Limpar desabilita o próprio botão, e o foco cairia no <body> — quem
+        // navega por teclado perderia o lugar no meio da barra. A busca é o
+        // começo natural de um novo filtro, então o foco vai para ela.
+        document.querySelector("[data-filter-search]")?.focus();
+    });
 }
 
 /* =========================================================================
@@ -627,6 +828,13 @@ async function loadPage() {
 function init() {
     initCaseNumberMask();
     initCurrencyMask();
+
+    // Depois de initCurrencyMask(), nunca antes: os dois escutam "input" nos
+    // mesmos campos de valor da barra, e listener dispara na ordem em que foi
+    // registrado. Invertido, applyFilters() leria o campo antes de a máscara
+    // reescrevê-lo e filtraria por um número defasado em um dígito.
+    initFilters();
+
     initLawsuitEditModal();
     initLawsuitEditForm();
     initModal();

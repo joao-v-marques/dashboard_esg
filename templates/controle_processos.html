@@ -6,8 +6,11 @@
   "Editar" abre um modal com os mesmos campos de "Cadastrar Processo",
   preenchidos (fillForm, utils/lawsuit_form.js) e salvos via PUT; "Gerar
   Recurso" abre outro modal, vinculado àquele processo (o lawsuit_id vem da
-  própria linha, não é campo de formulário nenhum). Sem filtro nesta etapa, e
-  sem desativar/excluir processo — só os dados.
+  própria linha, não é campo de formulário nenhum). Sem desativar/excluir
+  processo — só os dados.
+
+  A barra de filtros é a mesma de controle_nips.html e residuos.html: recorte
+  no cliente, sobre as linhas já renderizadas, sem nova ida ao servidor.
 
   Como nas demais telas, o HTML é puro e o shell (topbar, sidebar) nasce vazio
   em [data-topbar]/[data-sidebar], preenchido por js/pages/shell.js.
@@ -98,7 +101,9 @@
                      Três estados, mutuamente exclusivos via hidden — mesmo
                      desenho de controle_nips.html. Dentro do estado "com
                      dado", a ausência de resultado é uma linha própria dentro
-                     da tabela, não um estado à parte.
+                     da tabela, não um estado à parte — é ela que responde
+                     tanto por "nada cadastrado" quanto por "nada para os
+                     filtros".
                      ===================================================== -->
                 <section aria-labelledby="titulo-processos">
                     <h2 class="visually-hidden" id="titulo-processos">Processos cadastrados</h2>
@@ -113,8 +118,86 @@
                         </div>
                     </div>
 
-                    <!-- Com dado — tabela, sem toolbar de filtros nesta etapa. Nasce oculto. -->
+                    <!-- Com dado — toolbar de filtros + tabela. Nasce oculto. -->
                     <div class="card" data-lawsuits-content hidden>
+                        <!-- Os dois pares (período e valor) moram cada um em UM
+                             .toolbar__filter, com um rótulo só: soltos, "De" e
+                             "Até" caem em fileiras diferentes quando a barra
+                             quebra, e a barra fecha em três fileiras em vez de
+                             duas. Ver .toolbar__range em lawsuits.css. -->
+                        <div class="toolbar">
+                            <div class="toolbar__search">
+                                <label class="field__label" for="filtro-busca">Buscar</label>
+                                <input class="input" type="search" id="filtro-busca"
+                                       placeholder="Nº do processo, autor, réu, vara..."
+                                       data-filter-search>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-objeto">Objeto/Assunto</label>
+                                <select class="select" id="filtro-objeto" data-filter-subject-matter></select>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-tramite">Estágio processual</label>
+                                <select class="select" id="filtro-tramite" data-filter-proceeding-stage></select>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-status">Status</label>
+                                <select class="select" id="filtro-status" data-filter-status></select>
+                            </div>
+
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-probabilidade">Probabilidade de perda</label>
+                                <select class="select" id="filtro-probabilidade" data-filter-loss-probability></select>
+                            </div>
+
+                            <!-- Um rótulo para dois campos: o <label for> serve a um
+                                 controle só, então quem nomeia o par é o role="group"
+                                 + aria-labelledby, e cada campo diz o que é pelo
+                                 próprio aria-label. -->
+                            <div class="toolbar__filter toolbar__range">
+                                <span class="field__label" id="filtro-periodo-rotulo">Período</span>
+                                <div role="group" aria-labelledby="filtro-periodo-rotulo">
+                                    <input class="input" type="date" id="filtro-data-de"
+                                           aria-label="Data inicial" data-filter-date-from>
+                                    <input class="input" type="date" id="filtro-data-ate"
+                                           aria-label="Data final" data-filter-date-to>
+                                </div>
+                            </div>
+
+                            <!-- data-currency-input: a máscara de moeda é a mesma dos
+                                 formulários (initCurrencyMask, utils/lawsuit_form.js),
+                                 para o filtro ler dinheiro do mesmo jeito que o
+                                 cadastro escreve. -->
+                            <div class="toolbar__filter toolbar__range">
+                                <span class="field__label" id="filtro-valor-rotulo">Valor da causa (R$)</span>
+                                <div role="group" aria-labelledby="filtro-valor-rotulo">
+                                    <input class="input tabular" type="text" id="filtro-valor-min"
+                                           inputmode="decimal" placeholder="Mín." autocomplete="off"
+                                           aria-label="Valor mínimo" data-currency-input data-filter-value-min>
+                                    <input class="input tabular" type="text" id="filtro-valor-max"
+                                           inputmode="decimal" placeholder="Máx." autocomplete="off"
+                                           aria-label="Valor máximo" data-currency-input data-filter-value-max>
+                                </div>
+                            </div>
+
+                            <!-- Nasce desabilitado: sem filtro aplicado não há o
+                                 que limpar. controle_processos.js liga e desliga o
+                                 botão junto com a contagem, a cada mudança. -->
+                            <div class="toolbar__actions">
+                                <button type="button" class="btn btn--secondary" data-filter-clear disabled>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                        <path d="m4.5 4.5 7 7M11.5 4.5l-7 7" stroke="currentColor"
+                                              stroke-width="1.5" stroke-linecap="round"/>
+                                    </svg>
+                                    Limpar filtros
+                                    <span class="toolbar__count" data-filter-count hidden></span>
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="table-wrap">
                             <table class="table table--cards lawsuits-table">
                                 <caption class="visually-hidden">Processos judiciais cadastrados.</caption>

@@ -17,15 +17,66 @@
   border: 0;
 }
 
+/* Barra de filtros ---------------------------------------------------------
+ *
+ * O componente .toolbar (components.css) prevê um controle por .toolbar__filter.
+ * Esta tela tem dois PARES — período e faixa de valor — e um par partido em
+ * duas fileiras não se lê como par: "Até" sozinho no começo da segunda linha
+ * não diz até o quê. Os dois campos entram no mesmo .toolbar__filter, sob um
+ * rótulo só, e o par passa a quebrar como uma peça inteira.
+ *
+ * Com isso a barra fecha em duas fileiras numa janela de 1440px — busca e os
+ * quatro selects em cima, os dois pares e o "Limpar filtros" embaixo.
+ *
+ * Vive aqui, e não em components.css, porque só esta tela tem par de campos na
+ * barra; se uma segunda precisar, sobe como .toolbar__range de verdade (mesma
+ * regra de .records-empty-row logo abaixo).
+ */
+.toolbar__range {
+  flex: 1 1 220px;
+  min-width: 220px;
+}
+
+.toolbar__range > div {
+  display: flex;
+  gap: var(--space-8);
+}
+
+/* Os dois campos dividem a largura do par em partes iguais. Sem o min-width: 0
+   o input de data não encolhe abaixo do tamanho natural do widget do
+   navegador e o par estoura a barra. */
+.toolbar__range > div > .input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 /* Tabela de "Consultar Processos" ------------------------------------------
  *
  * Nome em cima, réu embaixo — mesmo truque de .beneficiary-cell em nips.css:
  * duas colunas para as partes do processo custam espaço que só cinco colunas
  * (contra as nove de NIP's) não precisam gastar.
+ *
+ * .case-cell segue o mesmo desenho: o objeto do processo entra como linha
+ * secundária embaixo do número. Ele é filtro na barra acima, e filtrar por um
+ * dado que não aparece em lugar nenhum da linha esconde resultado por um
+ * critério que ninguém consegue conferir. Como texto na célula, também entra
+ * no textContent que a busca livre varre — de graça.
  */
-.parties-cell {
+.parties-cell,
+.case-cell {
   display: flex;
   flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Status em cima, probabilidade de perda embaixo. É o mesmo par de .case-cell
+   mais o align-items: flex-start de .status-cell em nips.css — a pílula precisa
+   ter a largura do próprio texto; esticada até a borda da coluna ela deixaria de
+   ser pílula e viraria faixa de cor. */
+.status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-4);
 }
 
