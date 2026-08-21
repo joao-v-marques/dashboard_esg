@@ -205,12 +205,43 @@ CREATE TABLE subject_matters (
     is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+INSERT INTO subject_matters (name)
+VALUES
+    ('Habilitação de Crédito'),
+    ('Acidente'),
+    ('Execução de Título Extrajudicial'),
+    ('Responsabilidade Civil-ERRO MÉDICO (Danos morais e estéticos)'),
+    ('Reativação de plano de pessoa jurídica'),
+    ('Responsabilidade Civil-ERRO MÉDICO'),
+    ('Cobertura (Medicamento fora do Rol, sem eficácia comprovada e com parecer da CONITEC desfavorável à incorporação no SUS)'),
+    ('Cobertura (Protatectomia Radical e linfadenectomia estendida na técnica robótica)'),
+    ('Cobertura (reembolso órtese craniana - capacete craniano)'),
+    ('Cobertura (Parto cesáreo, carência)'),
+    ('Cobertura: OPME (plano não regulamentado)'),
+    ('Cobertura (DERMOLIPECTOMIA ENTRE COXAS E BRAÇOS)'),
+    ('Cobertura (Therasuit)'),
+    ('Cobertura/Reembolso'),
+    ('Cobertura (Bomba de infusão de insulina e outros)'),
+    ('Cobertura (prótese mamária estético)'),
+    ('Cobertura (TEA. Cliente da Nacional Unimed)'),
+    ('Cobertura - Dano moral'),
+    ('Home Care'),
+    ('Dano moral');
+
 -- Tabela de TRÂMITE, estágio do procedimento
 CREATE TABLE proceeding_stages (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name VARCHAR(255),
     is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+INSERT INTO proceeding_stages (name)
+values
+    ('2ª Vara Cível da Comarca de São Sebastião do Paraíso'),
+    ('1ª Vara Cível da Comarca de São Sebastião do Paraíso'),
+    ('2ª Vara Cível da Comarca de Ribeirão Preto'),
+    ('Juizado Especial Cível - Jesp de Monte Santo de Minas'),
+    ('Vara de Infância e Juventude da Comarca de São Sebastião do Paraíso');
 
 -- Tabela de status do processo jurídico
 CREATE TABLE lawsuit_status (
@@ -219,12 +250,25 @@ CREATE TABLE lawsuit_status (
     is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+INSERT INTO lawsuit_status (name)
+VALUES
+    ('Suspensão do feito até o efetivo pagamento do débito.'),
+    ('Sobrestamento 60 dias'),
+    ('Aguarda perícia.'),
+    ('Audiência de conciliação infrutífera (sem acordo).'),
+    ('Conclusos para julgamento');
+
 -- Tabela com os textos de probabilidade de perca (Remota ou Provável)
 CREATE TABLE loss_probabilities (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name VARCHAR(255),
     is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+INSERT INTO loss_probabilities (name)
+VALUES
+    ('Remota'),
+    ('Provável');
 
 -- Tabela de processos jurídicos, para acompanhamento processual
 CREATE TABLE lawsuits (
@@ -264,6 +308,15 @@ CREATE TABLE judging_bodies (
     name VARCHAR(255),
     is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+INSERT INTO judging_bodies (name)
+VALUES
+    ('2ª CÂMARA CÍVEL - TJMG '),
+    ('5ª CÂMARA CÍVEL - TJMG'),
+    ('17ª CÂMARA CÍVEL - TJMG'),
+    ('18ª CÂMARA CÍVEL - TJMG'),
+    ('TERCEIRA VICE-PRESIDÊNCIA - STJ');
+
 
 -- Tabela de controle processual recursal (Recursos vinculados ao processo de origem)
 CREATE TABLE lawsuit_appeals (
