@@ -1469,7 +1469,7 @@ button.input-wrap__affix[aria-pressed="true"] {
    que desalinha as duas. O text-align faz o mesmo trabalho e a célula continua
    célula; o meio vertical já vem do `vertical-align: middle` de .table tbody td. */
 .table__actions {
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -1480,7 +1480,7 @@ button.input-wrap__affix[aria-pressed="true"] {
    dentro do .btn-icon (ícone de 20px num alvo de 40px), para a palavra parar
    em cima do ícone, e não do canto invisível do botão. */
 .table thead th.table__actions {
-  text-align: right;
+  text-align: center;
   padding-right: calc(var(--space-16) + 10px);
 }
 
