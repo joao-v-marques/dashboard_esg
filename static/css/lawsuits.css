@@ -1,0 +1,18 @@
+/* ==========================================================================
+   lawsuits.css — estilos exclusivos da tela de Processos Jurídicos.
+
+   Card, fieldset, campos e botões vêm inteiros de components.css. O que sobra
+   é o mesmo reset de fieldset documentado em .nip-fields (nips.css).
+   ========================================================================== */
+
+/* O <fieldset> que envolve os campos do formulário de cadastro só existe para
+   desabilitar tudo de uma vez enquanto os selects de apoio carregam — ele não
+   desenha nada. A borda e o padding que o navegador dá de graça a todo
+   fieldset desalinhariam o conteúdo em relação ao .card__body, e o
+   min-width: min-content nativo faria o .field-row estourar a largura do card
+   (mesmo motivo do .fieldset em components.css e do .nip-fields em nips.css). */
+.lawsuit-fields {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+}
