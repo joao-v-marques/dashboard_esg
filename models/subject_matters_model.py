@@ -1,0 +1,44 @@
+from database.connect_db import get_db_connection
+
+class SubjectMatters:
+    def __init__(self, id, name, is_active=None):
+        self.id = id
+        self.name = name
+        self.is_active = is_active
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "is_active": self.is_active
+        }
+
+class SubjectMattersModel:
+    @staticmethod
+    def get_all():
+        conn = None
+        cursor = None
+        try:
+            conn, cursor = get_db_connection()
+
+            sql_query = """
+                SELECT *
+                FROM subject_matters
+            """
+            cursor.execute(sql_query)
+
+            subject_matters_data = cursor.fetchall()
+
+            subject_matters = [
+                SubjectMatters(**subject_matter)
+                for subject_matter in subject_matters_data
+            ]
+
+            return subject_matters
+        except Exception as e:
+            raise Exception(str(e))
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()

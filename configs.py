@@ -14,6 +14,11 @@ from routes.nip_dashboard_controller import bp_nip_dashboard
 from routes.nips_controller import bp_nips
 from routes.nip_nature_controller import bp_nip_natures
 from routes.nip_status_controller import bp_nip_status
+from routes.subject_matters_controller import bp_subject_matters
+from routes.proceeding_stages_controller import bp_proceeding_stages
+from routes.lawsuit_status_controller import bp_lawsuit_status
+from routes.loss_probabilities_controller import bp_loss_probabilities
+from routes.judging_bodies_controller import bp_judging_bodies
 
 PREFIX = "/dashboard-esg"
 
@@ -36,3 +41,8 @@ def config_bps(app):
     app.register_blueprint(bp_nips, url_prefix=PREFIX)
     app.register_blueprint(bp_nip_natures, url_prefix=PREFIX)
     app.register_blueprint(bp_nip_status, url_prefix=PREFIX)
+    app.register_blueprint(bp_subject_matters, url_prefix=PREFIX)
+    app.register_blueprint(bp_proceeding_stages, url_prefix=PREFIX)
+    app.register_blueprint(bp_lawsuit_status, url_prefix=PREFIX)
+    app.register_blueprint(bp_loss_probabilities, url_prefix=PREFIX)
+    app.register_blueprint(bp_judging_bodies, url_prefix=PREFIX)
