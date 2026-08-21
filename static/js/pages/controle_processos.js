@@ -60,7 +60,7 @@ import {
     clearFormErrors as clearLawsuitFormErrors,
     setFieldError as setLawsuitFieldError,
 } from "../utils/lawsuit_form.js";
-import { formatarNumero } from "../utils/format_ptbr.js";
+import { formatarMoeda } from "../utils/format_ptbr.js";
 import {
     clearFormErrors,
     setFieldError,
@@ -273,7 +273,7 @@ function buildLawsuitRow(lawsuit) {
     tr.appendChild(buildStatusCell(lawsuit));
     tr.appendChild(buildCell({
         label: "Valor da causa",
-        text: `R$ ${formatarNumero(Number(lawsuit.claim_value), 2)}`,
+        text: formatarMoeda(lawsuit.claim_value),
         innerClass: "tabular",
     }));
     tr.appendChild(buildActionsCell(lawsuit));
@@ -338,7 +338,7 @@ function renderAppealList(appeals) {
 
         const secondary = document.createElement("span");
         secondary.className = "table__secondary";
-        secondary.textContent = `${appeal.judging_body_name ?? "—"} · ${appeal.status_name ?? "—"} · R$ ${formatarNumero(Number(appeal.claim_value), 2)}`;
+        secondary.textContent = `${appeal.judging_body_name ?? "—"} · ${appeal.status_name ?? "—"} · ${formatarMoeda(appeal.claim_value)}`;
 
         li.append(primary, secondary);
         listEl.appendChild(li);

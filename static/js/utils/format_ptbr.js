@@ -29,6 +29,23 @@ export function formatarNumero(valor, decimais = 0) {
     });
 }
 
+/**
+ * Valor em reais: "R$ 1.234,56".
+ *
+ * Sempre duas casas, mesmo em valor redondo — coluna de dinheiro com "1.000"
+ * embaixo de "1.234,56" perde o alinhamento, e nota fiscal nenhuma escreve
+ * "R$ 1.000".
+ *
+ * A API entrega claim_value como NÚMERO (ver money_to_float em utils/money.py):
+ * o Number() aqui é só para o caso de a função ser chamada com o texto de um
+ * campo de formulário.
+ */
+export function formatarMoeda(valor) {
+    if (valor === null || valor === undefined || Number.isNaN(Number(valor))) return SEM_DADO;
+
+    return `R$ ${formatarNumero(Number(valor), 2)}`;
+}
+
 /** Contagem inteira (pessoas, ocorrências, registros). */
 export function formatarInteiro(valor) {
     return formatarNumero(valor, 0);

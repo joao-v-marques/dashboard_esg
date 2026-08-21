@@ -1,4 +1,5 @@
 from database.connect_db import get_db_connection
+from utils.money import money_to_float
 
 class Lawsuit:
     # Os campos *_name não existem na tabela lawsuits: vêm dos JOINs de get_all,
@@ -27,6 +28,11 @@ class Lawsuit:
         self.updated_by_name = updated_by_name
         self.is_active = is_active
 
+    # claim_value sai por money_to_float, e não cru: a coluna é NUMERIC, o
+    # psycopg devolve Decimal e o Flask serializa Decimal como STRING JSON —
+    # somar ou comparar isso num gráfico dá resultado errado sem dar erro. Ver
+    # utils/money.py. É aqui, e não no service, porque os três endpoints
+    # (GET, POST e PUT) chamam este to_dict direto.
     def to_dict(self):
         return {
             "id": self.id,
@@ -34,7 +40,7 @@ class Lawsuit:
             "case_number": self.case_number,
             "plaintiff": self.plaintiff,
             "defendant": self.defendant,
-            "claim_value": self.claim_value,
+            "claim_value": money_to_float(self.claim_value),
             "subject_matter_id": self.subject_matter_id,
             "subject_matter_name": self.subject_matter_name,
             "proceeding_stage_id": self.proceeding_stage_id,

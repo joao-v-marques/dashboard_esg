@@ -29,6 +29,10 @@ def create():
         new_lawsuit = LawsuitService.create(data)
 
         return jsonify(new_lawsuit.to_dict()), 201
+    except ValidationError as e:
+        return jsonify({
+            "message": str(e)
+        }), 400
     except Exception as e:
         return jsonify({
             "message": str(e)

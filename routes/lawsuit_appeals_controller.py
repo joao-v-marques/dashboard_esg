@@ -40,6 +40,10 @@ def create():
         new_appeal = LawsuitAppealService.create(data)
 
         return jsonify(new_appeal.to_dict()), 201
+    except ValidationError as e:
+        return jsonify({
+            "message": str(e)
+        }), 400
     except Exception as e:
         return jsonify({
             "message": str(e)

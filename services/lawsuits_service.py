@@ -1,5 +1,11 @@
 from models.lawsuits_model import LawsuitModel, Lawsuit
 from utils.exceptions import ValidationError
+from utils.money import parse_money
+
+# Piso do valor da causa, inclusivo: 100 passa, 99,99 não. Fica em constante
+# porque a mesma regra vale no POST e no PUT — a de recurso é outra, e mora em
+# lawsuit_appeals_service.py.
+MINIMUM_CLAIM_VALUE = 100
 
 class LawsuitService:
     def get_all():
@@ -12,8 +18,11 @@ class LawsuitService:
 
     def create(data):
         try:
-            if data['claim_value'] <= 100:
-                raise ValidationError("O valor do processo deve ser no mínimo 100 R$")
+            # parse_money devolve Decimal de 2 casas — é ele que vai para a
+            # coluna NUMERIC(15, 2), nunca o float que veio do JSON. Também é
+            # ele que recusa texto, nulo e negativo com 400, em vez de deixar
+            # o erro nascer no banco como 500. Ver utils/money.py.
+            claim_value = parse_money(data.get('claim_value'), "valor da causa", minimum=MINIMUM_CLAIM_VALUE)
 
             # COLOCAR VALIDAÇÕES AQUI DEPOIS
 
@@ -22,7 +31,7 @@ class LawsuitService:
                 case_number=data['case_number'],
                 plaintiff=data['plaintiff'],
                 defendant=data['defendant'],
-                claim_value=data['claim_value'],
+                claim_value=claim_value,
                 subject_matter_id=data['subject_matter_id'],
                 proceeding_stage_id=data['proceeding_stage_id'],
                 status_id=data['status_id'],
@@ -33,6 +42,11 @@ class LawsuitService:
             new_lawsuit = LawsuitModel.create(lawsuit)
 
             return new_lawsuit
+        # Sem este re-raise, o "except Exception" abaixo reembrulharia a
+        # ValidationError num Exception genérico e o controller devolveria 500
+        # para um valor inválido, que é caso de 400 — mesmo arranjo do update.
+        except ValidationError:
+            raise
         except Exception as e:
             raise Exception(str(e))
 
@@ -47,8 +61,7 @@ class LawsuitService:
                 raise ValidationError("Envie um corpo JSON com os dados do processo")
 
             # COLOCAR AS VALIDAÇÕES AQUI DEPOIS
-            if data['claim_value'] <= 100:
-                raise ValidationError("O valor do processo deve ser no mínimo 100 R$")
+            claim_value = parse_money(data.get('claim_value'), "valor da causa", minimum=MINIMUM_CLAIM_VALUE)
 
             new_lawsuit = Lawsuit(
                 id=data['id'],
@@ -56,7 +69,7 @@ class LawsuitService:
                 case_number=data['case_number'],
                 plaintiff=data['plaintiff'],
                 defendant=data['defendant'],
-                claim_value=data['claim_value'],
+                claim_value=claim_value,
                 subject_matter_id=data['subject_matter_id'],
                 proceeding_stage_id=data['proceeding_stage_id'],
                 status_id=data['status_id'],

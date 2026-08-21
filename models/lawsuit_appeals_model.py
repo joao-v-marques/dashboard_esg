@@ -1,4 +1,5 @@
 from database.connect_db import get_db_connection
+from utils.money import money_to_float
 
 class LawsuitAppeal:
     # Os campos *_name não existem na tabela lawsuit_appeals: vêm dos JOINs de
@@ -26,6 +27,9 @@ class LawsuitAppeal:
         self.updated_by_name = updated_by_name
         self.is_active = is_active
 
+    # claim_value sai por money_to_float pelo mesmo motivo do to_dict de
+    # lawsuits_model.py: Decimal viraria string no JSON e quebraria conta e
+    # gráfico em silêncio. Ver utils/money.py.
     def to_dict(self):
         return {
             "id": self.id,
@@ -34,7 +38,7 @@ class LawsuitAppeal:
             "appeal_number": self.appeal_number,
             "appellant": self.appellant,
             "appellee": self.appellee,
-            "claim_value": self.claim_value,
+            "claim_value": money_to_float(self.claim_value),
             "judging_body_id": self.judging_body_id,
             "judging_body_name": self.judging_body_name,
             "status_id": self.status_id,

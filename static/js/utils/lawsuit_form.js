@@ -77,7 +77,10 @@ export function initCaseNumberMask(root = document) {
 
    Como no número do processo, só o dígito importa: o que sai daqui para a API
    é number (ponto decimal), nunca o texto com separador de milhar — ver
-   claimValueNumber() em readFormPayload().
+   claimValueNumber() em readFormPayload(). Do outro lado, parse_money()
+   (utils/money.py) converte esse number em Decimal antes de gravar, e a API
+   devolve number de volta: o campo nunca vira string no caminho, para soma e
+   gráfico funcionarem direto.
    ========================================================================= */
 
 export const claimValueDigits = (value) => String(value ?? "").replace(/\D/g, "").slice(0, 15);
@@ -215,9 +218,11 @@ export function readFormPayload() {
  *
  * case_number e claim_value passam pelas próprias máscaras (formatCaseNumber,
  * formatCurrency) para a tela mostrar exatamente o que a digitação mostraria
- * — a coluna guarda só dígito nos dois casos. claim_value chega como Decimal
- * (string, ex. "1234.56"); Math.round(... * 100) recupera os "centavos" que
- * formatCurrency espera receber como dígitos.
+ * — a coluna guarda só dígito nos dois casos. claim_value chega da API como
+ * número (1234.56 — ver money_to_float em utils/money.py); Math.round(... * 100)
+ * recupera os "centavos" que formatCurrency espera receber como dígitos, e o
+ * arredondamento é o que absorve o 123455.99999999999 que 1234.56 * 100 dá em
+ * ponto flutuante.
  */
 export function fillForm(lawsuit) {
     document.getElementById("lawsuit-case-number").value = formatCaseNumber(lawsuit.case_number);
