@@ -2,7 +2,9 @@
    lawsuits.css — estilos exclusivos da tela de Processos Jurídicos.
 
    Card, fieldset, campos e botões vêm inteiros de components.css. O que sobra
-   é o mesmo reset de fieldset documentado em .nip-fields (nips.css).
+   é o mesmo reset de fieldset documentado em .nip-fields (nips.css), o arranjo
+   da barra de filtros e — o bloco maior — a tabela de onze colunas de
+   "Consultar Processos", que rola por dentro do próprio card.
    ========================================================================== */
 
 /* O <fieldset> que envolve os campos do formulário de cadastro só existe para
@@ -24,9 +26,6 @@
  * duas fileiras não se lê como par: "Até" sozinho no começo da segunda linha
  * não diz até o quê. Os dois campos entram no mesmo .toolbar__filter, sob um
  * rótulo só, e o par passa a quebrar como uma peça inteira.
- *
- * Com isso a barra fecha em duas fileiras numa janela de 1440px — busca e os
- * quatro selects em cima, os dois pares e o "Limpar filtros" embaixo.
  *
  * Vive aqui, e não em components.css, porque só esta tela tem par de campos na
  * barra; se uma segunda precisar, sobe como .toolbar__range de verdade (mesma
@@ -50,36 +49,6 @@
   min-width: 0;
 }
 
-/* Tabela de "Consultar Processos" ------------------------------------------
- *
- * Nome em cima, réu embaixo — mesmo truque de .beneficiary-cell em nips.css:
- * duas colunas para as partes do processo custam espaço que só cinco colunas
- * (contra as nove de NIP's) não precisam gastar.
- *
- * .case-cell segue o mesmo desenho: o objeto do processo entra como linha
- * secundária embaixo do número. Ele é filtro na barra acima, e filtrar por um
- * dado que não aparece em lugar nenhum da linha esconde resultado por um
- * critério que ninguém consegue conferir. Como texto na célula, também entra
- * no textContent que a busca livre varre — de graça.
- */
-.parties-cell,
-.case-cell {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-/* Status em cima, probabilidade de perda embaixo. É o mesmo par de .case-cell
-   mais o align-items: flex-start de .status-cell em nips.css — a pílula precisa
-   ter a largura do próprio texto; esticada até a borda da coluna ela deixaria de
-   ser pílula e viraria faixa de cor. */
-.status-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
-}
-
 /* Mesma regra de nips.css e residuos.css. Vive nos três arquivos porque cada
    tela carrega só o seu CSS; se uma quarta tela precisar, ela sobe para
    components.css. */
@@ -87,6 +56,185 @@
   text-align: center;
   padding: var(--space-48) var(--space-16);
   color: var(--color-text-muted);
+}
+
+/* Tabela de "Consultar Processos" ------------------------------------------
+ *
+ * São onze colunas: uma por campo do processo (data, situação, número, autor,
+ * réu, valor, objeto, trâmite, status e chance de perda) mais as ações. Nessa
+ * largura a linha não cabe na tela em resolução nenhuma, então a tabela rola
+ * na horizontal — e, para não se perder na rolagem, o cabeçalho e a coluna de
+ * ações ficam fixos.
+ *
+ * Tudo abaixo mora dentro de @media (min-width: 768px) porque abaixo disso
+ * .table--cards (components.css) transforma tabela, linha e célula em blocos:
+ * largura de coluna, table-layout e position: sticky deixam de significar
+ * qualquer coisa ali — pior, quebrariam o card. Mesma divisão de .nips-table.
+ * ------------------------------------------------------------------------- */
+
+@media (min-width: 768px) {
+
+  /* O card vira coluna flex de altura limitada, e é a TABELA que rola por
+     dentro dele — não a página.
+     O motivo é o cabeçalho: em .table thead th (components.css) ele gruda
+     abaixo da topbar, e isso só funciona enquanto o wrapper NÃO é container de
+     scroll. Como aqui ele precisa ser (o scroll horizontal é o ponto da tela),
+     o sticky se perderia. Dando altura ao card, o wrapper vira o scrollport
+     dos dois eixos: o cabeçalho volta a grudar — agora no topo dele — e a
+     coluna de ações pode grudar na direita.
+
+     A conta desconta do viewport a topbar, os dois paddings de .app__main
+     (--space-32 em cima, --space-64 embaixo) e cerca de 7rem do cabeçalho da
+     página com o gap do .stack-32. A barra de filtros NÃO entra na conta de
+     propósito: ela quebra em duas ou três fileiras conforme a largura da
+     janela, e é o flex do card que desconta a altura real dela do que sobra
+     para a tabela. */
+  .lawsuits-card {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - var(--topbar-height) - var(--space-32) - var(--space-64) - 7rem);
+  }
+
+  /* Mesma armadilha de .alert[hidden] e .stat-grid[hidden] em components.css:
+     ao dar display ao bloco, o [hidden] do navegador perde na cascata e o card
+     apareceria mesmo oculto — e ele nasce oculto, atrás do esqueleto de
+     carregamento. */
+  .lawsuits-card[hidden] {
+    display: none;
+  }
+
+  /* min-height: 0 não é preciso aqui porque overflow diferente de visible já
+     tira o item de flex do min-content automático; o piso em rem é para
+     janelas baixas — ali o card estoura um pouco, o que é melhor que uma
+     tabela de duas linhas. */
+  .lawsuits-table-wrap {
+    overflow: auto;
+    min-height: 12rem;
+  }
+
+  /* table-layout: fixed com larguras em rem, e não em % como .nips-table:
+     porcentagem se mede sobre a largura do container, e aqui a tabela é de
+     propósito mais larga que ele — as fatias sairiam todas erradas. A soma das
+     onze larguras é exatamente o min-width; com o layout fixo, uma soma menor
+     faria o navegador esticar as colunas proporcionalmente e uma maior faria
+     encolher, nos dois casos ignorando as medidas de baixo. */
+  .lawsuits-table {
+    table-layout: fixed;
+    min-width: 118.5rem;
+  }
+
+  /* Medidas pelo que for mais largo em cada coluna — em quase todas é o
+     cabeçalho em caixa alta, não o dado. O número do processo é a exceção:
+     "0001234-56.2024.8.26.0100" são 25 dígitos tabulares. Ações leva os dois
+     botões de 40px, o gap de 16px e o padding da célula. */
+  .lawsuits-table th:nth-child(1),  .lawsuits-table td:nth-child(1)  { width:  7rem;   } /* Data             */
+  .lawsuits-table th:nth-child(2),  .lawsuits-table td:nth-child(2)  { width:  6.5rem; } /* Ativo            */
+  .lawsuits-table th:nth-child(3),  .lawsuits-table td:nth-child(3)  { width: 15.5rem; } /* Nº do processo   */
+  .lawsuits-table th:nth-child(4),  .lawsuits-table td:nth-child(4)  { width: 13rem;   } /* Autor            */
+  .lawsuits-table th:nth-child(5),  .lawsuits-table td:nth-child(5)  { width: 13rem;   } /* Réu              */
+  .lawsuits-table th:nth-child(6),  .lawsuits-table td:nth-child(6)  { width: 10rem;   } /* Valor da causa   */
+  .lawsuits-table th:nth-child(7),  .lawsuits-table td:nth-child(7)  { width: 13rem;   } /* Objeto/Assunto   */
+  .lawsuits-table th:nth-child(8),  .lawsuits-table td:nth-child(8)  { width: 11rem;   } /* Trâmite          */
+  .lawsuits-table th:nth-child(9),  .lawsuits-table td:nth-child(9)  { width: 11rem;   } /* Andamento/Status */
+  .lawsuits-table th:nth-child(10), .lawsuits-table td:nth-child(10) { width: 10.5rem; } /* Chance de perda  */
+  .lawsuits-table th:nth-child(11), .lawsuits-table td:nth-child(11) { width:  8rem;   } /* Ações            */
+
+  /* Uma linha por célula, cortada com reticências. Autor, réu, objeto e
+     trâmite são texto livre e não têm teto de tamanho; deixá-los quebrar daria
+     linhas de alturas diferentes, e uma grade de onze colunas com altura
+     irregular é justamente o que não se consegue varrer com o olho.
+     O corte é só pintura: o texto continua inteiro no DOM (por isso a busca
+     livre não perde nada) e o JS o repete no atributo title, que é o que
+     aparece no hover. Mesmo desenho de .sector__summary em dashboard.css.
+
+     A célula de ações fica de fora, e não por não precisar: o overflow: hidden
+     recortaria o ::after de [data-tooltip] (components.css), que é a dica
+     "Editar"/"Gerar Recurso" e nasce FORA da célula, à esquerda do botão. Ela
+     também não tem o que truncar — são dois botões de tamanho fixo — e o
+     white-space: nowrap dela já vem de .table__actions. */
+  .lawsuits-table tbody td:not(.table__actions) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* A pílula também precisa caber na coluna. O text-overflow do <td> acima não
+     a alcança: .badge é inline-flex, e o que transborda é um filho dela, não o
+     texto da célula — sem isto um status longo é cortado a seco no meio da
+     palavra. O max-width prende a pílula à coluna, o min-width: 0 desfaz o
+     min-width: auto que todo item de flex tem (e que o impediria de encolher
+     abaixo do próprio texto), e o corte acontece no <span> que
+     buildBadgeCell() cria. O ponto colorido do ::before fica de fora porque já
+     é flex: none. */
+  .lawsuits-table tbody td .badge {
+    max-width: 100%;
+  }
+
+  .lawsuits-table tbody td .badge > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Dentro de um container de scroll o sticky se ancora no scrollport dele, e
+     não mais na topbar da página — ver o comentário de .lawsuits-card. */
+  .lawsuits-table thead th {
+    top: 0;
+  }
+
+  /* A coluna de ações continua à vista em qualquer ponto da rolagem
+     horizontal. O fundo precisa ser OPACO: sem ele as outras colunas passam
+     por baixo e aparecem através da célula. */
+  .lawsuits-table th.table__actions,
+  .lawsuits-table td.table__actions {
+    position: sticky;
+    right: 0;
+    background-color: var(--color-surface);
+
+    /* base.css usa border-collapse: collapse, e nesse modo quem pinta a borda
+       é a tabela, não a célula — a borda fica para trás quando a célula
+       desliza. As duas linhas da coluna fixa têm de vir de sombra: a primeira
+       é a régua vertical que mostra que ela flutua sobre o resto, a segunda
+       repõe o border-bottom que .table tbody td perdeu. */
+    box-shadow:
+      -1px 0 0 var(--color-border),
+      inset 0 -1px 0 var(--color-border);
+  }
+
+  .lawsuits-table tbody td.table__actions {
+    z-index: var(--z-sticky);
+  }
+
+  /* O <th> de ações é o único sticky nos DOIS eixos ao mesmo tempo: precisa
+     passar por cima tanto das células da própria coluna quanto do resto do
+     cabeçalho, que já está em --z-sticky. */
+  .lawsuits-table thead th.table__actions {
+    z-index: calc(var(--z-sticky) + 1);
+    background-color: var(--color-surface-sunken);
+  }
+
+  /* No hover a célula fixa tem de continuar opaca — este é o ponto em que ela
+     mais facilmente deixa de ser.
+
+     Dois motivos somados: --color-hover-layer é rgba translúcido (tokens.css),
+     e o `.table tbody tr:hover td` de components.css é mais específico que a
+     regra de fundo declarada acima. Sem redeclarar o background-color aqui, o
+     realce da linha SUBSTITUÍA o fundo opaco e as colunas que passam por baixo
+     apareciam por cima dos botões de ação.
+
+     Por isso o fundo opaco é repetido e o realce entra como camada de
+     background-image, que se sobrepõe ao fundo em vez de trocá-lo. */
+  .lawsuits-table tbody tr:hover td.table__actions {
+    background-color: var(--color-surface);
+    background-image: linear-gradient(var(--color-hover-layer), var(--color-hover-layer));
+  }
+
+  /* A linha de "nenhum resultado" tem um colspan que atravessa as onze
+     colunas, então não pode obedecer ao white-space: nowrap acima nem ficar
+     escondida atrás da coluna fixa. */
+  .lawsuits-table tbody .records-empty-row td {
+    white-space: normal;
+  }
 }
 
 /* Lista de recursos, no modal de "Gerar Recurso" ----------------------------

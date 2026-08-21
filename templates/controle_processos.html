@@ -9,6 +9,13 @@
   própria linha, não é campo de formulário nenhum). Sem desativar/excluir
   processo — só os dados.
 
+  A tabela mostra uma coluna por campo do processo — data, situação, número,
+  autor, réu, valor, objeto, trâmite, status e chance de perda — mais as ações.
+  Nessa largura ela não cabe na tela, então rola por dentro do próprio card
+  (.lawsuits-card em lawsuits.css) com o cabeçalho preso no topo e a coluna de
+  ações presa na direita. A coluna "Ativo" é só leitura: continua não havendo
+  ação de desativar processo, ela apenas mostra o is_active que já vinha na API.
+
   A barra de filtros é a mesma de controle_nips.html e residuos.html: recorte
   no cliente, sobre as linhas já renderizadas, sem nova ida ao servidor.
 
@@ -119,12 +126,12 @@
                     </div>
 
                     <!-- Com dado — toolbar de filtros + tabela. Nasce oculto. -->
-                    <div class="card" data-lawsuits-content hidden>
+                    <div class="card lawsuits-card" data-lawsuits-content hidden>
                         <!-- Os dois pares (período e valor) moram cada um em UM
                              .toolbar__filter, com um rótulo só: soltos, "De" e
                              "Até" caem em fileiras diferentes quando a barra
-                             quebra, e a barra fecha em três fileiras em vez de
-                             duas. Ver .toolbar__range em lawsuits.css. -->
+                             quebra, e a barra gasta uma fileira a mais do
+                             que o necessário. Ver .toolbar__range em lawsuits.css. -->
                         <div class="toolbar">
                             <div class="toolbar__search">
                                 <label class="field__label" for="filtro-busca">Buscar</label>
@@ -151,6 +158,21 @@
                             <div class="toolbar__filter">
                                 <label class="field__label" for="filtro-probabilidade">Probabilidade de perda</label>
                                 <select class="select" id="filtro-probabilidade" data-filter-loss-probability></select>
+                            </div>
+
+                            <!-- Situação é o único filtro cuja lista não vem da
+                                 API: são dois valores fixos, e passá-los por
+                                 populateSelect() (que espera {id, name} de um
+                                 endpoint) só para não escrever duas <option>
+                                 seria cerimônia. Os value casam com o
+                                 dataset.isActive escrito em buildLawsuitRow. -->
+                            <div class="toolbar__filter">
+                                <label class="field__label" for="filtro-situacao">Situação</label>
+                                <select class="select" id="filtro-situacao" data-filter-active>
+                                    <option value="">Todas</option>
+                                    <option value="true">Ativos</option>
+                                    <option value="false">Inativos</option>
+                                </select>
                             </div>
 
                             <!-- Um rótulo para dois campos: o <label for> serve a um
@@ -198,15 +220,27 @@
                             </div>
                         </div>
 
-                        <div class="table-wrap">
+                        <!-- Uma coluna por campo do processo. Com onze colunas a
+                             linha não cabe na tela em resolução nenhuma, então
+                             .lawsuits-table-wrap (lawsuits.css) rola nos dois
+                             eixos, com o cabeçalho preso no topo e a coluna de
+                             ações presa na direita — as ações continuam à mão em
+                             qualquer ponto da rolagem horizontal. -->
+                        <div class="table-wrap lawsuits-table-wrap">
                             <table class="table table--cards lawsuits-table">
                                 <caption class="visually-hidden">Processos judiciais cadastrados.</caption>
                                 <thead>
                                 <tr>
+                                    <th scope="col">Data</th>
+                                    <th scope="col">Ativo</th>
                                     <th scope="col">Nº do processo</th>
-                                    <th scope="col">Partes</th>
-                                    <th scope="col">Status</th>
-                                    <th scope="col">Valor da causa</th>
+                                    <th scope="col">Autor</th>
+                                    <th scope="col">Réu</th>
+                                    <th scope="col" class="table__num">Valor da causa</th>
+                                    <th scope="col">Objeto/Assunto</th>
+                                    <th scope="col">Trâmite</th>
+                                    <th scope="col">Andamento/Status</th>
+                                    <th scope="col">Chance de perda</th>
                                     <th scope="col" class="table__actions">Ações</th>
                                 </tr>
                                 </thead>
@@ -214,7 +248,7 @@
                                 <!-- Linhas escritas por js/pages/controle_processos.js. A linha
                                      de "nenhum resultado" abaixo é fixa e só alterna hidden. -->
                                 <tr class="records-empty-row" data-lawsuits-empty-row hidden>
-                                    <td colspan="5" data-lawsuits-empty-message>Carregando...</td>
+                                    <td colspan="11" data-lawsuits-empty-message>Carregando...</td>
                                 </tr>
                                 </tbody>
                             </table>

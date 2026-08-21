@@ -5,9 +5,10 @@
  *
  * Contrato com o HTML (data-*):
  *   [data-new-lawsuit-link]   link para "Cadastrar Processo"; o href é escrito aqui
- *   [data-filter-search]      busca livre (nº do processo, autor, réu, objeto, vara)
+ *   [data-filter-search]      busca livre (nº do processo, autor, réu, objeto, trâmite)
  *   [data-filter-subject-matter] / [data-filter-proceeding-stage] /
- *   [data-filter-status] / [data-filter-loss-probability]   selects de filtro
+ *   [data-filter-status] / [data-filter-loss-probability] /
+ *   [data-filter-active]                                    selects de filtro
  *   [data-filter-date-from] / [data-filter-date-to]         período do processo
  *   [data-filter-value-min] / [data-filter-value-max]       faixa do valor da causa
  *   [data-filter-clear]       limpa os campos acima
@@ -56,7 +57,7 @@
 
 import { API, PAGES } from "../utils/routes.js";
 import { notifySuccess, notifyError } from "../utils/notyf.js";
-import { populateSelect, toIsoDate } from "../utils/nip_form.js";
+import { formatDate, populateSelect, toIsoDate } from "../utils/nip_form.js";
 import {
     formatCaseNumber,
     initCaseNumberMask,
@@ -68,7 +69,7 @@ import {
     setFieldError as setLawsuitFieldError,
     claimValueNumber,
 } from "../utils/lawsuit_form.js";
-import { formatarMoeda } from "../utils/format_ptbr.js";
+import { formatarMoeda, SEM_DADO } from "../utils/format_ptbr.js";
 import { syncFilterClear } from "../utils/filters.js";
 import {
     clearFormErrors,
@@ -194,12 +195,27 @@ async function loadLawsuits() {
    Construída via DOM + textContent, nunca innerHTML com dado da API — mesmo
    cuidado de controle_nips.js: autor, réu e demais campos vêm de cadastro
    livre.
+
+   Uma coluna por campo do processo, na ordem do <thead> de
+   controle_processos.html. As células compostas de antes (número + objeto,
+   autor + réu, status + chance de perda) se dissolveram: com onze colunas o
+   que economizava espaço passou a esconder dado que o filtro usa.
    ========================================================================= */
 
-function buildCell({ label, text, cellClass, innerClass }) {
+/**
+ * Célula de texto.
+ *
+ * `title` repete o conteúdo no atributo homônimo, e existe para as colunas de
+ * texto livre: lawsuits.css as corta com reticências, e o title é o que
+ * devolve a frase inteira no hover. Só as colunas que podem estourar a largura
+ * o passam — um title igual ao texto que já cabe inteiro na tela é só um
+ * tooltip repetindo o óbvio.
+ */
+function buildCell({ label, text, cellClass, innerClass, title }) {
     const td = document.createElement("td");
     td.dataset.label = label;
     if (cellClass) td.className = cellClass;
+    if (title) td.title = title;
 
     if (innerClass) {
         const span = document.createElement("span");
@@ -214,83 +230,39 @@ function buildCell({ label, text, cellClass, innerClass }) {
 }
 
 /**
- * Número do processo em cima, objeto/assunto embaixo.
+ * Célula de pílula, usada em "Ativo" e em "Andamento/Status".
  *
- * O objeto é um dos filtros da barra, e filtrar por um dado que não aparece em
- * coluna nenhuma esconde linhas por um critério que ninguém consegue conferir
- * no resultado. Como linha secundária ele não custa coluna nova (a tabela já
- * tem min-width: 960px) e ainda entra no textContent que a busca livre varre.
+ * O status continua em badge--neutral, sem cor por situação: diferente de
+ * nip_status (controle_nips.js), a tabela lawsuit_status ainda não tem valores
+ * reais cadastrados — não há como saber hoje quais nomes significam
+ * "aguardando" ou "finalizado". Colorir por prefixo entra quando os status
+ * reais existirem.
+ *
+ * A situação do processo é o caso oposto: são dois valores e só, então a cor
+ * carrega o significado inteiro e o texto vira confirmação.
+ *
+ * A pílula fica solta no <td>, sem o wrapper flex que a célula composta de
+ * status usava: agora que cada dado tem a sua coluna não há mais um segundo
+ * texto embaixo dela para alinhar.
  */
-function buildCaseCell(lawsuit) {
+function buildBadgeCell({ label, text, tone, title }) {
     const td = document.createElement("td");
-    td.dataset.label = "Nº do processo";
-
-    const wrap = document.createElement("span");
-    wrap.className = "case-cell";
-
-    const caseNumber = document.createElement("span");
-    caseNumber.className = "table__primary tabular";
-    caseNumber.textContent = formatCaseNumber(lawsuit.case_number);
-
-    const subjectMatter = document.createElement("span");
-    subjectMatter.className = "table__secondary";
-    subjectMatter.textContent = lawsuit.subject_matter_name ?? "—";
-
-    wrap.append(caseNumber, subjectMatter);
-    td.appendChild(wrap);
-    return td;
-}
-
-/** Autor em cima, réu embaixo — mesmo truque de .beneficiary-cell em nips.css. */
-function buildPartiesCell(lawsuit) {
-    const td = document.createElement("td");
-    td.dataset.label = "Partes";
-
-    const wrap = document.createElement("span");
-    wrap.className = "parties-cell";
-
-    const plaintiff = document.createElement("span");
-    plaintiff.textContent = lawsuit.plaintiff;
-
-    const defendant = document.createElement("span");
-    defendant.className = "table__secondary";
-    defendant.textContent = lawsuit.defendant;
-
-    wrap.append(plaintiff, defendant);
-    td.appendChild(wrap);
-    return td;
-}
-
-/**
- * Status como badge neutro, com a probabilidade de perda embaixo.
- *
- * Sem cor por situação: diferente de nip_status (controle_nips.js), a tabela
- * lawsuit_status ainda não tem valores reais cadastrados — não há como saber
- * hoje quais nomes significam "aguardando" ou "finalizado". Colorir por
- * prefixo entra quando os status reais existirem.
- *
- * A probabilidade acompanha o status pelo mesmo motivo do objeto em
- * buildCaseCell: é filtro da barra e precisa ser conferível na linha. Situação
- * e risco também são lidos juntos — "conclusos para julgamento" diz pouco sem
- * "perda provável" ao lado.
- */
-function buildStatusCell(lawsuit) {
-    const td = document.createElement("td");
-    td.dataset.label = "Status";
-
-    const wrap = document.createElement("span");
-    wrap.className = "status-cell";
+    td.dataset.label = label;
+    if (title) td.title = title;
 
     const badge = document.createElement("span");
-    badge.className = "badge badge--neutral";
-    badge.textContent = lawsuit.status_name ?? "—";
+    badge.className = `badge ${tone}`;
 
-    const lossProbability = document.createElement("span");
-    lossProbability.className = "table__secondary";
-    lossProbability.textContent = `Perda: ${lawsuit.loss_probability_name ?? "—"}`;
+    // O texto vai num <span> próprio, e não solto no badge, para poder ser
+    // cortado com reticências: .badge é inline-flex, e texto solto dentro dele
+    // vira um item anônimo, que text-overflow não alcança — um status longo
+    // seria cortado a seco no meio da palavra. Ver .lawsuits-table .badge em
+    // lawsuits.css.
+    const badgeText = document.createElement("span");
+    badgeText.textContent = text;
+    badge.appendChild(badgeText);
 
-    wrap.append(badge, lossProbability);
-    td.appendChild(wrap);
+    td.appendChild(badge);
     return td;
 }
 
@@ -329,6 +301,11 @@ function buildLawsuitRow(lawsuit) {
     tr.dataset.statusId = String(lawsuit.status_id);
     tr.dataset.lossProbabilityId = String(lawsuit.loss_probability_id);
 
+    // "true"/"false" — o mesmo par de valores que as <option> do filtro de
+    // situação carregam. O Boolean() é o que faz is_active ausente ou nulo
+    // virar "false" em vez de "undefined", que não casaria com opção nenhuma.
+    tr.dataset.isActive = String(Boolean(lawsuit.is_active));
+
     // O valor da causa aparece na célula formatado ("R$ 1.234,56"); a
     // comparação de faixa precisa do número cru.
     tr.dataset.claimValue = String(Number(lawsuit.claim_value));
@@ -338,19 +315,69 @@ function buildLawsuitRow(lawsuit) {
     // quanto "0001234562024826010" — mesmo motivo do CPF em controle_nips.js.
     tr.dataset.caseNumberDigits = String(lawsuit.case_number ?? "");
 
-    // A vara é a única dimensão filtrável que não vira texto em nenhuma célula
-    // (os nomes são longos demais para a coluna): sem isto, a busca livre não a
-    // alcançaria. Ver rowSearchText().
-    tr.dataset.proceedingStageName = String(lawsuit.proceeding_stage_name ?? "");
+    // Uma célula por coluna, na ordem do <thead>. As de texto livre repetem o
+    // conteúdo em title porque lawsuits.css as corta com reticências — o corte
+    // é só pintura, o textContent que a busca varre continua inteiro.
+    tr.appendChild(buildCell({
+        label: "Data",
+        text: formatDate(lawsuit.lawsuit_date),
+        innerClass: "table__primary",
+    }));
 
-    tr.appendChild(buildCaseCell(lawsuit));
-    tr.appendChild(buildPartiesCell(lawsuit));
-    tr.appendChild(buildStatusCell(lawsuit));
+    tr.appendChild(buildBadgeCell({
+        label: "Ativo",
+        text: lawsuit.is_active ? "Ativo" : "Inativo",
+        tone: lawsuit.is_active ? "badge--success" : "badge--negative",
+    }));
+
+    tr.appendChild(buildCell({
+        label: "Nº do processo",
+        text: formatCaseNumber(lawsuit.case_number),
+        innerClass: "table__primary tabular",
+    }));
+
+    tr.appendChild(buildCell({
+        label: "Autor",
+        text: lawsuit.plaintiff,
+        title: lawsuit.plaintiff,
+    }));
+
+    tr.appendChild(buildCell({
+        label: "Réu",
+        text: lawsuit.defendant,
+        title: lawsuit.defendant,
+    }));
+
     tr.appendChild(buildCell({
         label: "Valor da causa",
         text: formatarMoeda(lawsuit.claim_value),
-        innerClass: "tabular",
+        cellClass: "table__num",
     }));
+
+    tr.appendChild(buildCell({
+        label: "Objeto/Assunto",
+        text: lawsuit.subject_matter_name ?? SEM_DADO,
+        title: lawsuit.subject_matter_name ?? "",
+    }));
+
+    tr.appendChild(buildCell({
+        label: "Trâmite",
+        text: lawsuit.proceeding_stage_name ?? SEM_DADO,
+        title: lawsuit.proceeding_stage_name ?? "",
+    }));
+
+    tr.appendChild(buildBadgeCell({
+        label: "Andamento/Status",
+        text: lawsuit.status_name ?? SEM_DADO,
+        tone: "badge--neutral",
+        title: lawsuit.status_name ?? "",
+    }));
+
+    tr.appendChild(buildCell({
+        label: "Chance de perda",
+        text: lawsuit.loss_probability_name ?? SEM_DADO,
+    }));
+
     tr.appendChild(buildActionsCell(lawsuit));
 
     return tr;
@@ -389,11 +416,15 @@ function renderTable() {
    ========================================================================= */
 
 /**
- * Texto da linha + o que ela não mostra: o número do processo sem máscara e o
- * nome da vara (que não vira coluna).
+ * Texto da linha mais o número do processo sem máscara — o único dado
+ * filtrável que a tabela não mostra em texto puro (a coluna o renderiza
+ * pontuado).
+ *
+ * O trâmite saiu daqui: virou coluna de verdade, e o corte com reticências de
+ * lawsuits.css é só pintura — o textContent continua trazendo o nome inteiro.
  */
 const rowSearchText = (row) =>
-    `${row.textContent} ${row.dataset.caseNumberDigits} ${row.dataset.proceedingStageName}`.toLowerCase();
+    `${row.textContent} ${row.dataset.caseNumberDigits}`.toLowerCase();
 
 // Um lugar só dizendo quais campos filtram esta tela: applyFilters() lê os
 // valores, initFilters() escuta as mudanças e syncFilterClear() conta quantos
@@ -405,6 +436,7 @@ const FILTER_SELECTORS = [
     "[data-filter-proceeding-stage]",
     "[data-filter-status]",
     "[data-filter-loss-probability]",
+    "[data-filter-active]",
     "[data-filter-date-from]",
     "[data-filter-date-to]",
     "[data-filter-value-min]",
@@ -434,6 +466,7 @@ function applyFilters() {
     const proceedingStageId = document.querySelector("[data-filter-proceeding-stage]")?.value ?? "";
     const statusId = document.querySelector("[data-filter-status]")?.value ?? "";
     const lossProbabilityId = document.querySelector("[data-filter-loss-probability]")?.value ?? "";
+    const isActive = document.querySelector("[data-filter-active]")?.value ?? "";
     const fromDate = document.querySelector("[data-filter-date-from]")?.value ?? "";
     const toDate = document.querySelector("[data-filter-date-to]")?.value ?? "";
     const minValue = readCurrencyFilter("[data-filter-value-min]");
@@ -453,6 +486,7 @@ function applyFilters() {
         const matchesProceedingStage = !proceedingStageId || row.dataset.proceedingStageId === proceedingStageId;
         const matchesStatus = !statusId || row.dataset.statusId === statusId;
         const matchesLossProbability = !lossProbabilityId || row.dataset.lossProbabilityId === lossProbabilityId;
+        const matchesActive = !isActive || row.dataset.isActive === isActive;
         const matchesFrom = !fromDate || row.dataset.lawsuitDate >= fromDate;
         const matchesTo = !toDate || row.dataset.lawsuitDate <= toDate;
         const matchesMinValue = minValue === null || claimValue >= minValue;
@@ -462,7 +496,7 @@ function applyFilters() {
         const matchesSearch = !search || rowSearchText(row).includes(search);
 
         const visible = matchesSubjectMatter && matchesProceedingStage && matchesStatus
-            && matchesLossProbability && matchesFrom && matchesTo
+            && matchesLossProbability && matchesActive && matchesFrom && matchesTo
             && matchesMinValue && matchesMaxValue && matchesSearch;
 
         row.hidden = !visible;
