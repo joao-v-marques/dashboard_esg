@@ -158,6 +158,15 @@ const NAV_ITEMS = [
                       stroke-linecap="round"/>
             </svg>`,
             },
+            {
+                href: PAGES.lawsuitControl,
+                label: "Consultar Processos",
+                icon: `
+            <svg class="nav__icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <rect x="3" y="4" width="14" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M3 8h14M8 8v8" stroke="currentColor" stroke-width="1.5"/>
+            </svg>`,
+            },
         ],
     },
     // TODO: os demais itens entram aqui conforme as telas forem criadas.

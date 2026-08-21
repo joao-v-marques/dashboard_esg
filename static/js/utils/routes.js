@@ -21,6 +21,7 @@ export const PAGES = {
     nipCreate: `${BASE_PATH}/nips/lancar`,
     nipControl: `${BASE_PATH}/nips/controle`,
     lawsuitCreate: `${BASE_PATH}/processos/cadastrar`,
+    lawsuitControl: `${BASE_PATH}/processos/consultar`,
 };
 
 /**
@@ -54,6 +55,8 @@ export const API = {
     proceedingStages: `${BASE_PATH}/api/proceeding-stages`,
     lawsuitStatus: `${BASE_PATH}/api/lawsuit-status`,
     lossProbabilities: `${BASE_PATH}/api/loss-probabilities`,
+    judgingBodies: `${BASE_PATH}/api/judging-bodies`,
+    lawsuitAppeals: `${BASE_PATH}/api/lawsuit-appeals`,
 };
 
 /**

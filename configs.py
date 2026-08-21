@@ -21,6 +21,7 @@ from routes.lawsuit_status_controller import bp_lawsuit_status
 from routes.loss_probabilities_controller import bp_loss_probabilities
 from routes.judging_bodies_controller import bp_judging_bodies
 from routes.lawsuits_controller import bp_lawsuits
+from routes.lawsuit_appeals_controller import bp_lawsuit_appeals
 
 PREFIX = "/dashboard-esg"
 
@@ -50,3 +51,4 @@ def config_bps(app):
     app.register_blueprint(bp_loss_probabilities, url_prefix=PREFIX)
     app.register_blueprint(bp_judging_bodies, url_prefix=PREFIX)
     app.register_blueprint(bp_lawsuits, url_prefix=PREFIX)
+    app.register_blueprint(bp_lawsuit_appeals, url_prefix=PREFIX)
