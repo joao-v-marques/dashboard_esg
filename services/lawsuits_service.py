@@ -12,6 +12,9 @@ class LawsuitService:
 
     def create(data):
         try:
+            if data['claim_value'] <= 100:
+                raise ValidationError("O valor do processo deve ser no mínimo 100 R$")
+
             # COLOCAR VALIDAÇÕES AQUI DEPOIS
 
             lawsuit = Lawsuit(
@@ -44,6 +47,8 @@ class LawsuitService:
                 raise ValidationError("Envie um corpo JSON com os dados do processo")
 
             # COLOCAR AS VALIDAÇÕES AQUI DEPOIS
+            if data['claim_value'] <= 100:
+                raise ValidationError("O valor do processo deve ser no mínimo 100 R$")
 
             new_lawsuit = Lawsuit(
                 id=data['id'],
