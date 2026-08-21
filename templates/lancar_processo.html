@@ -204,9 +204,10 @@
                                     <div class="field-row">
                                         <div class="field">
                                             <label class="field__label" for="lawsuit-claim-value">Valor da causa (R$)</label>
-                                            <input class="input" type="number" id="lawsuit-claim-value"
-                                                   name="claim_value" step="0.01" min="0" inputmode="decimal"
-                                                   autocomplete="off" required
+                                            <input class="input tabular" type="text" id="lawsuit-claim-value"
+                                                   name="claim_value" inputmode="decimal"
+                                                   placeholder="0,00" autocomplete="off" required
+                                                   data-currency-input
                                                    aria-describedby="erro-lawsuit-claim-value">
                                             <p class="field__error" id="erro-lawsuit-claim-value"
                                                data-error-for="lawsuit-claim-value" hidden></p>

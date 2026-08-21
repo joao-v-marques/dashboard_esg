@@ -14,6 +14,7 @@
  *   lawsuit-status, lawsuit-loss-probability
  *   [data-error-for="<id>"]        mensagem de erro do campo de mesmo id
  *   [data-case-number-input]       campo do número do processo (máscara abaixo)
+ *   [data-currency-input]          campo do valor da causa (máscara abaixo)
  */
 
 /* =========================================================================
@@ -57,6 +58,54 @@ export function initCaseNumberMask(root = document) {
             input.value = formatCaseNumber(input.value);
         });
     });
+}
+
+/* =========================================================================
+   Valor da causa
+
+   O campo é type="text", e não type="number": um <input type="number"> não
+   aceita ponto de milhar nem vírgula decimal (o navegador só entende ponto),
+   então formatar como "1.234,56" exige controlar o valor como texto, do
+   mesmo jeito que o número do processo acima.
+
+   Os dois últimos dígitos digitados são sempre os centavos — é assim que
+   calculadora e caixa eletrônico tratam entrada de valor em dinheiro, e evita
+   o usuário ter que digitar a vírgula. O corte em 15 dígitos acompanha
+   NUMERIC(15, 2) da coluna claim_value (13 inteiros + 2 decimais).
+
+   Como no número do processo, só o dígito importa: o que sai daqui para a API
+   é number (ponto decimal), nunca o texto com separador de milhar — ver
+   claimValueNumber() em readFormPayload().
+   ========================================================================= */
+
+export const claimValueDigits = (value) => String(value ?? "").replace(/\D/g, "").slice(0, 15);
+
+/** Dígitos viram "1.234,56": os dois últimos são centavos, o resto ganha separador de milhar. */
+export function formatCurrency(value) {
+    const digits = claimValueDigits(value);
+    if (!digits) return "";
+
+    const padded = digits.padStart(3, "0");
+    const cents = padded.slice(-2);
+    const integer = padded.slice(0, -2).replace(/^0+(?=\d)/, "") || "0";
+    const integerWithSeparators = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    return `${integerWithSeparators},${cents}`;
+}
+
+/** Liga a máscara no campo de valor. Mesmo desenho das demais: cursor sempre no fim. */
+export function initCurrencyMask(root = document) {
+    root.querySelectorAll("[data-currency-input]").forEach((input) => {
+        input.addEventListener("input", () => {
+            input.value = formatCurrency(input.value);
+        });
+    });
+}
+
+/** Valor mascarado ("1.234,56") de volta a number (1234.56), pronto para a API. */
+export function claimValueNumber(value) {
+    const digits = claimValueDigits(value);
+    return digits ? Number(digits) / 100 : 0;
 }
 
 /* =========================================================================
@@ -106,9 +155,10 @@ export function clearFormErrors() {
  * Devolve a lista de problemas, na ordem dos campos na tela — quem chama
  * aponta o foco para o primeiro. Lista vazia significa formulário válido.
  *
- * claim_value não tem regra própria além de "não vazio": o próprio
- * <input type="number" min="0"> já barra valor negativo ou não numérico antes
- * de chegar aqui.
+ * claim_value não tem regra própria além de "não vazio": a máscara em
+ * initCurrencyMask() já garante que o que está no campo é sempre dígito, e um
+ * valor incompleto ("0,05" digitando "5") ainda é um valor válido — só falta
+ * mesmo se ninguém digitar nada.
  *
  * O número do processo precisa do padrão CNJ completo — pela máscara ele
  * nunca sai malformado, mas sai pela metade se a pessoa parar de digitar no
@@ -150,7 +200,7 @@ export function readFormPayload() {
         case_number: caseNumberDigits(document.getElementById("lawsuit-case-number").value),
         plaintiff: document.getElementById("lawsuit-plaintiff").value.trim(),
         defendant: document.getElementById("lawsuit-defendant").value.trim(),
-        claim_value: Number(document.getElementById("lawsuit-claim-value").value),
+        claim_value: claimValueNumber(document.getElementById("lawsuit-claim-value").value),
         subject_matter_id: Number(document.getElementById("lawsuit-subject-matter").value),
         proceeding_stage_id: Number(document.getElementById("lawsuit-proceeding-stage").value),
         status_id: Number(document.getElementById("lawsuit-status").value),

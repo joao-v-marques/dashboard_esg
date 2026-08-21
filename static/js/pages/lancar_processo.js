@@ -24,6 +24,7 @@ import { notifySuccess, notifyError } from "../utils/notyf.js";
 import { populateSelect } from "../utils/nip_form.js";
 import {
     initCaseNumberMask,
+    initCurrencyMask,
     clearFormErrors,
     setFieldError,
     validateForm,
@@ -177,6 +178,7 @@ async function loadPage() {
 
 function init() {
     initCaseNumberMask();
+    initCurrencyMask();
     initClear();
     initForm();
     loadPage();
