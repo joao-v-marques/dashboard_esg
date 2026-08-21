@@ -12,8 +12,52 @@
  *   lawsuit-date, lawsuit-case-number, lawsuit-plaintiff, lawsuit-defendant,
  *   lawsuit-claim-value, lawsuit-subject-matter, lawsuit-proceeding-stage,
  *   lawsuit-status, lawsuit-loss-probability
- *   [data-error-for="<id>"]  mensagem de erro do campo de mesmo id
+ *   [data-error-for="<id>"]        mensagem de erro do campo de mesmo id
+ *   [data-case-number-input]       campo do número do processo (máscara abaixo)
  */
+
+/* =========================================================================
+   Número do processo
+
+   Padrão CNJ (Resolução 65/2008): NNNNNNN-DD.AAAA.J.TR.OOOO — sete dígitos de
+   sequência, dígito verificador, ano, órgão, tribunal e origem, sempre com 20
+   dígitos ao todo. A pontuação é só enfeite de digitação — é assim que o
+   processo é conferido no papel — mas é padrão da aplicação guardar apenas
+   dígitos em todo campo numérico com máscara (mesmo raciocínio do CPF em
+   utils/nip_form.js): o que sai daqui para a API já passa por
+   caseNumberDigits() antes, em readFormPayload().
+   ========================================================================= */
+
+export const caseNumberDigits = (value) => String(value ?? "").replace(/\D/g, "").slice(0, 20);
+
+/** Padrão aceito pela validação e escrito pela máscara. */
+export const CASE_NUMBER_PATTERN = /^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$/;
+
+/** 20 dígitos viram "0000000-00.0000.0.00.0000". Menos que isso é formatado do jeito que dá. */
+export function formatCaseNumber(value) {
+    const digits = caseNumberDigits(value);
+
+    return digits
+        .replace(/^(\d{7})(\d)/, "$1-$2")
+        .replace(/^(\d{7})-(\d{2})(\d)/, "$1-$2.$3")
+        .replace(/^(\d{7})-(\d{2})\.(\d{4})(\d)/, "$1-$2.$3.$4")
+        .replace(/^(\d{7})-(\d{2})\.(\d{4})\.(\d)(\d)/, "$1-$2.$3.$4.$5")
+        .replace(/^(\d{7})-(\d{2})\.(\d{4})\.(\d)\.(\d{2})(\d)/, "$1-$2.$3.$4.$5.$6");
+}
+
+/**
+ * Liga a máscara no campo do número do processo.
+ *
+ * Mesmo desenho do CPF/número da NIP: o cursor vai para o fim a cada tecla,
+ * porque é onde a digitação de um código sequencial acontece.
+ */
+export function initCaseNumberMask(root = document) {
+    root.querySelectorAll("[data-case-number-input]").forEach((input) => {
+        input.addEventListener("input", () => {
+            input.value = formatCaseNumber(input.value);
+        });
+    });
+}
 
 /* =========================================================================
    Validação
@@ -65,6 +109,12 @@ export function clearFormErrors() {
  * claim_value não tem regra própria além de "não vazio": o próprio
  * <input type="number" min="0"> já barra valor negativo ou não numérico antes
  * de chegar aqui.
+ *
+ * O número do processo precisa do padrão CNJ completo — pela máscara ele
+ * nunca sai malformado, mas sai pela metade se a pessoa parar de digitar no
+ * meio (mesmo raciocínio do número da NIP em utils/nip_form.js). O que esta
+ * validação não cobre é a unicidade: só o banco sabe se o processo já existe,
+ * e a resposta de erro do POST é que dá esse recado.
  */
 export function validateForm() {
     const problems = [];
@@ -73,6 +123,11 @@ export function validateForm() {
         const input = document.getElementById(id);
         if (!input || input.value.trim() === "") {
             problems.push({ id, message: empty });
+            return;
+        }
+
+        if (id === "lawsuit-case-number" && !CASE_NUMBER_PATTERN.test(input.value.trim())) {
+            problems.push({ id, message: "O número do processo deve seguir o padrão 0000000-00.0000.0.00.0000." });
         }
     });
 
@@ -92,7 +147,7 @@ export function validateForm() {
 export function readFormPayload() {
     return {
         lawsuit_date: document.getElementById("lawsuit-date").value,
-        case_number: document.getElementById("lawsuit-case-number").value.trim(),
+        case_number: caseNumberDigits(document.getElementById("lawsuit-case-number").value),
         plaintiff: document.getElementById("lawsuit-plaintiff").value.trim(),
         defendant: document.getElementById("lawsuit-defendant").value.trim(),
         claim_value: Number(document.getElementById("lawsuit-claim-value").value),

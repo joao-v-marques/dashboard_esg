@@ -99,10 +99,12 @@
                                     <div class="field-row">
                                         <div class="field">
                                             <label class="field__label" for="lawsuit-case-number">Número do processo</label>
-                                            <input class="input" type="text" id="lawsuit-case-number"
-                                                   name="case_number" maxlength="35" autocomplete="off" required
+                                            <input class="input tabular" type="text" id="lawsuit-case-number"
+                                                   name="case_number" inputmode="numeric" maxlength="25"
+                                                   placeholder="0000000-00.0000.0.00.0000" autocomplete="off" required
+                                                   data-case-number-input
                                                    aria-describedby="erro-lawsuit-case-number dica-lawsuit-case-number">
-                                            <p class="field__hint" id="dica-lawsuit-case-number">Único por processo.</p>
+                                            <p class="field__hint" id="dica-lawsuit-case-number">Padrão 0000000-00.0000.0.00.0000. Único por processo.</p>
                                             <p class="field__error" id="erro-lawsuit-case-number"
                                                data-error-for="lawsuit-case-number" hidden></p>
                                         </div>

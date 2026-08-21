@@ -23,6 +23,7 @@ import { API, PAGES } from "../utils/routes.js";
 import { notifySuccess, notifyError } from "../utils/notyf.js";
 import { populateSelect } from "../utils/nip_form.js";
 import {
+    initCaseNumberMask,
     clearFormErrors,
     setFieldError,
     validateForm,
@@ -175,6 +176,7 @@ async function loadPage() {
 }
 
 function init() {
+    initCaseNumberMask();
     initClear();
     initForm();
     loadPage();
