@@ -497,7 +497,12 @@ function desenharRosca(raiz, plot, tip, grafico, largura, altura) {
 
     // Miolo: o total do período. É o número que a rosca divide, e tê-lo no
     // centro evita ter que somar as fatias de olho.
-    raiz.appendChild(texto(cx, cy - 2, formatarNumero(total, 0), "chart-label", "middle"));
+    //
+    // Duas casas, e não um inteiro curto: o mesmo total aparece no cartão de
+    // KPI ao lado com duas casas, e 107,5 arredondado para "108" aqui lê como
+    // divergência de dado entre dois números que são o mesmo. Cabe porque o
+    // miolo tem o diâmetro interno inteiro para o texto.
+    raiz.appendChild(texto(cx, cy - 2, formatarNumero(total, 2), "chart-label", "middle"));
     raiz.appendChild(texto(cx, cy + 14, grafico.unidade ?? "", "chart-tick", "middle"));
 }
 

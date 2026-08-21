@@ -9,14 +9,40 @@
    js/pages/dashboard.js); a estrutura do bloco é sempre a mesma e vem da
    configuração de cada setor (js/pages/dashboard_sectors.js).
 
-   O ALVO DESTE ARQUIVO É UMA TELA SÓ. Em 1920×1080 o painel inteiro de
-   Resíduos — barra, seis indicadores, três gráficos e a tabela — cabe sem
-   rolagem vertical. É isso que explica cada decisão de densidade abaixo: o
-   filtro subiu para a barra em vez de ter cabeçalho próprio, o resumo do setor
-   ocupa uma linha, o vão entre blocos caiu de 24px para 16px e os cards se
-   arranjam em duas linhas de 12 colunas em vez de uma pilha. Abaixo de
-   1360px a promessa deixa de valer e a página volta a rolar — o que não pode
-   deixar de valer nunca é a legibilidade: rótulo encolhe, número não quebra.
+   O ALVO DESTE ARQUIVO É UMA TELA SÓ. O painel inteiro de Resíduos — barra,
+   cinco indicadores, dois gráficos e a tabela — cabe sem rolagem vertical.
+
+   O alvo é medido em PIXELS CSS, não em polegadas de monitor: com o Windows a
+   125% (o padrão de fábrica em boa parte das telas), um monitor de 1920×1080
+   entrega 1536×730 px CSS de viewport, e não 1920×1080. Foi medindo nesse
+   1536×730 que os números abaixo foram escolhidos — medir no monitor nominal
+   é o erro que fazia o painel "caber" na régua e rolar na tela de quem usa.
+
+   O orçamento vertical em 730px:
+
+     topbar                        64px
+     barra do painel               49px
+     resumo do setor + margem      32px
+     grade de indicadores         118px  (UMA linha — ver .stat-grid--5)
+     folgas do stack e do main     72px
+     ------------------------------------
+     sobra para a grade de cards  ~396px
+
+   Uma linha de cards custa ~294px e a de tabela ~222px: DUAS linhas não cabem
+   nesse orçamento de jeito nenhum. Por isso os cards de Resíduos se arranjam
+   em UMA linha de 12 colunas (4 + 3 + 5), e não em duas. Medido: o conteúdo
+   fecha em 628px, com 102px de folga.
+
+   É isso que explica cada decisão de densidade abaixo: o filtro subiu para a
+   barra em vez de ter cabeçalho próprio, o resumo do setor ocupa uma linha e o
+   vão entre blocos caiu de 24px para 16px. Abaixo de 1360px a promessa deixa
+   de valer e a página volta a rolar — o que não pode deixar de valer nunca é a
+   legibilidade: rótulo encolhe, número não quebra.
+
+   COMO REMEDIR depois de mexer aqui: não confie no olho nem no tamanho do
+   monitor. Abra o painel e compare `document.documentElement.scrollHeight`
+   com `window.innerHeight` — e olhe `window.innerWidth`, que é quem revela a
+   escala do sistema.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -137,7 +163,9 @@
   --chart-height: 148px;
 }
 
+.sector__cell--3  { grid-column: span 3; }
 .sector__cell--4  { grid-column: span 4; }
+.sector__cell--5  { grid-column: span 5; }
 .sector__cell--6  { grid-column: span 6; }
 .sector__cell--8  { grid-column: span 8; }
 .sector__cell--12 { grid-column: span 12; }
@@ -145,7 +173,9 @@
 /* Nos degraus canônicos do projeto: em 1199px as duas larguras viram meia
    linha (dois cards lado a lado), e em 899px cada card ocupa a linha toda. */
 @media (max-width: 1199px) {
+  .sector__cell--3,
   .sector__cell--4,
+  .sector__cell--5,
   .sector__cell--8 { grid-column: span 6; }
 }
 

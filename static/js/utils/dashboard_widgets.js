@@ -122,6 +122,7 @@ export function criarCartaoIndicador(kpi, valorAnterior, densidade = "compacta")
 function modificadorDaGrade(quantidade) {
     if (quantidade === 2) return "stat-grid--2";
     if (quantidade === 4) return "stat-grid--4";
+    if (quantidade === 5) return "stat-grid--5";
     if (quantidade === 6) return "stat-grid--6";
     return null;
 }

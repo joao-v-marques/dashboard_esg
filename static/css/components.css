@@ -1473,6 +1473,17 @@ button.input-wrap__affix[aria-pressed="true"] {
   white-space: nowrap;
 }
 
+/* Mesmo caso do <th> em .table__num logo acima: `.table thead th` vence
+   `.table__actions` na especificidade e deixava o rótulo "Ações" na esquerda
+   da coluna enquanto os botões da linha ficavam na direita — as duas coisas
+   fora do mesmo eixo. O padding maior tira do rótulo os 10px que sobram
+   dentro do .btn-icon (ícone de 20px num alvo de 40px), para a palavra parar
+   em cima do ícone, e não do canto invisível do botão. */
+.table thead th.table__actions {
+  text-align: right;
+  padding-right: calc(var(--space-16) + 10px);
+}
+
 .table__actions > * + * {
   margin-left: var(--space-16);
 }
@@ -2284,6 +2295,40 @@ button.input-wrap__affix[aria-pressed="true"] {
 
 .stat--micro .stat__note {
   padding-top: var(--space-4);
+}
+
+/* Cinco indicadores por linha. Cinco é o único tamanho que não divide as 12
+   colunas, então aqui é a GRADE que passa a ter cinco colunas, em vez de o
+   cartão declarar um span — é o mesmo resultado visual dos outros tamanhos,
+   por outro caminho.
+
+   Sem esta regra os cinco cairiam no span 4 do padrão e ocupariam DUAS linhas.
+   Essa segunda linha é ~142px (cartão micro + gutter), exatamente o que
+   empurra a última linha de cards do painel para fora da dobra. */
+.stat-grid--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.stat-grid--5 > .stat,
+.stat-grid--5 > .skeleton { grid-column: span 1; }
+
+/* Abaixo de 1360px a grade volta às 12 colunas e desce os mesmos degraus da
+   grade de seis: três por linha, depois duas, por fim uma. A partir daqui o
+   painel já rola de qualquer forma (ver o cabeçalho de dashboard.css), e o que
+   manda é o rótulo não quebrar em quatro linhas. */
+@media (max-width: 1359px) {
+  .stat-grid--5 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+
+  .stat-grid--5 > .stat,
+  .stat-grid--5 > .skeleton { grid-column: span 4; }
+}
+
+@media (max-width: 899px) {
+  .stat-grid--5 > .stat,
+  .stat-grid--5 > .skeleton { grid-column: span 6; }
+}
+
+@media (max-width: 599px) {
+  .stat-grid--5 > .stat,
+  .stat-grid--5 > .skeleton { grid-column: span 12; }
 }
 
 /* Seis indicadores por linha (span 2 de 12). Abaixo de 1360px a linha de seis

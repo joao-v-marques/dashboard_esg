@@ -146,8 +146,8 @@ function serieAtravessaAnos(serie) {
  *
  * Com os três tipos de hoje o resultado ainda cai certo por semântica —
  * Reciclável no verde e Não Reciclável no laranja, exatamente os dois tons que
- * o gráfico de evolução usa para reciclagem e destinação final — porque foi
- * essa a ordem de cadastro.
+ * o gráfico de evolução usa para reciclagem e não reciclado — porque foi essa
+ * a ordem de cadastro.
  */
 function slotDoTipo(id) {
     return "s" + ((Number(id) - 1) % 6 + 1);
@@ -156,7 +156,7 @@ function slotDoTipo(id) {
 const RESIDUOS = {
     id: "residuos",
     nome: "Resíduos",
-    resumo: "Quanto foi gerado, quanto voltou para a reciclagem e o que sobrou para destinação final, por tipo e por unidade.",
+    resumo: "Quanto foi gerado, quanto voltou para a reciclagem e quanto não foi reciclado, por tipo de resíduo.",
 
     filtro: { tipo: "intervalo" },
 
@@ -178,10 +178,10 @@ const RESIDUOS = {
         return buscarJson(API.wasteDashboard + "?de=" + de + "&ate=" + ate);
     },
 
-    // Seis indicadores, na densidade micro: os três do peso (gerado, reciclado,
-    // destinação final) fecham a conta entre si, a taxa é a leitura deles em
-    // percentual, e os dois últimos dizem sobre QUE coleta esses números falam
-    // — sem eles, "1.200 kg no ano" não distingue um ano inteiro de coleta de
+    // Cinco indicadores, na densidade micro: os três do peso (gerado,
+    // reciclado, não reciclado) fecham a conta entre si, a taxa é a leitura
+    // deles em percentual, e o último diz sobre QUE coleta esses números falam
+    // — sem ele, "1.200 kg no ano" não distingue um ano inteiro de coleta de
     // um único mês lançado.
     kpis: [
         {
@@ -208,9 +208,9 @@ const RESIDUOS = {
             nota: () => "Tipos recicláveis no cadastro.",
         },
         {
-            id: "destinacao",
-            sigla: "DF",
-            rotulo: "Destinação final",
+            id: "nao-reciclado",
+            sigla: "NR",
+            rotulo: "Não Reciclado",
             unidade: "kg",
             decimais: 2,
             tom: "negative",
@@ -219,7 +219,7 @@ const RESIDUOS = {
             // porque é este o número que vira custo de destinação e o que a
             // meta de redução persegue — a taxa sozinha esconde o volume.
             valor: (dados) => dados.resumo.kg_destinacao_final,
-            nota: () => "O que não volta ao ciclo.",
+            nota: () => "Tipos não recicláveis no cadastro.",
         },
         {
             id: "taxa",
@@ -248,33 +248,29 @@ const RESIDUOS = {
             valor: (dados) => dados.resumo.media_por_dia_coletado,
             nota: (dados) => formatarInteiro(dados.resumo.dias_com_lancamento) + " dias com coleta.",
         },
-        {
-            id: "cobertura",
-            sigla: "UC",
-            rotulo: "Unidades com coleta",
-            decimais: 0,
-            tom: "warning",
-            melhorQuando: "maior",
-            // Indicador de ABRANGÊNCIA, não de resultado: diz de quantas
-            // unidades os números acima estão falando. Enquanto for menor que o
-            // total, o painel está descrevendo parte da cooperativa, e isso
-            // precisa estar à vista de quem lê.
-            valor: (dados) => dados.resumo.unidades_com_lancamento,
-            nota: (dados) => "De " + formatarInteiro(dados.resumo.total_unidades)
-                + " cadastradas · " + formatarInteiro(dados.resumo.lancamentos) + " lançamentos.",
-        },
     ],
 
-    // O peso (kg) e a taxa (%) são dois gráficos, e não um só com barra e linha
-    // sobrepostas: duas escalas verticais no mesmo desenho se alinham de forma
-    // arbitrária e inventam uma correlação que o dado não tem.
+    // Só o peso (kg) é desenhado: a taxa (%) fica no cartão "Taxa de
+    // reciclagem", e não entra aqui como segunda escala vertical em cima das
+    // colunas — duas escalas no mesmo desenho se alinham de forma arbitrária e
+    // inventam uma correlação que o dado não tem.
+    //
+    // OS SPANS DESTE SETOR SOMAM 12 DE PROPÓSITO: 4 (evolução) + 3 (composição)
+    // + 5 (tabela) põem os três cards em UMA linha. Não é estética — no
+    // viewport real (1536×730 px CSS, ver o cabeçalho de dashboard.css) uma
+    // segunda linha de cards não cabe na tela, e o painel volta a rolar. Quem
+    // mexer nestes três números mexe nessa promessa: eles têm que continuar
+    // somando 12.
+    //
+    // A tabela leva 5 e não 4 porque com 4 colunas ela pede ~461px e um card de
+    // span 4 dá 392px — a coluna "% do gerado" ficava cortada.
     graficos: [
         {
             id: "residuos-evolucao",
             tipo: "colunas-empilhadas",
-            span: 8,
+            span: 4,
             titulo: "Evolução mensal",
-            descricao: "Peso de resíduo gerado mês a mês, separado entre o que foi para reciclagem e o que foi para destinação final.",
+            descricao: "Peso de resíduo gerado mês a mês, separado entre o que foi para reciclagem e o que não foi reciclado.",
             unidade: "kg",
             decimais: 2,
             nota: (dados, periodo) => "kg · " + RESIDUOS.rotuloPeriodo(periodo),
@@ -296,7 +292,7 @@ const RESIDUOS = {
                             legenda: formatarNumero(dados.resumo.kg_reciclado, 2) + " kg",
                         },
                         {
-                            rotulo: "Destinação final",
+                            rotulo: "Não Reciclado",
                             slot: "landfill",
                             valores: serie.map((mes) => mes.kg_destinacao_final),
                             legenda: formatarNumero(dados.resumo.kg_destinacao_final, 2) + " kg",
@@ -307,7 +303,7 @@ const RESIDUOS = {
                             + ", com " + formatarNumero(pico.kg_gerado, 2) + " kg."
                         : null,
                     tabela: {
-                        colunas: ["Mês", "Reciclagem (kg)", "Destinação final (kg)", "Total (kg)"],
+                        colunas: ["Mês", "Reciclagem (kg)", "Não Reciclado (kg)", "Total (kg)"],
                         linhas: serie.map((mes) => [
                             rotulosDoMes(mes.mes, true).longo,
                             formatarNumero(mes.kg_reciclado, 2),
@@ -321,7 +317,7 @@ const RESIDUOS = {
         {
             id: "residuos-composicao",
             tipo: "composicao",
-            span: 4,
+            span: 3,
             titulo: "Composição por tipo",
             descricao: "Participação de cada tipo de resíduo no peso total gerado no período.",
             unidade: "kg",
@@ -367,75 +363,29 @@ const RESIDUOS = {
                 };
             },
         },
-        {
-            id: "residuos-taxa",
-            tipo: "linha",
-            span: 4,
-            titulo: "Taxa de reciclagem por mês",
-            descricao: "Percentual do resíduo gerado em cada mês que foi para reciclagem, com a taxa do período inteiro marcada como referência.",
-            unidade: "%",
-            decimais: 2,
-            // Escala fixa de 0 a 100: uma taxa tem os dois extremos definidos, e
-            // deixar o eixo se ajustar ao período faria uma variação de 3 p.p.
-            // num mês fraco parecer o mesmo salto que 30 p.p. em outro.
-            escala: { max: 100, passo: 25 },
-            nota: () => "% do gerado no mês",
-            dados: (dados) => {
-                const serie = dados.serie_mensal;
-                const comAno = serieAtravessaAnos(serie);
-                const melhor = dados.destaques.melhor_mes_reciclagem;
-                const media = dados.resumo.pct_reciclado;
-
-                return {
-                    categorias: serie.map((mes) => ({
-                        ...rotulosDoMes(mes.mes, comAno),
-                        // O peso do mês entra no balão junto da taxa: 100% de
-                        // reciclagem em cima de 4 kg e em cima de 400 kg são a
-                        // mesma altura no gráfico e coisas muito diferentes.
-                        apoio: [{ rotulo: "Gerado", valor: formatarNumero(mes.kg_gerado, 2) + " kg" }],
-                    })),
-                    series: [{
-                        rotulo: "Taxa de reciclagem",
-                        slot: "s1",
-                        valores: serie.map((mes) => mes.pct_reciclado),
-                    }],
-                    referencia: media === null || media === undefined
-                        ? null
-                        : { valor: media, rotulo: "média " + formatarPercentual(media) + "%" },
-                    rodape: melhor
-                        ? "Melhor mês: " + rotulosDoMes(melhor.mes, true).longo
-                            + ", com " + formatarPercentual(melhor.pct_reciclado) + "% reciclado."
-                        : null,
-                    tabela: {
-                        colunas: ["Mês", "Taxa de reciclagem (%)", "Gerado (kg)"],
-                        linhas: serie.map((mes) => [
-                            rotulosDoMes(mes.mes, true).longo,
-                            formatarPercentual(mes.pct_reciclado),
-                            formatarNumero(mes.kg_gerado, 2),
-                        ]),
-                    },
-                };
-            },
-        },
     ],
 
-    // A quebra por unidade não entra como tabela enquanto a coleta for só da
-    // Sede: uma tabela de uma linha só não detalha nada, e sugere uma comparação
-    // entre unidades que ainda não existe. O que o painel diz hoje sobre isso é
-    // o cartão "Unidades com coleta", que é honesto sem fingir comparação. O
-    // endpoint continua devolvendo `por_unidade` — quando as demais unidades
-    // começarem a lançar, ela volta como mais um item desta lista, sem mexer em
-    // backend.
+    // Nada por unidade enquanto a coleta for só da Sede — nem tabela, nem
+    // cartão de abrangência: uma linha só não detalha nada, e sugere uma
+    // comparação entre unidades que ainda não existe. O endpoint continua
+    // devolvendo `por_unidade` e a contagem de unidades no resumo — quando as
+    // demais começarem a lançar, a quebra volta como mais um item desta lista,
+    // sem mexer em backend.
+    // TETO MEDIDO: a tabela cresce uma linha por tipo de resíduo cadastrado, e
+    // é ela quem primeiro empurra o painel para fora da dobra. Em 1536×730 px
+    // CSS cabem até SETE tipos (hoje são três). Do oitavo em diante o painel
+    // volta a rolar, e aí a saída é rolagem interna no corpo da tabela — não
+    // mais uma linha de cards, que não cabe.
     tabelas: [
         {
-            span: 8,
+            span: 5,
             densa: true,
             titulo: "Composição por tipo de resíduo",
-            descricao: "Resíduos gerados no período por tipo, com a destinação e a participação de cada um no total.",
+            descricao: "Resíduos gerados no período por tipo, com a classificação e a participação de cada um no total.",
             nota: (dados, periodo) => "kg · " + RESIDUOS.rotuloPeriodo(periodo),
             colunas: [
                 { titulo: "Tipo", tipo: "pill" },
-                { titulo: "Destinação", tipo: "texto" },
+                { titulo: "Classificação", tipo: "texto" },
                 { titulo: "Gerado", tipo: "numero", decimais: 2 },
                 { titulo: "% do gerado", tipo: "numero", decimais: 2 },
             ],
@@ -444,7 +394,7 @@ const RESIDUOS = {
 
                 return dados.composicao_por_tipo.map((linha) => [
                     { texto: linha.tipo, classe: linha.is_recyclable ? "pill pill--success" : "pill" },
-                    linha.is_recyclable ? "Reciclagem" : "Destinação final",
+                    linha.is_recyclable ? "Reciclagem" : "Não Reciclado",
                     { valor: linha.kg },
                     // O % é sempre recalculado a partir do bruto, como no
                     // resto do painel — nunca guardado pronto.
