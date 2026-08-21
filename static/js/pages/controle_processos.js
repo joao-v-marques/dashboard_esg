@@ -1,6 +1,7 @@
 /**
- * Consultar Processos: tabela só leitura dos processos judiciais cadastrados,
- * com um modal de "Gerar Recurso" por linha (POST /api/lawsuit-appeals).
+ * Consultar Processos: tabela dos processos judiciais cadastrados, com dois
+ * modais por linha — "Editar" (PUT /api/lawsuits) e "Gerar Recurso"
+ * (POST /api/lawsuit-appeals, com lista dos recursos já registrados).
  *
  * Contrato com o HTML (data-*):
  *   [data-new-lawsuit-link]   link para "Cadastrar Processo"; o href é escrito aqui
@@ -19,21 +20,46 @@
  *     [data-appeal-list-empty]      recado de "nenhum recurso ainda"
  *     [data-appeal-form]            formulário; o submit é interceptado
  *     [data-appeal-submit]          botão de enviar
- *   [data-form-judging-body] / [data-form-status] / [data-form-loss-probability]
- *                              selects do modal, preenchidos pela API
+ *   [data-appeal-judging-body] / [data-appeal-status] / [data-appeal-loss-probability]
+ *                              selects do modal de recurso, preenchidos pela API
+ *   [data-lawsuit-edit-modal]       <dialog> do formulário de edição de processo
+ *     [data-lawsuit-edit-modal-close] fecha (botão X e Cancelar)
+ *     [data-lawsuit-edit-form]        formulário; o submit é interceptado
+ *     [data-lawsuit-edit-submit]      botão de salvar
+ *   [data-lawsuit-subject-matter] / [data-lawsuit-proceeding-stage] /
+ *   [data-lawsuit-status] / [data-lawsuit-loss-probability]
+ *                              selects do modal de edição, preenchidos pela API
  *
- * A tela não cria nem edita processo — isso é "Cadastrar Processo", a outra
- * tela do grupo. O modal aqui lista os recursos do processo e cria mais um;
- * currentLawsuitId nunca é null enquanto o modal está aberto — quem abre é
- * sempre o botão "Gerar Recurso" de uma linha (ver startCreatingAppeal()).
- * Enviar o formulário não fecha o modal: a lista recarrega e os campos
- * limpam no lugar, para dar para gerar vários recursos seguidos.
+ * A tela não cria processo — isso é "Cadastrar Processo", a outra tela do
+ * grupo. currentLawsuitId (recurso) e currentEditingLawsuitId (edição) nunca
+ * são null enquanto o respectivo modal está aberto — quem abre é sempre um
+ * botão de linha (ver startCreatingAppeal() e startEditingLawsuit()).
+ * Enviar o formulário de recurso não fecha o modal: a lista recarrega e os
+ * campos limpam no lugar, para dar para gerar vários recursos seguidos.
+ * Enviar o de edição fecha o modal e recarrega a tabela, como em
+ * controle_nips.js.
+ *
+ * status_id e loss_probability_id existem nos dois formulários (recurso e
+ * edição de processo, mesmas tabelas de apoio) — por isso os selects de cada
+ * um usam atributos data-* prefixados por formulário (data-appeal-status /
+ * data-lawsuit-status), em vez do data-form-* genérico de outras telas: um
+ * atributo só faria populateSelect() (que usa querySelector, e pega só o
+ * primeiro elemento) preencher o select errado.
  */
 
 import { API, PAGES } from "../utils/routes.js";
 import { notifySuccess, notifyError } from "../utils/notyf.js";
 import { populateSelect, toIsoDate } from "../utils/nip_form.js";
-import { formatCaseNumber, initCurrencyMask } from "../utils/lawsuit_form.js";
+import {
+    formatCaseNumber,
+    initCaseNumberMask,
+    initCurrencyMask,
+    fillForm as fillLawsuitForm,
+    validateForm as validateLawsuitForm,
+    readFormPayload as readLawsuitFormPayload,
+    clearFormErrors as clearLawsuitFormErrors,
+    setFieldError as setLawsuitFieldError,
+} from "../utils/lawsuit_form.js";
 import { formatarNumero } from "../utils/format_ptbr.js";
 import {
     clearFormErrors,
@@ -44,10 +70,14 @@ import {
     setLoading,
     readJson,
 } from "../utils/lawsuit_appeal_form.js";
-import { buildAppealButton } from "../utils/table_actions.js";
+import { buildEditButton, buildAppealButton } from "../utils/table_actions.js";
 
 let allLawsuits = [];
 let currentUser = null;
+
+// Preenchido sempre que o modal de edição abre, a partir da linha clicada.
+// Ver startEditingLawsuit().
+let currentEditingLawsuitId = null;
 
 // Preenchido sempre que o modal abre, a partir da linha clicada — nunca é
 // escolhido dentro do formulário. Ver startCreatingAppeal().
@@ -89,23 +119,40 @@ async function loadCurrentUser() {
 }
 
 async function loadReferenceData() {
-    const [judgingBodiesResponse, statusResponse, lossProbabilitiesResponse] = await Promise.all([
+    const [
+        subjectMattersResponse,
+        proceedingStagesResponse,
+        judgingBodiesResponse,
+        statusResponse,
+        lossProbabilitiesResponse,
+    ] = await Promise.all([
+        fetch(API.subjectMatters, { credentials: "same-origin" }),
+        fetch(API.proceedingStages, { credentials: "same-origin" }),
         fetch(API.judgingBodies, { credentials: "same-origin" }),
         fetch(API.lawsuitStatus, { credentials: "same-origin" }),
         fetch(API.lossProbabilities, { credentials: "same-origin" }),
     ]);
 
-    if (!judgingBodiesResponse.ok || !statusResponse.ok || !lossProbabilitiesResponse.ok) {
-        throw new Error("Falha ao carregar os dados de apoio do recurso");
+    if (!subjectMattersResponse.ok || !proceedingStagesResponse.ok || !judgingBodiesResponse.ok || !statusResponse.ok || !lossProbabilitiesResponse.ok) {
+        throw new Error("Falha ao carregar os dados de apoio do processo e do recurso");
     }
 
+    const subjectMatters = await subjectMattersResponse.json();
+    const proceedingStages = await proceedingStagesResponse.json();
     const judgingBodies = await judgingBodiesResponse.json();
     const status = await statusResponse.json();
     const lossProbabilities = await lossProbabilitiesResponse.json();
 
-    populateSelect(document.querySelector("[data-form-judging-body]"), judgingBodies, "Selecione");
-    populateSelect(document.querySelector("[data-form-status]"), status, "Selecione");
-    populateSelect(document.querySelector("[data-form-loss-probability]"), lossProbabilities, "Selecione");
+    // Modal de recurso.
+    populateSelect(document.querySelector("[data-appeal-judging-body]"), judgingBodies, "Selecione");
+    populateSelect(document.querySelector("[data-appeal-status]"), status, "Selecione");
+    populateSelect(document.querySelector("[data-appeal-loss-probability]"), lossProbabilities, "Selecione");
+
+    // Modal de edição de processo.
+    populateSelect(document.querySelector("[data-lawsuit-subject-matter]"), subjectMatters, "Selecione");
+    populateSelect(document.querySelector("[data-lawsuit-proceeding-stage]"), proceedingStages, "Selecione");
+    populateSelect(document.querySelector("[data-lawsuit-status]"), status, "Selecione");
+    populateSelect(document.querySelector("[data-lawsuit-loss-probability]"), lossProbabilities, "Selecione");
 }
 
 async function loadLawsuits() {
@@ -198,8 +245,15 @@ function buildActionsCell(lawsuit) {
     // O aria-label descreve a linha, não a coluna — mesmo motivo de
     // buildActionsCell em controle_nips.js. O número do processo é o código
     // que identifica o processo para quem o acompanha.
+    const caseNumber = formatCaseNumber(lawsuit.case_number);
+
+    td.appendChild(buildEditButton({
+        label: `Editar processo ${caseNumber}`,
+        onClick: () => startEditingLawsuit(lawsuit),
+    }));
+
     td.appendChild(buildAppealButton({
-        label: `Gerar recurso do processo ${formatCaseNumber(lawsuit.case_number)}`,
+        label: `Gerar recurso do processo ${caseNumber}`,
         onClick: () => startCreatingAppeal(lawsuit),
     }));
 
@@ -318,6 +372,105 @@ async function loadAppealsForLawsuit(lawsuitId) {
     } finally {
         if (loadingEl) loadingEl.hidden = true;
     }
+}
+
+/* =========================================================================
+   Modal de edição de processo
+   ========================================================================= */
+
+function openLawsuitEditModal() {
+    const modal = document.querySelector("[data-lawsuit-edit-modal]");
+    if (!modal) return;
+
+    modal.showModal();
+    document.body.classList.add("no-scroll");
+}
+
+/** Abre o modal já preenchido com um processo existente. */
+function startEditingLawsuit(lawsuit) {
+    currentEditingLawsuitId = lawsuit.id;
+    fillLawsuitForm(lawsuit);
+    openLawsuitEditModal();
+}
+
+function initLawsuitEditModal() {
+    const modal = document.querySelector("[data-lawsuit-edit-modal]");
+    if (!modal) return;
+
+    document.querySelectorAll("[data-lawsuit-edit-modal-close]").forEach((button) => {
+        button.addEventListener("click", () => closeModal(modal));
+    });
+
+    // <dialog> não fecha ao clicar fora sozinho — só o clique no próprio
+    // elemento (o backdrop), nunca num filho, chega até aqui.
+    modal.addEventListener("click", (event) => {
+        if (event.target === modal) closeModal(modal);
+    });
+
+    modal.addEventListener("close", () => {
+        document.body.classList.remove("no-scroll");
+    });
+}
+
+function initLawsuitEditForm() {
+    const form = document.querySelector("[data-lawsuit-edit-form]");
+    if (!form) return;
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearLawsuitFormErrors();
+
+        const problems = validateLawsuitForm();
+        if (problems.length) {
+            problems.forEach(({ id, message }) => setLawsuitFieldError(id, message));
+            document.getElementById(problems[0].id)?.focus();
+            return;
+        }
+
+        if (currentEditingLawsuitId === null) {
+            notifyError("Nenhum processo selecionado para edição. Feche o formulário e tente de novo.");
+            return;
+        }
+
+        const submit = form.querySelector("[data-lawsuit-edit-submit]");
+        setLoading(submit, true);
+
+        // O id diz ao backend qual registro alterar; updated_by e updated_at
+        // são calculados no servidor a partir da sessão autenticada, e por
+        // isso não vão no corpo — mesmo arranjo do PUT de NIP's.
+        const payload = { ...readLawsuitFormPayload(), id: currentEditingLawsuitId };
+
+        try {
+            const response = await fetch(API.lawsuits, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify(payload),
+            });
+
+            if (response.status === 200) {
+                const modal = document.querySelector("[data-lawsuit-edit-modal]");
+                if (modal) closeModal(modal);
+                notifySuccess("Processo atualizado com sucesso.");
+                await loadLawsuits();
+                return;
+            }
+
+            if (response.status === 401) {
+                window.location.replace(`${PAGES.login}?reason=session-expired`);
+                return;
+            }
+
+            const data = await readJson(response);
+            notifyError(data?.message ?? "Não foi possível salvar o processo.");
+            console.error(`A API respondeu ${response.status}`);
+        } catch (error) {
+            notifyError("Não foi possível falar com o servidor. Verifique sua conexão e tente de novo.");
+            console.error(error);
+        } finally {
+            setLoading(submit, false);
+        }
+    });
 }
 
 /* =========================================================================
@@ -472,7 +625,10 @@ async function loadPage() {
 }
 
 function init() {
+    initCaseNumberMask();
     initCurrencyMask();
+    initLawsuitEditModal();
+    initLawsuitEditForm();
     initModal();
     initForm();
     loadPage();

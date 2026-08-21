@@ -2,17 +2,26 @@
 <!--
   Consultar Processos.
 
-  Lista todos os processos judiciais cadastrados. Nesta etapa a tela é só
-  leitura — sem filtro, sem editar processo — e serve de ponto de partida para
-  gerar um recurso: cada linha tem um botão "Gerar Recurso" que abre um modal
-  vinculado àquele processo (o lawsuit_id vem da própria linha, não é campo do
-  formulário). Edição de processo e listagem de recursos ficam para depois.
+  Lista todos os processos judiciais cadastrados. Cada linha tem dois botões:
+  "Editar" abre um modal com os mesmos campos de "Cadastrar Processo",
+  preenchidos (fillForm, utils/lawsuit_form.js) e salvos via PUT; "Gerar
+  Recurso" abre outro modal, vinculado àquele processo (o lawsuit_id vem da
+  própria linha, não é campo de formulário nenhum). Sem filtro nesta etapa, e
+  sem desativar/excluir processo — só os dados.
 
   Como nas demais telas, o HTML é puro e o shell (topbar, sidebar) nasce vazio
   em [data-topbar]/[data-sidebar], preenchido por js/pages/shell.js.
 
   Três estados (carregando / conteúdo / erro), mesmo desenho de
   controle_nips.html.
+
+  Os selects de status e probabilidade de perda existem duas vezes nesta
+  página — no modal de recurso e no de edição de processo, as duas telas
+  usando as mesmas tabelas de apoio (lawsuit_status, loss_probabilities). Por
+  isso os atributos data-* de cada select são prefixados por formulário
+  (data-appeal-status / data-lawsuit-status, e assim por diante): um atributo
+  genérico faria o querySelector (que pega só o primeiro elemento) de
+  controle_processos.js preencher o select errado.
 -->
 <html lang="pt-BR">
 <head>
@@ -64,9 +73,9 @@
                     <div class="page-head__text">
                         <h1 class="page-head__title">Consultar Processos</h1>
                         <p class="page-head__subtitle">
-                            Processos judiciais cadastrados. Use "Gerar Recurso"
-                            numa linha para registrar um recurso vinculado
-                            àquele processo.
+                            Processos judiciais cadastrados. Use "Editar" numa
+                            linha para alterar os dados do processo, ou "Gerar
+                            Recurso" para registrar um recurso vinculado a ele.
                         </p>
                     </div>
 
@@ -244,7 +253,7 @@
                 <div class="field">
                     <label class="field__label" for="appeal-judging-body">Órgão julgador</label>
                     <select class="select" id="appeal-judging-body" name="judging_body_id" required
-                            data-form-judging-body aria-describedby="erro-appeal-judging-body">
+                            data-appeal-judging-body aria-describedby="erro-appeal-judging-body">
                         <option value="">Selecione</option>
                     </select>
                     <p class="field__error" id="erro-appeal-judging-body" data-error-for="appeal-judging-body" hidden></p>
@@ -263,7 +272,7 @@
                 <div class="field">
                     <label class="field__label" for="appeal-status">Status</label>
                     <select class="select" id="appeal-status" name="status_id" required
-                            data-form-status aria-describedby="erro-appeal-status">
+                            data-appeal-status aria-describedby="erro-appeal-status">
                         <option value="">Selecione</option>
                     </select>
                     <p class="field__error" id="erro-appeal-status" data-error-for="appeal-status" hidden></p>
@@ -272,7 +281,7 @@
                 <div class="field">
                     <label class="field__label" for="appeal-loss-probability">Probabilidade de perda</label>
                     <select class="select" id="appeal-loss-probability" name="loss_probability_id" required
-                            data-form-loss-probability aria-describedby="erro-appeal-loss-probability">
+                            data-appeal-loss-probability aria-describedby="erro-appeal-loss-probability">
                         <option value="">Selecione</option>
                     </select>
                     <p class="field__error" id="erro-appeal-loss-probability" data-error-for="appeal-loss-probability" hidden></p>
@@ -288,6 +297,130 @@
             <span class="spacer"></span>
             <button type="button" class="btn btn--secondary" data-appeal-modal-close>Cancelar</button>
             <button type="submit" class="btn btn--primary" data-appeal-submit>Gerar recurso</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- =====================================================================
+     Modal de edição de processo
+
+     Os mesmos campos do formulário de cadastro (templates/lancar_processo.html),
+     porque o processo editado é a mesma entidade cadastrada lá — mesmos id/name,
+     preenchidos por fillForm() (utils/lawsuit_form.js) ao abrir. Sem o
+     agrupamento role="group" da tela de cadastro: aquele existe para organizar
+     uma página inteira, e aqui é só um modal (mesma escolha do modal de editar
+     NIP em controle_nips.html). <dialog> nativo: Esc, foco preso dentro e fundo
+     inerte já vêm do elemento. novalidate porque a validação é feita em
+     utils/lawsuit_form.js.
+     ===================================================================== -->
+<dialog class="modal" data-lawsuit-edit-modal aria-labelledby="titulo-modal-processo">
+    <div class="modal__head">
+        <div>
+            <h2 class="modal__title" id="titulo-modal-processo">Editar Processo</h2>
+            <p class="modal__subtitle">Altere os dados do processo e salve para atualizar.</p>
+        </div>
+        <button type="button" class="btn-icon modal__close" data-lawsuit-edit-modal-close aria-label="Fechar">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+        </button>
+    </div>
+
+    <form data-lawsuit-edit-form novalidate>
+        <div class="modal__body">
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="lawsuit-case-number">Número do processo</label>
+                    <input class="input tabular" type="text" id="lawsuit-case-number" name="case_number"
+                           inputmode="numeric" maxlength="25" placeholder="0000000-00.0000.0.00.0000"
+                           autocomplete="off" required data-case-number-input
+                           aria-describedby="erro-lawsuit-case-number">
+                    <p class="field__error" id="erro-lawsuit-case-number" data-error-for="lawsuit-case-number" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="lawsuit-date">Data do processo</label>
+                    <input class="input" type="date" id="lawsuit-date" name="lawsuit_date" required
+                           aria-describedby="erro-lawsuit-date">
+                    <p class="field__error" id="erro-lawsuit-date" data-error-for="lawsuit-date" hidden></p>
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="lawsuit-plaintiff">Autor (Requerente)</label>
+                    <input class="input" type="text" id="lawsuit-plaintiff" name="plaintiff"
+                           maxlength="255" autocomplete="off" required
+                           aria-describedby="erro-lawsuit-plaintiff">
+                    <p class="field__error" id="erro-lawsuit-plaintiff" data-error-for="lawsuit-plaintiff" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="lawsuit-defendant">Réu (Requerido)</label>
+                    <input class="input" type="text" id="lawsuit-defendant" name="defendant"
+                           maxlength="255" autocomplete="off" required
+                           aria-describedby="erro-lawsuit-defendant">
+                    <p class="field__error" id="erro-lawsuit-defendant" data-error-for="lawsuit-defendant" hidden></p>
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="lawsuit-subject-matter">Objeto/Assunto</label>
+                    <select class="select" id="lawsuit-subject-matter" name="subject_matter_id" required
+                            data-lawsuit-subject-matter aria-describedby="erro-lawsuit-subject-matter">
+                        <option value="">Selecione</option>
+                    </select>
+                    <p class="field__error" id="erro-lawsuit-subject-matter" data-error-for="lawsuit-subject-matter" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="lawsuit-proceeding-stage">Estágio processual</label>
+                    <select class="select" id="lawsuit-proceeding-stage" name="proceeding_stage_id" required
+                            data-lawsuit-proceeding-stage aria-describedby="erro-lawsuit-proceeding-stage">
+                        <option value="">Selecione</option>
+                    </select>
+                    <p class="field__error" id="erro-lawsuit-proceeding-stage" data-error-for="lawsuit-proceeding-stage" hidden></p>
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="lawsuit-status">Status</label>
+                    <select class="select" id="lawsuit-status" name="status_id" required
+                            data-lawsuit-status aria-describedby="erro-lawsuit-status">
+                        <option value="">Selecione</option>
+                    </select>
+                    <p class="field__error" id="erro-lawsuit-status" data-error-for="lawsuit-status" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="lawsuit-loss-probability">Probabilidade de perda</label>
+                    <select class="select" id="lawsuit-loss-probability" name="loss_probability_id" required
+                            data-lawsuit-loss-probability aria-describedby="erro-lawsuit-loss-probability">
+                        <option value="">Selecione</option>
+                    </select>
+                    <p class="field__error" id="erro-lawsuit-loss-probability" data-error-for="lawsuit-loss-probability" hidden></p>
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="field__label" for="lawsuit-claim-value">Valor da causa (R$)</label>
+                    <input class="input tabular" type="text" id="lawsuit-claim-value" name="claim_value"
+                           inputmode="decimal" placeholder="0,00" autocomplete="off" required
+                           data-currency-input aria-describedby="erro-lawsuit-claim-value">
+                    <p class="field__error" id="erro-lawsuit-claim-value" data-error-for="lawsuit-claim-value" hidden></p>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="modal__footer">
+            <span class="spacer"></span>
+            <button type="button" class="btn btn--secondary" data-lawsuit-edit-modal-close>Cancelar</button>
+            <button type="submit" class="btn btn--primary" data-lawsuit-edit-submit>Salvar alterações</button>
         </div>
     </form>
 </dialog>

@@ -1,9 +1,9 @@
 /**
- * Formulário de cadastro de processo judicial ("Cadastrar Processo").
- *
- * Único hoje, mas separado de js/pages/lancar_processo.js pelo mesmo motivo de
- * utils/nip_form.js: quando a tela de consulta/edição existir, ela reusa esta
- * validação e esta leitura de campos em vez de duplicá-las.
+ * Formulário de processo judicial — mesmos campos em "Cadastrar Processo"
+ * (js/pages/lancar_processo.js) e no modal de editar de "Consultar Processos"
+ * (js/pages/controle_processos.js), com os mesmos ids nas duas telas: o
+ * processo editado ali é a mesma entidade cadastrada aqui. Igual à relação
+ * entre utils/nip_form.js e as duas telas de NIP's.
  *
  * populateSelect() não está aqui: é genérica (recebe {id, name}) e já existe em
  * utils/nip_form.js — importar de lá em vez de duplicar.
@@ -16,6 +16,8 @@
  *   [data-case-number-input]       campo do número do processo (máscara abaixo)
  *   [data-currency-input]          campo do valor da causa (máscara abaixo)
  */
+
+import { toIsoDate } from "./nip_form.js";
 
 /* =========================================================================
    Número do processo
@@ -206,6 +208,29 @@ export function readFormPayload() {
         status_id: Number(document.getElementById("lawsuit-status").value),
         loss_probability_id: Number(document.getElementById("lawsuit-loss-probability").value),
     };
+}
+
+/**
+ * Escreve um processo existente nos campos, para edição.
+ *
+ * case_number e claim_value passam pelas próprias máscaras (formatCaseNumber,
+ * formatCurrency) para a tela mostrar exatamente o que a digitação mostraria
+ * — a coluna guarda só dígito nos dois casos. claim_value chega como Decimal
+ * (string, ex. "1234.56"); Math.round(... * 100) recupera os "centavos" que
+ * formatCurrency espera receber como dígitos.
+ */
+export function fillForm(lawsuit) {
+    document.getElementById("lawsuit-case-number").value = formatCaseNumber(lawsuit.case_number);
+    document.getElementById("lawsuit-date").value = toIsoDate(lawsuit.lawsuit_date);
+    document.getElementById("lawsuit-plaintiff").value = lawsuit.plaintiff ?? "";
+    document.getElementById("lawsuit-defendant").value = lawsuit.defendant ?? "";
+    document.getElementById("lawsuit-claim-value").value = formatCurrency(String(Math.round(Number(lawsuit.claim_value) * 100)));
+    document.getElementById("lawsuit-subject-matter").value = String(lawsuit.subject_matter_id);
+    document.getElementById("lawsuit-proceeding-stage").value = String(lawsuit.proceeding_stage_id);
+    document.getElementById("lawsuit-status").value = String(lawsuit.status_id);
+    document.getElementById("lawsuit-loss-probability").value = String(lawsuit.loss_probability_id);
+
+    clearFormErrors();
 }
 
 /* =========================================================================
