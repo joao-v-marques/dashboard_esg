@@ -2,10 +2,13 @@
  * Cadastros do Jurídico: mantém as listas que alimentam os formulários de
  * processo judicial.
  *
- * A tela é dirigida pelo registro CATALOGS logo abaixo. Hoje ele tem uma
- * entrada — objetos do processo — e as outras quatro listas do Jurídico
- * (trâmites, status, chance de perda, órgãos julgadores) entram como irmãs
+ * A tela é dirigida pelo registro CATALOGS logo abaixo. Hoje ele tem duas
+ * entradas — objetos do processo e trâmites — e as outras três listas do
+ * Jurídico (status, chance de perda, órgãos julgadores) entram como irmãs
  * assim que ganharem POST/PUT/DELETE no backend. Hoje elas só têm GET.
+ *
+ * A segunda entrada entrou sem tocar em nenhuma função deste arquivo, que é o
+ * que a regra abaixo existe para garantir.
  *
  * REGRA QUE PROTEGE ESSA ESTRUTURA: nenhuma função daqui pode olhar
  * `catalog.key` para decidir o que fazer. Se alguma precisar perguntar "qual
@@ -103,6 +106,45 @@ const CATALOGS = [
             rowEditLabel: (name) => `Editar objeto ${name}`,
             rowDeactivateLabel: (name) => `Desativar objeto ${name}`,
             rowReactivateLabel: (name) => `Reativar objeto ${name}`,
+        },
+    },
+    {
+        key: "tramites",
+        group: "Jurídico",
+        navLabel: "Trâmites do processo",
+        title: "Trâmites do processo",
+        // "Trâmite" e não "Estágio processual": este é o cabeçalho de uma
+        // coluna, e é a palavra que controle_processos.html já usa na coluna do
+        // mesmo campo. O nome por extenso fica nos rótulos de formulário, onde
+        // há largura para ele.
+        columnLabel: "Trâmite",
+        searchPlaceholder: "Buscar pelo nome do trâmite",
+        endpoint: API.proceedingStages,
+        // Espelha a validação de ProceedingStageService.create.
+        maxLength: 255,
+        texts: {
+            newButton: "Novo trâmite",
+            createTitle: "Novo trâmite",
+            createSubtitle: "Ele passa a aparecer ao cadastrar um processo.",
+            editTitle: "Editar trâmite",
+            editSubtitle: "O novo nome vale também para os processos que já usam este trâmite.",
+            fieldLabel: "Nome do trâmite",
+            submitCreate: "Cadastrar trâmite",
+            submitEdit: "Salvar alterações",
+            created: (name) => `Trâmite "${name}" cadastrado.`,
+            updated: (name) => `Trâmite "${name}" atualizado.`,
+            reactivatedOnCreate: (name) =>
+                `"${name}" já existia como trâmite inativo e foi reativado. Ele volta a aparecer ao cadastrar um processo.`,
+            deactivated: (name) => `Trâmite "${name}" desativado.`,
+            reactivated: (name) => `Trâmite "${name}" reativado.`,
+            emptyAll: "Nenhum trâmite cadastrado ainda.",
+            emptyFiltered: "Nenhum trâmite para os filtros selecionados.",
+            confirmDeactivateTitle: "Desativar trâmite",
+            confirmDeactivateText: (name) =>
+                `"${name}" deixa de aparecer ao cadastrar um processo. Os processos que já usam esse trâmite continuam como estão — nada é apagado.`,
+            rowEditLabel: (name) => `Editar trâmite ${name}`,
+            rowDeactivateLabel: (name) => `Desativar trâmite ${name}`,
+            rowReactivateLabel: (name) => `Reativar trâmite ${name}`,
         },
     },
 ];
