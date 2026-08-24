@@ -136,15 +136,15 @@ async function loadReferenceData() {
         statusResponse,
         lossProbabilitiesResponse,
     ] = await Promise.all([
-        // Com os inativos: um processo antigo pode apontar para um objeto ou um
-        // trâmite que saiu de circulação, e ele precisa continuar aparecendo
-        // tanto no filtro quanto no campo do modal de edição. Ver populateSelect
-        // e allowInactiveOption, mais abaixo. As três listas restantes ainda não
-        // têm CRUD, então não têm inativo para trazer.
+        // Com os inativos: um processo antigo pode apontar para um objeto, um
+        // trâmite ou um status que saiu de circulação, e ele precisa continuar
+        // aparecendo tanto no filtro quanto no campo do modal de edição. Ver
+        // populateSelect e allowInactiveOption, mais abaixo. As duas listas
+        // restantes ainda não têm CRUD, então não têm inativo para trazer.
         fetch(`${API.subjectMatters}?include_inactive=true`, { credentials: "same-origin" }),
         fetch(`${API.proceedingStages}?include_inactive=true`, { credentials: "same-origin" }),
         fetch(API.judgingBodies, { credentials: "same-origin" }),
-        fetch(API.lawsuitStatus, { credentials: "same-origin" }),
+        fetch(`${API.lawsuitStatus}?include_inactive=true`, { credentials: "same-origin" }),
         fetch(API.lossProbabilities, { credentials: "same-origin" }),
     ]);
 
@@ -164,12 +164,17 @@ async function loadReferenceData() {
         { markInactive: true });
     populateSelect(document.querySelector("[data-filter-proceeding-stage]"), proceedingStages, "Todos",
         { markInactive: true });
-    populateSelect(document.querySelector("[data-filter-status]"), status, "Todos");
+    populateSelect(document.querySelector("[data-filter-status]"), status, "Todos",
+        { markInactive: true });
     populateSelect(document.querySelector("[data-filter-loss-probability]"), lossProbabilities, "Todas");
 
     // Modal de recurso.
     populateSelect(document.querySelector("[data-appeal-judging-body]"), judgingBodies, "Selecione");
-    populateSelect(document.querySelector("[data-appeal-status]"), status, "Selecione");
+    // O modal de recurso só cadastra, nunca edita um recurso existente (ver
+    // startCreatingAppeal), então aqui basta bloquear o inativo — não há um
+    // recurso em edição para o qual reabrir a opção.
+    populateSelect(document.querySelector("[data-appeal-status]"), status, "Selecione",
+        { markInactive: true, disableInactive: true });
     populateSelect(document.querySelector("[data-appeal-loss-probability]"), lossProbabilities, "Selecione");
 
     // Modal de edição de processo.
@@ -177,7 +182,8 @@ async function loadReferenceData() {
         { markInactive: true, disableInactive: true });
     populateSelect(document.querySelector("[data-lawsuit-proceeding-stage]"), proceedingStages, "Selecione",
         { markInactive: true, disableInactive: true });
-    populateSelect(document.querySelector("[data-lawsuit-status]"), status, "Selecione");
+    populateSelect(document.querySelector("[data-lawsuit-status]"), status, "Selecione",
+        { markInactive: true, disableInactive: true });
     populateSelect(document.querySelector("[data-lawsuit-loss-probability]"), lossProbabilities, "Selecione");
 }
 
@@ -635,14 +641,15 @@ function openLawsuitEditModal() {
  *
  * Registro desativado entra no select marcado e bloqueado, para não ser
  * escolhido em processo nenhum. Mas o processo que já o usa precisa poder ser
- * editado — mexer no valor da causa não pode apagar o objeto ou o trâmite dele.
+ * editado — mexer no valor da causa não pode apagar o objeto, o trâmite ou o
+ * status dele.
  *
  * Redesabilita os demais no mesmo passo: sem isso, editar dois processos em
  * sequência deixaria solto o item liberado na abertura anterior.
  *
- * Recebe o seletor do campo em vez de existir uma função por lista: as duas
- * listas com CRUD (objetos e trâmites) precisam exatamente disto, e as outras
- * três precisarão quando ganharem o seu.
+ * Recebe o seletor do campo em vez de existir uma função por lista: as três
+ * listas com CRUD (objetos, trâmites e status) precisam exatamente disto, e as
+ * outras duas precisarão quando ganharem o seu.
  */
 function allowInactiveOption(fieldSelector, itemId) {
     document.querySelectorAll(`${fieldSelector} option[data-inactive]`)
@@ -658,6 +665,7 @@ function startEditingLawsuit(lawsuit) {
     // quando o valor for escrito neles.
     allowInactiveOption("[data-lawsuit-subject-matter]", lawsuit.subject_matter_id);
     allowInactiveOption("[data-lawsuit-proceeding-stage]", lawsuit.proceeding_stage_id);
+    allowInactiveOption("[data-lawsuit-status]", lawsuit.status_id);
     fillLawsuitForm(lawsuit);
     openLawsuitEditModal();
 }
