@@ -1,10 +1,10 @@
 from models.subject_matters_model import SubjectMattersModel, SubjectMatters
-from utils.exceptions import ValidationError
+from utils.exceptions import ValidationError, NotFoundError
 
 class SubjectMattersService:
-    def get_all():
+    def get_all(include_inactive=False):
         try:
-            subject_matters = SubjectMattersModel.get_all()
+            subject_matters = SubjectMattersModel.get_all(include_inactive)
 
             return subject_matters
         except Exception as e:
@@ -25,8 +25,14 @@ class SubjectMattersService:
             if len(name) > 255:
                 raise ValidationError("O nome do objeto deve ter no máximo 255 caracteres")
 
-            if SubjectMattersModel.get_by_name(name):
-                raise ValidationError("Já existe um objeto cadastrado com esse nome")
+            existing_subject_matter = SubjectMattersModel.get_by_name(name)
+
+            if existing_subject_matter:
+                if existing_subject_matter.is_active:
+                    raise ValidationError("Já existe um objeto cadastrado com esse nome")
+
+                # Tratamento para reativar Objeto caso um usuário tente cadastrar algum já existente e inativo
+                return SubjectMattersModel.set_active(existing_subject_matter.id, True)
 
             subject_matter = SubjectMatters(
                 name=name
@@ -36,6 +42,23 @@ class SubjectMattersService:
         
             return new_subject_matter
         except ValidationError:
+            raise
+        except Exception as e:
+            raise Exception(str(e))
+
+    def delete(subject_matter_id):
+        try:
+            subject_matter = SubjectMattersModel.get_by_id(subject_matter_id)
+
+            if subject_matter is None:
+                raise NotFoundError("Objeto não encontrado")
+
+            # Caso esteja inativo, devolve o registro como está
+            if not subject_matter.is_active:
+                return subject_matter
+
+            return SubjectMattersModel.set_active(subject_matter_id, False)
+        except (ValidationError, NotFoundError):
             raise
         except Exception as e:
             raise Exception(str(e))
