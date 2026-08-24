@@ -41,6 +41,28 @@ def create():
             "message": str(e)
         }), 500
 
+@bp_subject_matters.route("/api/subject-matters/<int:subject_matter_id>", methods=['PUT'])
+@token_required_api
+def update(subject_matter_id):
+    try:
+        data = request.get_json(silent=True)
+
+        updated_subject_matter = SubjectMattersService.update(subject_matter_id, data)
+
+        return jsonify(updated_subject_matter.to_dict()), 200
+    except NotFoundError as e:
+        return jsonify({
+            "message": str(e)
+        }), 404
+    except ValidationError as e:
+        return jsonify({
+            "message": str(e)
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "message": str(e)
+        }), 500
+
 @bp_subject_matters.route("/api/subject-matters/<int:subject_matter_id>", methods=['DELETE'])
 @token_required_api
 def delete(subject_matter_id):

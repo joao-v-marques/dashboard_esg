@@ -139,6 +139,38 @@ class SubjectMattersModel:
             if conn:
                 conn.close()
 
+    @staticmethod
+    def update(subject_matter):
+        conn = None
+        cursor = None
+        try:
+            conn, cursor = get_db_connection()
+
+            sql_query = """
+                UPDATE subject_matters
+                SET name = %s
+                WHERE id = %s
+                RETURNING *
+            """
+            values = (subject_matter.name, subject_matter.id)
+
+            cursor.execute(sql_query, values)
+            updated_subject_matter = cursor.fetchone()
+
+            conn.commit()
+
+            if updated_subject_matter is None:
+                return None
+
+            return SubjectMatters(**updated_subject_matter)
+        except Exception as e:
+            raise Exception(str(e))
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
     # Função de SOFT DELETE de um subject_matters
     @staticmethod
     def set_active(subject_matter_id, is_active):
