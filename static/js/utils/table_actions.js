@@ -1,6 +1,6 @@
 /**
- * Ações da coluna "Ações", na parte que é igual nas duas telas que têm tabela
- * (Lançamento de Resíduos e Controle de NIP's).
+ * Ações da coluna "Ações", na parte que é igual em toda tela que tem tabela
+ * (Resíduos, NIP's, Processos e os Cadastros do Jurídico).
  *
  * São botões só de ícone: numa tabela larga, a palavra "Editar" repetida em
  * cada linha vira uma coluna de texto que compete com o dado — que é o que a
@@ -35,6 +35,24 @@ const APPEAL_ICON = `
               stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
     </svg>`;
 
+// Círculo cortado — o sinal universal de "fora de circulação". Vale mais que
+// uma lixeira aqui: a ação é soft delete, o registro continua no banco e volta
+// com um clique; lixeira prometeria uma exclusão que não acontece.
+const DEACTIVATE_ICON = `
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+        <circle cx="10" cy="10" r="6.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="m5.4 5.4 9.2 9.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>`;
+
+// Seta em arco, no sentido anti-horário: desfazer o que o ícone acima fez.
+const REACTIVATE_ICON = `
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+        <path d="M4.5 10a5.5 5.5 0 1 0 1.9-4.16" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round"/>
+        <path d="M4 3.5v3h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round"/>
+    </svg>`;
+
 /**
  * Botão de editar de uma linha.
  *
@@ -66,6 +84,43 @@ export function buildAppealButton({ label, tooltip = "Gerar Recurso", onClick })
     button.type = "button";
     button.className = "btn-icon btn-icon--row";
     button.innerHTML = APPEAL_ICON;
+    button.setAttribute("aria-label", label);
+    button.dataset.tooltip = tooltip;
+    button.addEventListener("click", onClick);
+
+    return button;
+}
+
+/**
+ * Botão de desativar de uma linha (soft delete).
+ *
+ * Duas funções, e não uma buildToggleActiveButton({ isActive }): este módulo
+ * monta botão, não decide estado. Quem sabe se a linha está ativa é a página,
+ * que já tem o registro em mãos — passar o booleano para cá só mudaria o lugar
+ * do `if`, e de quebra faria o módulo conhecer o formato do dado.
+ *
+ * Sem variante de perigo no botão: a desativação é reversível e o vermelho
+ * repetido em toda linha faria a tabela inteira parecer um alerta. O peso da
+ * ação está no modal de confirmação, que é onde ela de fato acontece.
+ */
+export function buildDeactivateButton({ label, tooltip = "Desativar", onClick }) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn-icon btn-icon--row";
+    button.innerHTML = DEACTIVATE_ICON;
+    button.setAttribute("aria-label", label);
+    button.dataset.tooltip = tooltip;
+    button.addEventListener("click", onClick);
+
+    return button;
+}
+
+/** Botão de reativar de uma linha — o par de buildDeactivateButton. */
+export function buildReactivateButton({ label, tooltip = "Reativar", onClick }) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn-icon btn-icon--row";
+    button.innerHTML = REACTIVATE_ICON;
     button.setAttribute("aria-label", label);
     button.dataset.tooltip = tooltip;
     button.addEventListener("click", onClick);

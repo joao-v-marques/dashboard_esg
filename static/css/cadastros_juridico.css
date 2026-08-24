@@ -1,0 +1,75 @@
+/* ==========================================================================
+   cadastros_juridico.css — estilos exclusivos da tela de Cadastros do Jurídico.
+
+   Cabeçalho de página, card, barra de ferramentas, tabela, badges, campos,
+   modal, estado vazio e a coluna lateral (.catalog-nav) vêm inteiros de
+   components.css. Aqui só entra o arranjo dos dois blocos da tela — a coluna
+   de listas e o painel da lista escolhida — e a repartição das colunas da
+   tabela.
+   ========================================================================== */
+
+/* A coluna de listas tem largura fixa e o painel fica com o resto.
+
+   minmax(0, 1fr) e não 1fr: a tabela tem min-width própria (.table, em
+   components.css) e, com 1fr, estouraria a coluna do grid em vez de rolar
+   dentro do .table-wrap — que é justamente o que o wrap existe para fazer. */
+.catalog-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: var(--gutter);
+  align-items: start;
+}
+
+/* No degrau em que as grades de três colunas viram uma, a coluna de listas
+   passa para cima do painel. Vira faixa horizontal rolável em vez de empilhar:
+   com as cinco listas do Jurídico, empilhadas elas empurrariam a tabela para
+   fora da primeira tela inteira. */
+@media (max-width: 899px) {
+  .catalog-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .catalog-nav__list {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding-bottom: var(--space-4);
+  }
+
+  .catalog-nav__link {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  /* A barra de 4px do item atual é vertical e pressupõe item empilhado; na
+     faixa horizontal ela encostaria no item anterior. O fundo da pílula já
+     marca qual é o atual. */
+  .catalog-nav__link.is-active::before {
+    content: none;
+  }
+}
+
+/* Repartição das colunas da tabela.
+
+   Tudo aqui mora dentro de @media (min-width: 768px) porque abaixo disso
+   .table--cards transforma tabela, linha e célula em blocos: table-layout e
+   largura de coluna deixam de significar qualquer coisa e, pior, quebrariam o
+   card. Mesma razão comentada em nips.css e lawsuits.css. */
+@media (min-width: 768px) {
+  .catalog-table {
+    table-layout: fixed;
+    /* Três colunas curtas cabem sem a min-width de 960px que .table dá a
+       tabelas largas — sem isto a tabela rolaria de lado à toa. */
+    min-width: 0;
+  }
+
+  .catalog-table th:nth-child(1),
+  .catalog-table td:nth-child(1) { width: auto; }
+
+  .catalog-table th:nth-child(2),
+  .catalog-table td:nth-child(2) { width: 140px; }
+
+  .catalog-table th:nth-child(3),
+  .catalog-table td:nth-child(3) { width: 128px; }
+}

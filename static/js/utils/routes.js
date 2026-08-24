@@ -22,6 +22,7 @@ export const PAGES = {
     nipControl: `${BASE_PATH}/nips/controle`,
     lawsuitCreate: `${BASE_PATH}/processos/cadastrar`,
     lawsuitControl: `${BASE_PATH}/processos/consultar`,
+    lawsuitCatalogs: `${BASE_PATH}/processos/cadastros`,
 };
 
 /**

@@ -1488,6 +1488,21 @@ button.input-wrap__affix[aria-pressed="true"] {
   margin-left: var(--space-16);
 }
 
+/* Linha de "nenhum registro" da tabela.
+
+   Nasceu duplicada em nips.css, lawsuits.css e residuos.css, com o combinado
+   escrito nos três: na quarta tela ela subiria para cá. A quarta é a de
+   cadastros do jurídico — subiu.
+
+   É uma <tr> fixa no fim do <tbody>, e não um bloco à parte: dentro da tabela
+   ela herda a largura das colunas e o filtro no cliente só precisa alternar um
+   [hidden], sem trocar a tabela inteira por outro elemento. */
+.records-empty-row td {
+  text-align: center;
+  padding: var(--space-48) var(--space-16);
+  color: var(--color-text-muted);
+}
+
 /* Barra de ferramentas da tabela ------------------------------------------ */
 
 .toolbar {
@@ -2059,6 +2074,32 @@ button.input-wrap__affix[aria-pressed="true"] {
   .modal__section-head .btn { width: 100%; }
 }
 
+/* Modal de confirmação ----------------------------------------------------
+ *
+ * Mesma caixa do .modal, mais estreita. Os 880px do modal de formulário
+ * existem para caber duas colunas de campos; duas frases nessa largura ficam
+ * com a linha longa demais para ler e o par de botões perdido no canto.
+ *
+ * Não leva <form> dentro: a regra `.modal[open] > form` acima existe só para
+ * devolver o formulário à coluna flex do dialog. Sem formulário, .modal__body
+ * e .modal__footer são filhos diretos do <dialog> e a coluna já é dele. */
+.modal--confirm {
+  width: min(480px, calc(100vw - var(--space-32)));
+}
+
+/* O corpo da confirmação é texto, não campos: o gap de 32px do .modal__body
+   serve para separar blocos de formulário e aqui abriria um vão entre duas
+   frases da mesma ideia. */
+.modal--confirm .modal__body {
+  gap: var(--space-8);
+}
+
+.modal--confirm__text {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text);
+}
+
 /* --------------------------------------------------------------------------
    ABAS
    Faixa horizontal que troca o conteúdo abaixo dela sem sair da página. A aba
@@ -2123,6 +2164,89 @@ button.input-wrap__affix[aria-pressed="true"] {
    na cor da marca quando ela é a atual. */
 .tabs__tab[aria-selected="true"] .count-pill {
   background-color: var(--color-primary-subtle);
+}
+
+/* --------------------------------------------------------------------------
+   NAVEGAÇÃO DE CADASTROS
+   Coluna lateral interna das telas de cadastro: à esquerda a lista de listas,
+   à direita a tabela da lista escolhida.
+
+   Não é .tabs nem .nav, e o motivo de cada um importa:
+     .tabs   é faixa horizontal com sublinhado — aguenta bem umas cinco abas.
+             O Jurídico já tem cinco listas, e as telas de NIP's e Resíduos vêm
+             atrás; em faixa horizontal isso vira uma fileira que quebra em duas
+             linhas antes de a terceira tela existir.
+     .nav    é da sidebar escura: pinta com --color-text-on-inverse e
+             --color-brand-deep-*, que sobre .color-surface some.
+
+   Fica em components.css, e não no CSS da tela, porque as telas de cadastros
+   de NIP's e de Resíduos usam este mesmo bloco inteiro — é componente, não
+   arranjo de uma página.
+   -------------------------------------------------------------------------- */
+
+.catalog-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.catalog-nav__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.catalog-nav__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Mesma altura de qualquer controle da aplicação, para o item alinhar com o
+   topo do card ao lado quando a coluna e a tabela ficam lado a lado. */
+.catalog-nav__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--control-height);
+  padding-inline: var(--space-16);
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  transition: background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.catalog-nav__link:hover {
+  background-color: var(--color-hover-layer);
+  color: var(--color-text-strong);
+  text-decoration: none;
+}
+
+.catalog-nav__link.is-active {
+  background-color: var(--color-primary-subtle);
+  color: var(--color-primary-text);
+  font-weight: var(--weight-semibold);
+}
+
+/* A mesma barra de 4px que marca o item atual na sidebar (.nav__link.is-active).
+   Repetir o marcador é de propósito: "onde eu estou" tem que se parecer com
+   "onde eu estou" nos dois níveis de navegação da tela. */
+.catalog-nav__link.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--space-8);
+  bottom: var(--space-8);
+  width: 4px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary);
 }
 
 /* --------------------------------------------------------------------------

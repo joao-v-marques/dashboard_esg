@@ -13,8 +13,3 @@
   gap: var(--space-8);
 }
 
-.records-empty-row td {
-  text-align: center;
-  padding: var(--space-48) var(--space-16);
-  color: var(--color-text-muted);
-}
