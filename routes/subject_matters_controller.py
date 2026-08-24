@@ -82,4 +82,23 @@ def delete(subject_matter_id):
         return jsonify({
             "message": str(e)
         }), 500
-    
+
+@bp_subject_matters.route("/api/subject-matters/<int:subject_matter_id>/reactivate", methods=['PATCH'])
+@token_required_api
+def reactivate(subject_matter_id):
+    try:
+        reactivated_subject_matter = SubjectMattersService.reactivate(subject_matter_id)
+
+        return jsonify(reactivated_subject_matter.to_dict()), 200
+    except NotFoundError as e:
+        return jsonify({
+            "message": str(e)
+        }), 404
+    except ValidationError as e:
+        return jsonify({
+            "message": str(e)
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "message": str(e)
+        }), 500

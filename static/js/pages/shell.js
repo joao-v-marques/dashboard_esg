@@ -167,6 +167,22 @@ const NAV_ITEMS = [
                 <path d="M3 8h14M8 8v8" stroke="currentColor" stroke-width="1.5"/>
             </svg>`,
             },
+            {
+                // Mantém as listas que os dois itens acima consomem (objetos,
+                // trâmites, status...). Fica no grupo, e não numa seção
+                // "Administração" à parte: quem está trabalhando em processos
+                // tem a configuração de processos dois itens abaixo, em vez de
+                // ter que decidir em qual dos dois lugares ela mora.
+                href: PAGES.lawsuitCatalogs,
+                label: "Cadastros",
+                icon: `
+            <svg class="nav__icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M4 5.5h.01M4 10h.01M4 14.5h.01" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round"/>
+                <path d="M8 5.5h8M8 10h8M8 14.5h8" stroke="currentColor" stroke-width="1.5"
+                      stroke-linecap="round"/>
+            </svg>`,
+            },
         ],
     },
     // TODO: os demais itens entram aqui conforme as telas forem criadas.

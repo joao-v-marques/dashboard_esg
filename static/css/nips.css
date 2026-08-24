@@ -136,14 +136,6 @@
   .nips-table-wrap { overflow-x: auto; }
 }
 
-/* Mesma regra de residuos.css. Vive nos dois arquivos porque cada tela carrega
-   só o seu CSS; se uma terceira tela precisar, ela sobe para components.css. */
-.records-empty-row td {
-  text-align: center;
-  padding: var(--space-48) var(--space-16);
-  color: var(--color-text-muted);
-}
-
 /* O <fieldset> que envolve os campos do formulário de lançamento só existe
    para desabilitar tudo de uma vez enquanto natureza e status carregam — ele
    não desenha nada. A borda e o padding que o navegador dá de graça a todo

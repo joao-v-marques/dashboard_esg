@@ -97,8 +97,26 @@ export function initNipNumberMask(root = document) {
    Selects de natureza e status
    ========================================================================= */
 
-/** Preenche um <select> a partir de uma lista de {id, name}. */
-export function populateSelect(select, items, placeholder) {
+/**
+ * Preenche um <select> a partir de uma lista de {id, name}.
+ *
+ * As opções extras existem para as tabelas de apoio que ganharam
+ * ativo/inativo (subject_matters hoje; as outras conforme forem ganhando).
+ * Um registro desativado não pode simplesmente sumir do select: um processo
+ * antigo aponta para ele, e sem a opção na lista o campo abriria em branco no
+ * modal de edição — perda silenciosa de dado ao salvar.
+ *
+ *   markInactive     acrescenta " (inativo)" ao rótulo e marca a opção com
+ *                    data-inactive, para quem preenche poder reabrir só a que
+ *                    o registro em edição usa.
+ *   disableInactive  além de marcar, impede a escolha. Serve ao formulário;
+ *                    num filtro seria peso morto, porque filtrar por um item
+ *                    fora de circulação é justamente o que se quer poder fazer.
+ *
+ * Nenhuma chamada antiga passa o quarto argumento, então o comportamento
+ * padrão é o de sempre.
+ */
+export function populateSelect(select, items, placeholder, { markInactive = false, disableInactive = false } = {}) {
     if (!select) return;
 
     select.innerHTML = "";
@@ -110,8 +128,16 @@ export function populateSelect(select, items, placeholder) {
 
     items.forEach((item) => {
         const option = document.createElement("option");
+        const inactive = markInactive && item.is_active === false;
+
         option.value = String(item.id);
-        option.textContent = item.name;
+        option.textContent = inactive ? `${item.name} (inativo)` : item.name;
+
+        if (inactive) {
+            option.dataset.inactive = "true";
+            option.disabled = disableInactive;
+        }
+
         select.appendChild(option);
     });
 }

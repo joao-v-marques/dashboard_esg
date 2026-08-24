@@ -97,3 +97,21 @@ class SubjectMattersService:
             raise
         except Exception as e:
             raise Exception(str(e))
+
+    def reactivate(subject_matter_id):
+        try:
+            subject_matter = SubjectMattersModel.get_by_id(subject_matter_id)
+
+            if subject_matter is None:
+                raise NotFoundError("Objeto não encontrado")
+
+            # Caso já esteja ativo, devolve o registro como está — mesmo desenho
+            # idempotente do delete() acima: repetir a ação não é erro
+            if subject_matter.is_active:
+                return subject_matter
+
+            return SubjectMattersModel.set_active(subject_matter_id, True)
+        except (ValidationError, NotFoundError):
+            raise
+        except Exception as e:
+            raise Exception(str(e))

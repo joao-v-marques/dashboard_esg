@@ -28,8 +28,8 @@
  * rótulo só, e o par passa a quebrar como uma peça inteira.
  *
  * Vive aqui, e não em components.css, porque só esta tela tem par de campos na
- * barra; se uma segunda precisar, sobe como .toolbar__range de verdade (mesma
- * regra de .records-empty-row logo abaixo).
+ * barra; se uma segunda precisar, sobe como .toolbar__range de verdade — foi o
+ * que aconteceu com .records-empty-row, que já subiu para components.css.
  */
 .toolbar__range {
   flex: 1 1 220px;
@@ -47,15 +47,6 @@
 .toolbar__range > div > .input {
   flex: 1 1 0;
   min-width: 0;
-}
-
-/* Mesma regra de nips.css e residuos.css. Vive nos três arquivos porque cada
-   tela carrega só o seu CSS; se uma quarta tela precisar, ela sobe para
-   components.css. */
-.records-empty-row td {
-  text-align: center;
-  padding: var(--space-48) var(--space-16);
-  color: var(--color-text-muted);
 }
 
 /* Tabela de "Consultar Processos" ------------------------------------------
