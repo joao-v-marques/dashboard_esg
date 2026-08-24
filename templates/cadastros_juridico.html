@@ -3,10 +3,10 @@
   Cadastros do Jurídico.
 
   Mantém as listas que alimentam os formulários de processo judicial. Hoje os
-  objetos do processo (subject_matters), os trâmites (proceeding_stages) e os
-  status (lawsuit_status), que são as tabelas de apoio com CRUD no backend;
-  chance de perda e órgãos julgadores entram no registro CATALOGS de
-  js/pages/cadastros_juridico.js conforme ganharem POST/PUT/DELETE.
+  objetos do processo (subject_matters), os trâmites (proceeding_stages), os
+  status (lawsuit_status) e as chances de perda (loss_probabilities), que são
+  as tabelas de apoio com CRUD no backend; órgãos julgadores entra no registro
+  CATALOGS de js/pages/cadastros_juridico.js quando ganhar POST/PUT/DELETE.
 
   Duas peças na tela: a coluna de listas à esquerda (.catalog-nav, em
   components.css) e o painel da lista escolhida à direita. Qual lista está
@@ -175,7 +175,8 @@
                                         <thead>
                                         <tr>
                                             <!-- O rótulo desta coluna muda com a lista (Objeto,
-                                                 Trâmite, Status, ...) e é escrito pelo JS. -->
+                                                 Trâmite, Status, Chance de perda) e é
+                                                 escrito pelo JS. -->
                                             <th scope="col" data-catalog-column-label>Nome</th>
                                             <th scope="col">Situação</th>
                                             <th scope="col" class="table__actions">Ações</th>

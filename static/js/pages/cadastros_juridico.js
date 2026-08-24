@@ -2,12 +2,12 @@
  * Cadastros do Jurídico: mantém as listas que alimentam os formulários de
  * processo judicial.
  *
- * A tela é dirigida pelo registro CATALOGS logo abaixo. Hoje ele tem três
- * entradas — objetos do processo, trâmites e status — e as outras duas listas
- * do Jurídico (chance de perda, órgãos julgadores) entram como irmãs assim
- * que ganharem POST/PUT/DELETE no backend. Hoje elas só têm GET.
+ * A tela é dirigida pelo registro CATALOGS logo abaixo. Hoje ele tem quatro
+ * entradas — objetos do processo, trâmites, status e chances de perda — e a
+ * última lista do Jurídico (órgãos julgadores) entra como irmã assim que
+ * ganhar POST/PUT/DELETE no backend. Hoje ela só tem GET.
  *
- * Nem a segunda nem a terceira entrada precisaram tocar em uma função sequer
+ * Nenhuma das entradas depois da primeira precisou tocar em uma função sequer
  * deste arquivo, que é o que a regra abaixo existe para garantir.
  *
  * REGRA QUE PROTEGE ESSA ESTRUTURA: nenhuma função daqui pode olhar
@@ -184,6 +184,48 @@ const CATALOGS = [
             rowEditLabel: (name) => `Editar status ${name}`,
             rowDeactivateLabel: (name) => `Desativar status ${name}`,
             rowReactivateLabel: (name) => `Reativar status ${name}`,
+        },
+    },
+
+    {
+        key: "chances-de-perda",
+        group: "Jurídico",
+        // Sem "do processo" no fim, ao contrário das três acima: "Chances de
+        // perda" já é inequívoco sozinho, e o sufixo aqui seria impreciso — a
+        // lista serve a processos e recursos, não só a processos.
+        navLabel: "Chances de perda",
+        title: "Chances de perda",
+        columnLabel: "Chance de perda",
+        searchPlaceholder: "Buscar pelo nome da chance de perda",
+        endpoint: API.lossProbabilities,
+        // Espelha a validação de LossProbabilityService.create.
+        maxLength: 255,
+        // Primeira lista feminina do registro — é o caso que o comentário no
+        // topo do array previa. Como o status, é FK de lawsuits e de
+        // lawsuit_appeals, então as frases falam em "processo ou recurso".
+        texts: {
+            newButton: "Nova chance de perda",
+            createTitle: "Nova chance de perda",
+            createSubtitle: "Ela passa a aparecer ao cadastrar um processo ou um recurso.",
+            editTitle: "Editar chance de perda",
+            editSubtitle: "O novo nome vale também para os processos e recursos que já usam esta chance de perda.",
+            fieldLabel: "Nome da chance de perda",
+            submitCreate: "Cadastrar chance de perda",
+            submitEdit: "Salvar alterações",
+            created: (name) => `Chance de perda "${name}" cadastrada.`,
+            updated: (name) => `Chance de perda "${name}" atualizada.`,
+            reactivatedOnCreate: (name) =>
+                `"${name}" já existia como chance de perda inativa e foi reativada. Ela volta a aparecer ao cadastrar um processo ou um recurso.`,
+            deactivated: (name) => `Chance de perda "${name}" desativada.`,
+            reactivated: (name) => `Chance de perda "${name}" reativada.`,
+            emptyAll: "Nenhuma chance de perda cadastrada ainda.",
+            emptyFiltered: "Nenhuma chance de perda para os filtros selecionados.",
+            confirmDeactivateTitle: "Desativar chance de perda",
+            confirmDeactivateText: (name) =>
+                `"${name}" deixa de aparecer ao cadastrar um processo ou um recurso. Os processos e recursos que já usam essa chance de perda continuam como estão — nada é apagado.`,
+            rowEditLabel: (name) => `Editar chance de perda ${name}`,
+            rowDeactivateLabel: (name) => `Desativar chance de perda ${name}`,
+            rowReactivateLabel: (name) => `Reativar chance de perda ${name}`,
         },
     },
 ];
