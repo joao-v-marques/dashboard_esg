@@ -14,3 +14,6 @@ class AuthError(ValueError):
 
 class UpstreamError(Exception):
     """Uma API externa (ex.: certificados_cooperados) não respondeu ou respondeu com erro -> 502."""
+
+class NotFoundError(Exception):
+    """O recurso pedido pelo id não existe -> 404."""
