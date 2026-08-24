@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 from middlewares.jwt_middleware import token_required
 
-# Um blueprint só para as duas telas de processos judiciais: mesma família,
+# Um blueprint só para as telas de processos judiciais: mesma família,
 # mesmo motivo de bp_render_nips ter duas rotas (ver render_nips.py).
 bp_render_lawsuits = Blueprint("bp_render_lawsuits", __name__)
 
@@ -14,3 +14,8 @@ def render_cadastrar_processo():
 @token_required
 def render_consultar_processos():
     return render_template("controle_processos.html")
+
+@bp_render_lawsuits.route("/processos/cadastros", methods=['GET'])
+@token_required
+def render_cadastros_juridico():
+    return render_template("cadastros_juridico.html")
