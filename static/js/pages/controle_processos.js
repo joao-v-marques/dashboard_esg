@@ -136,12 +136,13 @@ async function loadReferenceData() {
         statusResponse,
         lossProbabilitiesResponse,
     ] = await Promise.all([
-        // Com os inativos: um processo antigo pode apontar para um objeto que
-        // saiu de circulação, e ele precisa continuar aparecendo tanto no filtro
-        // quanto no campo do modal de edição. Ver populateSelect e
-        // allowInactiveSubjectMatter, mais abaixo.
+        // Com os inativos: um processo antigo pode apontar para um objeto ou um
+        // trâmite que saiu de circulação, e ele precisa continuar aparecendo
+        // tanto no filtro quanto no campo do modal de edição. Ver populateSelect
+        // e allowInactiveOption, mais abaixo. As três listas restantes ainda não
+        // têm CRUD, então não têm inativo para trazer.
         fetch(`${API.subjectMatters}?include_inactive=true`, { credentials: "same-origin" }),
-        fetch(API.proceedingStages, { credentials: "same-origin" }),
+        fetch(`${API.proceedingStages}?include_inactive=true`, { credentials: "same-origin" }),
         fetch(API.judgingBodies, { credentials: "same-origin" }),
         fetch(API.lawsuitStatus, { credentials: "same-origin" }),
         fetch(API.lossProbabilities, { credentials: "same-origin" }),
@@ -161,7 +162,8 @@ async function loadReferenceData() {
     // significa "não filtrar por este campo" em vez de "escolha um".
     populateSelect(document.querySelector("[data-filter-subject-matter]"), subjectMatters, "Todos",
         { markInactive: true });
-    populateSelect(document.querySelector("[data-filter-proceeding-stage]"), proceedingStages, "Todos");
+    populateSelect(document.querySelector("[data-filter-proceeding-stage]"), proceedingStages, "Todos",
+        { markInactive: true });
     populateSelect(document.querySelector("[data-filter-status]"), status, "Todos");
     populateSelect(document.querySelector("[data-filter-loss-probability]"), lossProbabilities, "Todas");
 
@@ -173,7 +175,8 @@ async function loadReferenceData() {
     // Modal de edição de processo.
     populateSelect(document.querySelector("[data-lawsuit-subject-matter]"), subjectMatters, "Selecione",
         { markInactive: true, disableInactive: true });
-    populateSelect(document.querySelector("[data-lawsuit-proceeding-stage]"), proceedingStages, "Selecione");
+    populateSelect(document.querySelector("[data-lawsuit-proceeding-stage]"), proceedingStages, "Selecione",
+        { markInactive: true, disableInactive: true });
     populateSelect(document.querySelector("[data-lawsuit-status]"), status, "Selecione");
     populateSelect(document.querySelector("[data-lawsuit-loss-probability]"), lossProbabilities, "Selecione");
 }
@@ -627,29 +630,34 @@ function openLawsuitEditModal() {
     document.body.classList.add("no-scroll");
 }
 
-/** Abre o modal já preenchido com um processo existente. */
 /**
- * Reabre, no select de objeto, apenas o inativo que ESTE processo usa.
+ * Reabre, num select do modal, apenas o inativo que ESTE processo usa.
  *
- * Objeto desativado entra no select marcado e bloqueado, para não ser escolhido
- * em processo nenhum. Mas o processo que já o usa precisa poder ser editado —
- * mexer no valor da causa não pode apagar o objeto dele.
+ * Registro desativado entra no select marcado e bloqueado, para não ser
+ * escolhido em processo nenhum. Mas o processo que já o usa precisa poder ser
+ * editado — mexer no valor da causa não pode apagar o objeto ou o trâmite dele.
  *
  * Redesabilita os demais no mesmo passo: sem isso, editar dois processos em
- * sequência deixaria solto o objeto liberado na abertura anterior.
+ * sequência deixaria solto o item liberado na abertura anterior.
+ *
+ * Recebe o seletor do campo em vez de existir uma função por lista: as duas
+ * listas com CRUD (objetos e trâmites) precisam exatamente disto, e as outras
+ * três precisarão quando ganharem o seu.
  */
-function allowInactiveSubjectMatter(subjectMatterId) {
-    document.querySelectorAll("[data-lawsuit-subject-matter] option[data-inactive]")
+function allowInactiveOption(fieldSelector, itemId) {
+    document.querySelectorAll(`${fieldSelector} option[data-inactive]`)
         .forEach((option) => {
-            option.disabled = option.value !== String(subjectMatterId);
+            option.disabled = option.value !== String(itemId);
         });
 }
 
+/** Abre o modal já preenchido com um processo existente. */
 function startEditingLawsuit(lawsuit) {
     currentEditingLawsuitId = lawsuit.id;
-    // Antes de fillLawsuitForm: o select precisa ter a opção habilitada quando
-    // o valor for escrito nele.
-    allowInactiveSubjectMatter(lawsuit.subject_matter_id);
+    // Antes de fillLawsuitForm: os selects precisam ter a opção habilitada
+    // quando o valor for escrito neles.
+    allowInactiveOption("[data-lawsuit-subject-matter]", lawsuit.subject_matter_id);
+    allowInactiveOption("[data-lawsuit-proceeding-stage]", lawsuit.proceeding_stage_id);
     fillLawsuitForm(lawsuit);
     openLawsuitEditModal();
 }
