@@ -1,7 +1,7 @@
 from database.connect_db import get_db_connection
 
 class SubjectMatters:
-    def __init__(self, id, name, is_active=None):
+    def __init__(self, name, id=None, is_active=None):
         self.id = id
         self.name = name
         self.is_active = is_active
@@ -42,3 +42,33 @@ class SubjectMattersModel:
                 cursor.close()
             if conn:
                 conn.close()
+
+    @staticmethod
+    def get_by_name(subject_matter_name):
+        conn = None
+        cursor = None
+        try:
+            conn, cursor = get_db_connection()
+
+            sql_query = """
+                SELECT *
+                FROM subject_matters
+                WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s))
+            """
+            values = (subject_matter_name,)
+
+            cursor.execute(sql_query, values)
+            subject_matter_data = cursor.fetchone()
+
+            if subject_matter_data is None:
+                return None
+
+            return SubjectMatters(**subject_matter_data)
+        except Exception as e:
+            raise Exception(str(e))
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+    
