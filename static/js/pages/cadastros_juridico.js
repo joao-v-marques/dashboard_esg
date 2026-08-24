@@ -2,19 +2,19 @@
  * Cadastros do Jurídico: mantém as listas que alimentam os formulários de
  * processo judicial.
  *
- * A tela é dirigida pelo registro CATALOGS logo abaixo. Hoje ele tem duas
- * entradas — objetos do processo e trâmites — e as outras três listas do
- * Jurídico (status, chance de perda, órgãos julgadores) entram como irmãs
- * assim que ganharem POST/PUT/DELETE no backend. Hoje elas só têm GET.
+ * A tela é dirigida pelo registro CATALOGS logo abaixo. Hoje ele tem três
+ * entradas — objetos do processo, trâmites e status — e as outras duas listas
+ * do Jurídico (chance de perda, órgãos julgadores) entram como irmãs assim
+ * que ganharem POST/PUT/DELETE no backend. Hoje elas só têm GET.
  *
- * A segunda entrada entrou sem tocar em nenhuma função deste arquivo, que é o
- * que a regra abaixo existe para garantir.
+ * Nem a segunda nem a terceira entrada precisaram tocar em uma função sequer
+ * deste arquivo, que é o que a regra abaixo existe para garantir.
  *
  * REGRA QUE PROTEGE ESSA ESTRUTURA: nenhuma função daqui pode olhar
  * `catalog.key` para decidir o que fazer. Se alguma precisar perguntar "qual
  * lista é essa?", o que falta é um campo no registro — não um if. É o que
- * mantém acrescentar a segunda lista em uma entrada, e não em uma varredura
- * pelo arquivo.
+ * mantém acrescentar uma lista em uma entrada, e não em uma varredura pelo
+ * arquivo.
  *
  * O motor vive aqui dentro, e não em utils/: por enquanto há uma tela de
  * cadastros só. Ele sobe para utils/catalog_crud.js quando a segunda existir
@@ -145,6 +145,45 @@ const CATALOGS = [
             rowEditLabel: (name) => `Editar trâmite ${name}`,
             rowDeactivateLabel: (name) => `Desativar trâmite ${name}`,
             rowReactivateLabel: (name) => `Reativar trâmite ${name}`,
+        },
+    },
+    {
+        key: "status",
+        group: "Jurídico",
+        navLabel: "Status do processo",
+        title: "Status do processo",
+        columnLabel: "Status",
+        searchPlaceholder: "Buscar pelo nome do status",
+        endpoint: API.lawsuitStatus,
+        // Espelha a validação de LawsuitStatusService.create.
+        maxLength: 255,
+        // As frases desta lista falam em "processo ou recurso" onde as outras
+        // duas falam só em processo: lawsuit_status é a única das cinco que é
+        // FK de duas tabelas (lawsuits e lawsuit_appeals), então desativar um
+        // status some dos dois formulários, não de um só.
+        texts: {
+            newButton: "Novo status",
+            createTitle: "Novo status",
+            createSubtitle: "Ele passa a aparecer ao cadastrar um processo ou um recurso.",
+            editTitle: "Editar status",
+            editSubtitle: "O novo nome vale também para os processos e recursos que já usam este status.",
+            fieldLabel: "Nome do status",
+            submitCreate: "Cadastrar status",
+            submitEdit: "Salvar alterações",
+            created: (name) => `Status "${name}" cadastrado.`,
+            updated: (name) => `Status "${name}" atualizado.`,
+            reactivatedOnCreate: (name) =>
+                `"${name}" já existia como status inativo e foi reativado. Ele volta a aparecer ao cadastrar um processo ou um recurso.`,
+            deactivated: (name) => `Status "${name}" desativado.`,
+            reactivated: (name) => `Status "${name}" reativado.`,
+            emptyAll: "Nenhum status cadastrado ainda.",
+            emptyFiltered: "Nenhum status para os filtros selecionados.",
+            confirmDeactivateTitle: "Desativar status",
+            confirmDeactivateText: (name) =>
+                `"${name}" deixa de aparecer ao cadastrar um processo ou um recurso. Os processos e recursos que já usam esse status continuam como estão — nada é apagado.`,
+            rowEditLabel: (name) => `Editar status ${name}`,
+            rowDeactivateLabel: (name) => `Desativar status ${name}`,
+            rowReactivateLabel: (name) => `Reativar status ${name}`,
         },
     },
 ];
