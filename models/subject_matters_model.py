@@ -71,4 +71,33 @@ class SubjectMattersModel:
                 cursor.close()
             if conn:
                 conn.close()
-    
+
+    @staticmethod
+    def create(subject_matter):
+        conn = None
+        cursor = None
+        try:
+            conn, cursor = get_db_connection()
+
+            sql_query = """
+                INSERT INTO subject_matters (name)
+                VALUES (%s)
+                RETURNING id
+            """
+            values = (subject_matter.name,)
+
+            cursor.execute(sql_query, values)
+            new_id = cursor.fetchone()["id"]
+
+            subject_matter.id = new_id
+
+            conn.commit()
+
+            return subject_matter
+        except Exception as e:
+            raise Exception(str(e))
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
