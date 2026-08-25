@@ -41,6 +41,7 @@ import { API, PAGES } from "../utils/routes.js";
 import { notifySuccess, notifyError } from "../utils/notyf.js";
 import { syncFilterClear } from "../utils/filters.js";
 import { buildEditButton } from "../utils/table_actions.js";
+import { lockPageScroll, unlockPageScroll } from "../utils/scroll_lock.js";
 
 // Espelha MIN_RECORD_DATE em services/waste_records_service.py. Só orienta o
 // campo de data no formulário; quem decide de verdade é o servidor.
@@ -392,7 +393,7 @@ function openRecordModal() {
     if (!modal) return;
 
     modal.showModal();
-    document.body.classList.add("no-scroll");
+    lockPageScroll();
 }
 
 /**
@@ -406,7 +407,7 @@ function openRecordModal() {
  */
 function closeModal(modal) {
     modal.close();
-    document.body.classList.remove("no-scroll");
+    unlockPageScroll();
 }
 
 /** Abre o modal já preenchido com um lançamento existente, em modo de edição. */
@@ -440,11 +441,11 @@ function initConsentModal() {
     });
 
     modal.addEventListener("close", () => {
-        document.body.classList.remove("no-scroll");
+        unlockPageScroll();
     });
 
     modal.showModal();
-    document.body.classList.add("no-scroll");
+    lockPageScroll();
 }
 
 function initModal() {
@@ -474,7 +475,7 @@ function initModal() {
     // fundo, Esc e o fechamento programático depois do envio —, então a trava
     // sai daqui, num lugar só, em vez de repetida em cada botão.
     modal.addEventListener("close", () => {
-        document.body.classList.remove("no-scroll");
+        unlockPageScroll();
     });
 }
 

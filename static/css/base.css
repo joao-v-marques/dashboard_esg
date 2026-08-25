@@ -223,9 +223,23 @@ hr {
 
 /* Trava a rolagem da página por trás de um modal aberto. showModal() já
    bloqueia interação com o fundo, mas não impede o scroll — quem abre o
-   <dialog> aplica esta classe ao body, e a remove no evento "close". */
+   <dialog> chama lockPageScroll() (js/utils/scroll_lock.js), que aplica esta
+   classe, e unlockPageScroll() na saída.
+
+   Vai no <html>, nunca no <body>: com `overflow-y: scroll` declarado no
+   elemento raiz (acima), o overflow do body deixa de ser propagado para a
+   viewport. No body esta classe não travava rolagem nenhuma e ainda fazia do
+   body um contêiner de rolagem — a topbar e a sidebar, que são sticky, se
+   ancoravam nele em vez da viewport e voltavam para a posição estática, de
+   modo que a sidebar subia e ficava cortada com a página rolada.
+
+   O padding devolve a largura da barra de rolagem, que some junto com o
+   overflow: sem ele o conteúdo se alarga ~15px no instante em que o modal
+   abre. A medida vem do JS, em --scrollbar-width; scrollbar-gutter não serve,
+   o Chrome ignora a canaleta no elemento raiz (medido, não suposto). */
 .no-scroll {
-  overflow: hidden;
+  overflow-y: hidden;
+  padding-right: var(--scrollbar-width, 0px);
 }
 
 /* Link "pular para o conteúdo" — primeiro tabstop de toda página do app. */
