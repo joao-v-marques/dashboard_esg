@@ -51,6 +51,7 @@ import { API, PAGES } from "../utils/routes.js";
 import { notifySuccess, notifyError, notifyWarning } from "../utils/notyf.js";
 import { syncFilterClear } from "../utils/filters.js";
 import { buildEditButton, buildDeactivateButton, buildReactivateButton } from "../utils/table_actions.js";
+import { lockPageScroll, unlockPageScroll } from "../utils/scroll_lock.js";
 
 /* =========================================================================
    O registro
@@ -615,7 +616,7 @@ function initFilters() {
 function openModal(modal) {
     if (!modal) return;
     modal.showModal();
-    document.body.classList.add("no-scroll");
+    lockPageScroll();
 }
 
 /**
@@ -628,7 +629,7 @@ function openModal(modal) {
 function closeModal(modal) {
     if (!modal) return;
     modal.close();
-    document.body.classList.remove("no-scroll");
+    unlockPageScroll();
 }
 
 function setModalMode(mode) {
@@ -694,7 +695,7 @@ function initModals() {
         // Esc fecha por conta do navegador e não passa por closeModal(); sem
         // isto a trava de rolagem ficaria de pé com a tela já liberada.
         modal?.addEventListener("close", () => {
-            document.body.classList.remove("no-scroll");
+            unlockPageScroll();
         });
     });
 

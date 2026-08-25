@@ -33,6 +33,7 @@ import { API, PAGES } from "../utils/routes.js";
 import { notifySuccess, notifyError } from "../utils/notyf.js";
 import { syncFilterClear } from "../utils/filters.js";
 import { buildEditButton } from "../utils/table_actions.js";
+import { lockPageScroll, unlockPageScroll } from "../utils/scroll_lock.js";
 import {
     initCpfMask,
     initNipNumberMask,
@@ -481,7 +482,7 @@ function openNipModal() {
     if (!modal) return;
 
     modal.showModal();
-    document.body.classList.add("no-scroll");
+    lockPageScroll();
 }
 
 /**
@@ -493,7 +494,7 @@ function openNipModal() {
  */
 function closeModal(modal) {
     modal.close();
-    document.body.classList.remove("no-scroll");
+    unlockPageScroll();
 }
 
 /** Abre o modal já preenchido com uma NIP existente. */
@@ -522,7 +523,7 @@ function initModal() {
     // fundo, Esc e o fechamento programático depois do envio —, então a trava
     // sai daqui, num lugar só, em vez de repetida em cada botão.
     modal.addEventListener("close", () => {
-        document.body.classList.remove("no-scroll");
+        unlockPageScroll();
     });
 }
 

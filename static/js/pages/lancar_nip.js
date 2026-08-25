@@ -27,6 +27,7 @@
 
 import { API, PAGES } from "../utils/routes.js";
 import { notifySuccess, notifyError } from "../utils/notyf.js";
+import { lockPageScroll, unlockPageScroll } from "../utils/scroll_lock.js";
 import {
     initCpfMask,
     initNipNumberMask,
@@ -175,17 +176,17 @@ function initConsentModal() {
 
     document.querySelector("[data-consent-accept]")?.addEventListener("click", () => {
         modal.close();
-        document.body.classList.remove("no-scroll");
+        unlockPageScroll();
     });
 
     // close() não é síncrono o bastante para dispensar a linha acima, mas o
     // listener continua como reforço para qualquer outro caminho de saída.
     modal.addEventListener("close", () => {
-        document.body.classList.remove("no-scroll");
+        unlockPageScroll();
     });
 
     modal.showModal();
-    document.body.classList.add("no-scroll");
+    lockPageScroll();
 }
 
 /* =========================================================================

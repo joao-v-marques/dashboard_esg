@@ -81,6 +81,7 @@ import {
     readJson,
 } from "../utils/lawsuit_appeal_form.js";
 import { buildEditButton, buildAppealButton } from "../utils/table_actions.js";
+import { lockPageScroll, unlockPageScroll } from "../utils/scroll_lock.js";
 
 let allLawsuits = [];
 let currentUser = null;
@@ -637,7 +638,7 @@ function openLawsuitEditModal() {
     if (!modal) return;
 
     modal.showModal();
-    document.body.classList.add("no-scroll");
+    lockPageScroll();
 }
 
 /**
@@ -690,7 +691,7 @@ function initLawsuitEditModal() {
     });
 
     modal.addEventListener("close", () => {
-        document.body.classList.remove("no-scroll");
+        unlockPageScroll();
     });
 }
 
@@ -764,7 +765,7 @@ function openAppealModal() {
     if (!modal) return;
 
     modal.showModal();
-    document.body.classList.add("no-scroll");
+    lockPageScroll();
 }
 
 /**
@@ -774,7 +775,7 @@ function openAppealModal() {
  */
 function closeModal(modal) {
     modal.close();
-    document.body.classList.remove("no-scroll");
+    unlockPageScroll();
 }
 
 /** Abre o modal já vinculado ao processo da linha clicada. */
@@ -804,7 +805,7 @@ function initModal() {
     });
 
     modal.addEventListener("close", () => {
-        document.body.classList.remove("no-scroll");
+        unlockPageScroll();
     });
 }
 
