@@ -2,13 +2,12 @@
  * Cadastros do Jurídico: mantém as listas que alimentam os formulários de
  * processo judicial.
  *
- * A tela é dirigida pelo registro CATALOGS logo abaixo. Hoje ele tem quatro
- * entradas — objetos do processo, trâmites, status e chances de perda — e a
- * última lista do Jurídico (órgãos julgadores) entra como irmã assim que
- * ganhar POST/PUT/DELETE no backend. Hoje ela só tem GET.
+ * A tela é dirigida pelo registro CATALOGS logo abaixo, que hoje cobre as
+ * cinco listas de apoio do Jurídico: objetos do processo, trâmites, status,
+ * chances de perda e órgãos julgadores. Todas com CRUD no backend.
  *
- * Nenhuma das entradas depois da primeira precisou tocar em uma função sequer
- * deste arquivo, que é o que a regra abaixo existe para garantir.
+ * Nenhuma das quatro entradas depois da primeira precisou tocar em uma função
+ * sequer deste arquivo, que é o que a regra abaixo existe para garantir.
  *
  * REGRA QUE PROTEGE ESSA ESTRUTURA: nenhuma função daqui pode olhar
  * `catalog.key` para decidir o que fazer. Se alguma precisar perguntar "qual
@@ -226,6 +225,44 @@ const CATALOGS = [
             rowEditLabel: (name) => `Editar chance de perda ${name}`,
             rowDeactivateLabel: (name) => `Desativar chance de perda ${name}`,
             rowReactivateLabel: (name) => `Reativar chance de perda ${name}`,
+        },
+    },
+    {
+        key: "orgaos-julgadores",
+        group: "Jurídico",
+        navLabel: "Órgãos julgadores",
+        title: "Órgãos julgadores",
+        columnLabel: "Órgão julgador",
+        searchPlaceholder: "Buscar pelo nome do órgão julgador",
+        endpoint: API.judgingBodies,
+        // Espelha a validação de JudgingBodyService.create.
+        maxLength: 255,
+        // Única lista cujas frases falam só em recurso: judging_bodies é FK de
+        // lawsuit_appeals apenas, e não aparece em formulário de processo
+        // nenhum. As outras quatro falam em processo, ou em processo e recurso.
+        texts: {
+            newButton: "Novo órgão julgador",
+            createTitle: "Novo órgão julgador",
+            createSubtitle: "Ele passa a aparecer ao cadastrar um recurso.",
+            editTitle: "Editar órgão julgador",
+            editSubtitle: "O novo nome vale também para os recursos que já usam este órgão julgador.",
+            fieldLabel: "Nome do órgão julgador",
+            submitCreate: "Cadastrar órgão julgador",
+            submitEdit: "Salvar alterações",
+            created: (name) => `Órgão julgador "${name}" cadastrado.`,
+            updated: (name) => `Órgão julgador "${name}" atualizado.`,
+            reactivatedOnCreate: (name) =>
+                `"${name}" já existia como órgão julgador inativo e foi reativado. Ele volta a aparecer ao cadastrar um recurso.`,
+            deactivated: (name) => `Órgão julgador "${name}" desativado.`,
+            reactivated: (name) => `Órgão julgador "${name}" reativado.`,
+            emptyAll: "Nenhum órgão julgador cadastrado ainda.",
+            emptyFiltered: "Nenhum órgão julgador para os filtros selecionados.",
+            confirmDeactivateTitle: "Desativar órgão julgador",
+            confirmDeactivateText: (name) =>
+                `"${name}" deixa de aparecer ao cadastrar um recurso. Os recursos que já usam esse órgão julgador continuam como estão — nada é apagado.`,
+            rowEditLabel: (name) => `Editar órgão julgador ${name}`,
+            rowDeactivateLabel: (name) => `Desativar órgão julgador ${name}`,
+            rowReactivateLabel: (name) => `Reativar órgão julgador ${name}`,
         },
     },
 ];
